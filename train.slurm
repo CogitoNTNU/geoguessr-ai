@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:2
 #SBATCH --mem=32GB
 #SBATCH --nodes=1
-#SBATCH --constraint="(p100|a100|h100|h200)&(gpu40g|gpu80g)"
+#SBATCH --constraint="(a100|h100|h200)&(gpu40g|gpu80g)"
 #SBATCH --output=slurm_outputs/output_geo-guessr-ai.txt
 #SBATCH --error=slurm_outputs/output_geo-guessr-ai.err
 #SBATCH --mail-user=danielnh@stud.ntnu.no
