@@ -252,3 +252,14 @@ lerna-debug.log
 # System Files
 .DS_Store
 Thumbs.db
+ 
+# Frontend (React) artifacts
+/frontend/node_modules/
+/frontend/build/
+/frontend/coverage/
+/frontend/.pnp
+/frontend/.pnp.js
+/frontend/.env.local
+/frontend/.env.development.local
+/frontend/.env.test.local
+/frontend/.env.production.local
