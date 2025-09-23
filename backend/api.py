@@ -6,6 +6,8 @@ from pydantic import BaseModel
 import os
 import time
 
+import s3bucket
+
 model_path = "/models"
 
 
@@ -59,14 +61,22 @@ async def read_image(image_id: int):
     return {
         "image_id": image_id,
         "image_name": im.name,
-        "image_filepath": im.file_path,
+        "image_file_path": im.file_path,
         "image_desc": im.description,
     }
 
 
 @app.post("/submit_image/")
-async def submit_image():
-    return {"message": "Image has been added"}
+async def submit_image(file_path: str, s3_key: str):
+    if os.path.isfile(file_path):
+        s3bucket.upload_image_to_s3(file_path, s3_key)
+    else:
+        images = os.listdir(file_path)
+
+        for image in images:
+            path = f"{file_path}/{image}"
+            s3bucket.upload_image_to_s3(path, s3_key)
+    return {"message": "Images have been added to bucket"}
 
 
 @app.get("/predicition/{image_id}")
