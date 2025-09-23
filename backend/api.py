@@ -1,12 +1,25 @@
-from typing import Union
-
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
+from contextlib import asynccontextmanager
 from pydantic import BaseModel
 
+import os
 import time
 
-app = FastAPI()
+model_path = "/models"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting up")
+    os.makedirs(model_path, exist_ok=True)
+
+    yield
+
+    print("Shutting down")
+
+
+app = FastAPI(lifetime=lifespan)
 
 
 class Image(BaseModel):
@@ -22,25 +35,26 @@ class Model(BaseModel):
 
 
 @app.get("/", response_class=HTMLResponse)
-def read_root():
+async def read_root():
     return """<html>
     <head>
         <title>Some HTML in here</title>
     </head>
     <body>
-        <h1>Geoguessr AI API op side</h1>
-        <p>This is a simple HTML response from FastAPI.</p>
+        <h1>Geoguessr AI API</h1>
+        <p>This is the root page for the FastAPI.</p>
+        <p>GGAI{W0w_Y0u_f0und_m3}</p>
     </body>
     </html>"""
 
 
 @app.get("/model/{model_id}")
-def read_model(model_id: int, q: Union[str, None] = None):
+async def read_model(model_id: int):
     return {"model_id": model_id, "model_file_path": "1"}
 
 
 @app.get("/image/{image_id}")
-def read_image(image_id: int, q: Union[str, None] = None):
+async def read_image(image_id: int):
     im = Image()
     return {
         "image_id": image_id,
@@ -51,19 +65,19 @@ def read_image(image_id: int, q: Union[str, None] = None):
 
 
 @app.post("/submit_image/")
-def submit_image():
+async def submit_image():
     return {"message": "Image has been added"}
 
 
 @app.get("/predicition/{image_id}")
-def get_prediction(image_id: int):
+async def get_prediction(image_id: int):
     long = 1
     lat = 2
     return {"long": long, "lat": lat}
 
 
 @app.get("/health")
-def ping():
+async def ping():
     return {"status": "Healthy!", "Timestamp": time.time()}
 
 
