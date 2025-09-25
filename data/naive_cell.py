@@ -19,6 +19,8 @@ class RectCell:
         self.longtitude = np.array([p.lng for p in self.points])
         self.latitude = np.array([p.lat for p in self.points])
 
+        self.area = (self.max_lat - self.min_lat) * (self.max_lng - self.min_lng)
+
     def __len__(self) -> int:
         return len(self.points)
 
