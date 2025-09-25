@@ -39,7 +39,7 @@ def loc_id_from_geometry(geom: Point) -> str:
     """
     Stable id from WKB; trimming keeps it short but collision-resistant for practical use.
     """
-    wkb = geom.wkb  # bytes
+    wkb = geom.wkb
     return hashlib.sha1(wkb).hexdigest()[:10]
 
 
@@ -74,8 +74,6 @@ def build_records_from_gdf(
     Expands each row in gdf to N= len(headings) records.
     - gdf must have a geometry column (Point) and be convertible to EPSG:4326
     - image_path_resolver(loc_id, heading, row) -> local path to the JPG for that (loc, heading)
-
-    If you already have per-heading file paths in columns, you can implement resolver to read them.
     """
     gdf2 = ensure_epsg4326(gdf)
     gdf2 = gdf2.copy()
@@ -112,7 +110,6 @@ def upload_one_image(rec: dict) -> dict:
     Returns one manifest row (dict).
     """
     key = img_key(rec["location_id"], rec["heading"])
-    # Stream upload; boto3 will choose single/multipart depending on size
     with open(rec["image_path"], "rb") as f:
         data = f.read()
     s3.put_object(
