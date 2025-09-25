@@ -4,7 +4,7 @@ import numpy as np
 
 class Point:
     def __init__(self, id, lng, lat):
-        self.id: int = id
+        self.id: int = id  # TODO: Should be same for each (lat, long)-pair so pictures from same location can be saved in same folder in S3-buckert
         self.lng: float = lng
         self.lat: float = lat
 
@@ -30,7 +30,7 @@ class RectCell:
 
     def split_cell(self):
         p1, p2 = set(), set()
-        if self.should_split_lng(self):
+        if self.should_split_lng():
             for point in self.points:
                 if point.lng > (self.max_lng + self.min_lng) / 2:
                     p2.add(point)

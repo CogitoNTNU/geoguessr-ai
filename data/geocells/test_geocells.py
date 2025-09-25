@@ -6,28 +6,33 @@ import heapq
 def generate_points(n):
     points = set()
     for i in range(n):
-        points.add(Point(id=i, lng=random.random() * 90, lat=random.random() * 90))
+        points.add(
+            Point(id=i, lng=random.uniform(-180, 180), lat=random.uniform(-90, 90))
+        )
     return points
 
 
-def partition(n, min_cell_size, points):
+def partition(min_cell_size, points):
     start_cell = RectCell(points)
     cells = []
-    heapq.heappush(cells, (n - len(start_cell), start_cell))
-    lowest_points = cells[-1][0]
+    counter = 0
+    heapq.heappush(cells, (-len(start_cell), counter, start_cell))
+    counter += 1
 
-    while lowest_points > min_cell_size:
-        cell_to_split = cells[0][1]
-
+    while cells and -cells[0][0] > min_cell_size:
+        _, _, cell_to_split = heapq.heappop(cells)
         cell1, cell2 = cell_to_split.split_cell()
-        heapq.heappush(cells, (n - len(cell1), cell1))
-        heapq.heappush(cells, (n - len(cell2), cell2))
-        lowest_points = cells[-1][0]
+        if len(cell1) > 0:
+            heapq.heappush(cells, (-len(cell1), counter, cell1))
+            counter += 1
+        if len(cell2) > 0:
+            heapq.heappush(cells, (-len(cell2), counter, cell2))
+            counter += 1
 
     return cells
 
 
 points = generate_points(100)
-cells = partition(100, 10, points)
+cells = partition(10, points)
 
 print(cells[0][1])
