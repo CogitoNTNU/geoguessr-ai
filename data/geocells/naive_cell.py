@@ -3,9 +3,10 @@ import numpy as np
 
 
 class Point:
-    id: int
-    lng: float
-    lat: float
+    def __init__(self, id, lng, lat):
+        self.id: int = id
+        self.lng: float = lng
+        self.lat: float = lat
 
 
 class RectCell:
