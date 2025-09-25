@@ -9,6 +9,7 @@ dependencies = [
     "boto3>=1.40.36",
     "dotenv>=0.9.9",
     "fastapi[standard]>=0.116.1",
+    "geopandas>=1.1.1",
     "pillow>=11.3.0",
     "python-dotenv>=1.1.1",
     "uvicorn[standard]>=0.37.0",
