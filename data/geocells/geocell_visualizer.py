@@ -172,6 +172,7 @@ points = generate_points(10)
 [print(x.lat, x.lng) for x in points]
 # partition_output = partition(10, points)
 
+
 geocells = GenerateGeocells("data/GADM_data/", points)
 
 visualizer = CellVisualizer(geocells)

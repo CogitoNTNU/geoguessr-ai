@@ -2,6 +2,7 @@ import geopandas as gpd
 import pandas as pd
 import os
 from cell import Cell
+from tqdm import trange
 
 COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 
@@ -12,10 +13,12 @@ class GenerateGeocells:
         # TODO bytt punkt til å være i database, slik at de er koblet til bilder og har hvilken geocell de er i osv.
         # self.df = df
         # self.points = self.init_points()
-        self.points = points
+        self.points = self.init_points(points)
 
         # Hvert land har først en cell som dekker hele landet, så resten av cellene i landet
         self.country_cells = {}
+        self.countries = self.init_country_cells()
+        self.admin_1 = self.init_admin_1_cells()
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
@@ -32,10 +35,16 @@ class GenerateGeocells:
 
         return df
 
-    def init_points(self):
+    def init_points(self, points):
         # TODO fiks dette med database
-        points = []
+        points = [point for point in points]
         return points
+
+    def init_country_cells(self):
+        pass
+
+    def init_admin_1_cells(self):
+        pass
 
     def init_cells(self):
         cells = []
@@ -48,18 +57,22 @@ class GenerateGeocells:
             cell = Cell(name, [], polygons, country, admin_1)
 
             if country not in self.country_cells:
-                self.country_cells[country] = {
-                    country: [Cell(country, [], polygons, country, country)]
-                }
+                country_cell = [
+                    count for count in self.countries if count.country == country
+                ]
+
+                self.country_cells[country] = {country: [country_cell]}
             else:
                 self.country_cells[country][country][0].combine(
                     [Cell(name, [], polygons, country, admin_1)]
                 )
 
             if admin_1 not in self.country_cells[country]:
-                self.country_cells[country][admin_1] = [
-                    Cell(admin_1, [], polygons, country, admin_1)
+                admin_1_cell = [
+                    admin for admin in self.admin_1 if admin_1.admin_1 == admin_1
                 ]
+
+                self.country_cells[country][admin_1] = [admin_1_cell]
             else:
                 self.country_cells[country][admin_1][0].combine(
                     [Cell(name, [], polygons, country, admin_1)]
@@ -71,7 +84,8 @@ class GenerateGeocells:
         return cells
 
     def add_points_to_cells(self):
-        for point in self.points:
+        for i in trange(len(self.points)):
+            point = self.points[i]
             # TODO legg til database med punkt
             # if point.geocell != None:
             #     continue
@@ -103,4 +117,4 @@ class GenerateGeocells:
         return f"{self.cells}"
 
 
-gen = GenerateGeocells("data/GADM_data/", set())
+gen = GenerateGeocells("data/GADM_data/GADM_admin_2", set())
