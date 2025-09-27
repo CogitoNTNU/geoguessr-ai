@@ -297,6 +297,7 @@ dependencies = [
     { name = "numpy" },
     { name = "pydeck" },
     { name = "python-dotenv" },
+    { name = "shapely" },
     { name = "tensorflow" },
 ]
 
@@ -323,6 +324,7 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "pydeck", specifier = ">=0.9.1" },
     { name = "python-dotenv", specifier = ">=1.1.1" },
+    { name = "shapely", specifier = ">=2.1.2" },
     { name = "tensorflow", specifier = ">=2.20.0" },
 ]
 
