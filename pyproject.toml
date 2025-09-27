@@ -9,6 +9,7 @@ dependencies = [
     "ipython>=9.5.0",
     "numpy>=2.3.2",
     "pydeck>=0.9.1",
+    "python-dotenv>=1.1.1",
     "tensorflow>=2.20.0",
 ]
 
