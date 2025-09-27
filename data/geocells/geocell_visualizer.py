@@ -2,47 +2,51 @@ from typing import List, Dict
 import pydeck as pdk
 import webbrowser
 import os
-from load_admin_data import AdminCell
+from test_geocells import generate_points
+from generate_geocells import GenerateGeocells
+from cell import Cell
 
 
 class CellVisualizer:
     geocells: List[Dict]
     points: List[Dict]
 
-    def __init__(self, admin_cell):
-        self.df = admin_cell.df
-        self.geocells: List[Dict] = self._process_cells()
-        # self.points: List[Dict] = self._extract_points(cells)
+    def __init__(self, geocells: List[Cell]):
+        self.all_geocells: List[Cell] = geocells
+        self.geocells: List[Dict] = self._process_cells(geocells)
+        self.points: List[Dict] = self._extract_points()
 
-    def _process_cells(self):
+    def _process_cells(self, geocells: List[Cell]):
         polygons = []
 
-        for multipolygon, kommune in zip(self.df["geometry"], self.df["NAME_2"]):
-            for polygon in multipolygon.geoms:
+        for cell in self.all_geocells.cells:
+            for polygon in cell.polygons:
                 geojson_polygon = {
                     "type": "Feature",
                     "geometry": polygon.__geo_interface__,
                     "properties": {
                         "point_count": len(polygon.exterior.coords),
-                        "kommune": kommune,
+                        "kommune": cell.id,
                     },
                 }
                 polygons.append(geojson_polygon)
 
         return polygons
 
-    # def _extract_points(self, cells):
-    #     rectCells = [cell[2] for cell in cells]
-    #     points = []
-    #     for cell in rectCells:
-    #         for p in cell.points:
-    #             points.append(
-    #                 {
-    #                     "position": [p.lng, p.lat],
-    #                     "id": getattr(p, "id", None),
-    #                 }
-    #             )
-    #     return points
+    def _extract_points(self):
+        points = []
+        for cell in self.all_geocells.cells:
+            if len(cell) > 0:
+                print(cell)
+            for p in cell.points:
+                points.append(
+                    {
+                        "position": [p.lng, p.lat],
+                        "id": getattr(p, "id", None),
+                    }
+                )
+        print(points)
+        return points
 
     def create_deck(self, **kwargs):
         # Compute average center from geocells
@@ -96,18 +100,18 @@ class CellVisualizer:
         )
 
         # Individual points as a ScatterplotLayer
-        # points_layer = pdk.Layer(
-        #     "ScatterplotLayer",
-        #     data=self.points,
-        #     get_position="position",
-        #     get_fill_color=[255, 80, 80, 200],
-        #     stroked=False,
-        #     pickable=False,  # keep global tooltip focused on geocells
-        #     radiusMinPixels=2,
-        #     radiusMaxPixels=6,
-        #     get_radius=20000,
-        #     parameters={"depthTest": False},
-        # )
+        points_layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=self.points,
+            get_position="position",
+            get_fill_color=[255, 80, 80, 200],
+            stroked=False,
+            pickable=False,  # keep global tooltip focused on geocells
+            radiusMinPixels=2,
+            radiusMaxPixels=6,
+            get_radius=20000,
+            parameters={"depthTest": False},
+        )
 
         tooltip = {
             "html": "<b>Points:</b> {properties.point_count}<br/>"
@@ -116,7 +120,7 @@ class CellVisualizer:
         }
 
         deck = pdk.Deck(
-            layers=[countries_layer, geocells_layer],
+            layers=[countries_layer, geocells_layer, points_layer],
             views=[globe_view],
             initial_view_state=initial_view_state,
             tooltip=tooltip,
@@ -164,10 +168,11 @@ class CellVisualizer:
 
 # Sample output ============================================================================================================================================================
 
-# points = generate_points(1000)
+points = generate_points(10)
+[print(x.lat, x.lng) for x in points]
 # partition_output = partition(10, points)
 
-admin_cell = AdminCell("data/GADM_data/")
+geocells = GenerateGeocells("data/GADM_data/", points)
 
-visualizer = CellVisualizer(admin_cell)
+visualizer = CellVisualizer(geocells)
 visualizer.show()

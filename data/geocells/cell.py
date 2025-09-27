@@ -1,8 +1,10 @@
 import shapely.ops
+from shapely.geometry import Point
 import numpy as np
 from typing import List
 import pandas as pd
 import geopandas as gpd
+from loguru import logger
 
 
 class Cell:
@@ -17,7 +19,7 @@ class Cell:
         self.country = country
         self.admin_1 = admin_1
 
-        self.neigbours = []
+        self.neighbours = []
 
     def add_point(self, point):
         self.points.append(point)
@@ -27,7 +29,7 @@ class Cell:
             if cell == self:
                 continue
             if cell.shape().intersects(self.shape()):
-                self.neigbours.append(geocells.id)
+                self.neighbours.append(geocells.id)
 
     def shape(self):
         union = shapely.ops.unary_union(self.polygons)
@@ -44,7 +46,7 @@ class Cell:
         for other in others:
             self.points += other.points
             self.polygons += other.polygons
-            self.neigbours += other.neighbours
+            self.neighbours += other.neighbours
             other.points = []
             other.polygons = []
 
@@ -54,8 +56,8 @@ class Cell:
 
             other.neighbours = []
 
-            self.neigbours.remove(other.id)
-            self.neigbours.remove(self.id)
+            # self.neighbours.remove(other.id)
+            # self.neighbours.remove(self.id)
 
     def split(self):
         pass
@@ -64,7 +66,12 @@ class Cell:
         pass
 
     def contains(self, point):
-        return self.shape().contains(point)
+        try:
+            return self.shape().contains(point)
+        except TypeError:
+            return self.shape().contains(Point(point.lng, point.lat))
+        except Exception as e:
+            logger.warning(e)
 
     def cluster(self):
         pass
