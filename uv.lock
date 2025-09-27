@@ -296,6 +296,7 @@ dependencies = [
     { name = "ipython" },
     { name = "numpy" },
     { name = "pydeck" },
+    { name = "shapely" },
     { name = "tensorflow" },
 ]
 
@@ -321,6 +322,7 @@ requires-dist = [
     { name = "ipython", specifier = ">=9.5.0" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "pydeck", specifier = ">=0.9.1" },
+    { name = "shapely", specifier = ">=2.1.2" },
     { name = "tensorflow", specifier = ">=2.20.0" },
 ]
 
