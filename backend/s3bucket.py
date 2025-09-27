@@ -8,8 +8,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import boto3
 import pandas as pd
 import geopandas as gpd
+from typing import Iterable, Dict, Any
 from shapely.geometry import Point
 from botocore.config import Config
+
 
 # ---------- CONFIG ----------
 BUCKET = "cogito-geoguessr"
@@ -17,6 +19,7 @@ BASE_PREFIX = "geoguessr-ai"
 VERSION = "v1"
 MANIFEST_PREFIX = f"{BASE_PREFIX}/manifest/{VERSION}"
 SNAPSHOT_PREFIX = f"{BASE_PREFIX}/manifest_snapshot/{VERSION}"
+HEADINGS_DEFAULT = (0, 90, 180, 270)
 REGION = "eu-north-1"
 s3 = boto3.client("s3", region_name=REGION, config=Config(max_pool_connections=50))
 
@@ -269,3 +272,131 @@ def load_latest_snapshot_gdf() -> gpd.GeoDataFrame:
     if gdf.crs is None:
         gdf.set_crs(4326, inplace=True)
     return gdf
+
+
+def _parse_location_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
+    """
+    Scans `root_dir` for files shaped like:
+      <pano_id>_0.jpg, <pano_id>_90.jpg, <pano_id>_180.jpg, <pano_id>_270.jpg
+      <pano_id>_metadata.json
+
+    Returns a dict: pano_id -> {
+        'pano_id': str,
+        'lat': float,
+        'lon': float,
+        'geometry': Point(lon, lat),
+        'polygon_wkt': None,   # placeholder
+        'images': {heading(int): local_path(str)}
+    }
+    """
+    index: Dict[str, Dict[str, Any]] = {}
+
+    for name in os.listdir(root_dir):
+        if not name.endswith("_metadata.json"):
+            continue
+        base = name[: -len("_metadata.json")]
+        meta_path = os.path.join(root_dir, name)
+        with open(meta_path, "r", encoding="utf-8") as f:
+            meta = json.load(f)
+
+        lat = float(meta["location"]["lat"])
+        lon = float(meta["location"]["lng"])
+
+        index[base] = {
+            "pano_id": base,
+            "lat": lat,
+            "lon": lon,
+            "geometry": Point(lon, lat),  # EPSG:4326
+            "polygon_wkt": None,  # placeholder for later polygon geometry
+            "images": {},
+        }
+
+    for name in os.listdir(root_dir):
+        if not name.lower().endswith(".jpg"):
+            continue
+        try:
+            prefix, rest = name.rsplit("_", 1)
+            heading_str = rest.split(".")[0]
+            heading = int(heading_str)
+        except Exception:
+            continue
+
+        if prefix not in index:
+            continue
+
+        index[prefix]["images"][heading] = os.path.join(root_dir, name)
+
+    return index
+
+
+def _records_from_folder_index(
+    idx: Dict[str, Dict[str, Any]], headings: Iterable[int] = HEADINGS_DEFAULT
+) -> list[dict]:
+    """
+    Turns the folder index into upload records your existing `upload_batch(...)` understands.
+    Uses the pano_id/hash as location_id directly (so keys stay stable).
+    Skips headings that are missing locally.
+    """
+    records: list[dict] = []
+    for loc in idx.values():
+        for h in headings:
+            img_path = loc["images"].get(h)
+            if not img_path:
+                continue
+            records.append(
+                {
+                    "location_id": loc["pano_id"],
+                    "lat": loc["lat"],
+                    "lon": loc["lon"],
+                    "heading": int(h),
+                    "pitch": None,
+                    "image_path": img_path,
+                    "geometry": loc["geometry"],
+                    "polygon_wkt": loc["polygon_wkt"],
+                }
+            )
+    return records
+
+
+def ingest_from_folder(
+    folder: str,
+    batch_date: str | None = None,
+    headings: Iterable[int] = HEADINGS_DEFAULT,
+    max_workers: int = 16,
+):
+    """
+    Walk `folder`, read <pano_id>_metadata.json (lat/lon), pair with images, then:
+      1) upsert images to S3 (idempotent keys)
+      2) write append-only GeoParquet batch
+      3) refresh latest snapshot
+    """
+    batch_date = batch_date or datetime.date.today().isoformat()
+
+    idx = _parse_location_folder(folder)
+    records = _records_from_folder_index(idx, headings=headings)
+    if not records:
+        return {"message": "No records found to ingest.", "rows_in_batch": 0}
+
+    gdf_batch = upload_batch(records, max_workers=max_workers)
+    gdf_batch["batch_date"] = batch_date
+
+    if "polygon_wkt" not in gdf_batch.columns:
+        gdf_batch["polygon_wkt"] = None
+
+    batch_key = write_batch_manifest(gdf_batch, batch_date)
+
+    prev = load_previous_snapshot()
+    latest = merge_snapshot(prev, gdf_batch)
+    snapshot_key = write_new_snapshot(latest)
+
+    return {
+        "batch_manifest_key": batch_key,
+        "snapshot_key": snapshot_key,
+        "rows_in_batch": len(gdf_batch),
+        "rows_in_latest": len(latest),
+        "ingested_locations": len({r["location_id"] for r in records}),
+    }
+
+
+result = ingest_from_folder("./dataset", batch_date="2025-09-25", max_workers=24)
+print(result)
