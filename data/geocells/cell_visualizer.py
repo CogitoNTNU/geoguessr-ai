@@ -8,11 +8,9 @@ import os
 
 class CellVisualizer:
     geocells: List[Dict]
-    points: List[Dict]
 
     def __init__(self, cells):
         self.geocells: List[Dict] = self._process_cells(cells)
-        self.points: List[Dict] = self._extract_points(cells)
 
     def _process_cells(self, cells):
         rectCells = [cell[2] for cell in cells]
@@ -44,19 +42,6 @@ class CellVisualizer:
             polygons.append(polygon)
 
         return polygons
-
-    def _extract_points(self, cells):
-        rectCells = [cell[2] for cell in cells]
-        points = []
-        for cell in rectCells:
-            for p in cell.points:
-                points.append(
-                    {
-                        "position": [p.lng, p.lat],
-                        "id": getattr(p, "id", None),
-                    }
-                )
-        return points
 
     def create_deck(self, **kwargs):
         # Compute average center from geocells
@@ -124,20 +109,6 @@ class CellVisualizer:
             parameters={"depthTest": False},
         )
 
-        # Individual points as a ScatterplotLayer
-        points_layer = pdk.Layer(
-            "ScatterplotLayer",
-            data=self.points,
-            get_position="position",
-            get_fill_color=[255, 80, 80, 200],
-            stroked=False,
-            pickable=False,  # keep global tooltip focused on geocells
-            radiusMinPixels=2,
-            radiusMaxPixels=6,
-            get_radius=20000,
-            parameters={"depthTest": False},
-        )
-
         tooltip = {
             "html": "<b>Points:</b> {properties.point_count}<br/>"
             "<b>Area:</b> {properties.area:.2f}<br/>"
@@ -146,7 +117,7 @@ class CellVisualizer:
         }
 
         deck = pdk.Deck(
-            layers=[countries_layer, geocells_layer, points_layer],
+            layers=[countries_layer, geocells_layer],
             views=[globe_view],
             initial_view_state=initial_view_state,
             tooltip=tooltip,
