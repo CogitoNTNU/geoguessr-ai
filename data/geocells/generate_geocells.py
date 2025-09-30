@@ -136,8 +136,9 @@ class GenerateGeocells:
                     break
 
     def generate_geocells(self):
-        for cell in self.cells[0:10]:
-            print(len(cell.points))
+        for cell in self.cells:
+            print(cell.neighbours)
+            cell.combine(cell.neighbours)
 
     def __str__(self):
         return f"{self.cells}"

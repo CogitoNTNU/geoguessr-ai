@@ -61,6 +61,9 @@ class Cell:
                 self.neighbours.remove(other)
             if self in self.neighbours:
                 self.neighbours.remove(self)
+
+            other.current_shape = other.shape()
+
         self.current_shape = self.shape()
 
     def split(self):

@@ -20,16 +20,17 @@ class CellVisualizer:
         polygons = []
 
         for cell in self.all_geocells.cells:
-            for polygon in cell.polygons:
-                geojson_polygon = {
-                    "type": "Feature",
-                    "geometry": polygon.__geo_interface__,
-                    "properties": {
-                        "point_count": len(cell.points),
-                        "kommune": cell.id,
-                    },
-                }
-                polygons.append(geojson_polygon)
+            # for polygon in cell.polygons:
+            geojson_polygon = {
+                "type": "Feature",
+                "geometry": cell.current_shape.__geo_interface__,
+                "properties": {
+                    "point_count": len(cell.points),
+                    "kommune": cell.id,
+                    "naboer": [i.id for i in cell.neighbours],
+                },
+            }
+            polygons.append(geojson_polygon)
 
         return polygons
 
@@ -116,7 +117,8 @@ class CellVisualizer:
 
         tooltip = {
             "html": "<b>Points:</b> {properties.point_count}<br/>"
-            "<b>Kommune:</b> {properties.kommune}",
+            "<b>Kommune:</b> {properties.kommune}<br/>"
+            "<b>Naboer:</b> {properties.naboer}",
             "style": {"backgroundColor": "steelblue", "color": "white"},
         }
 
