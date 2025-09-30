@@ -24,6 +24,7 @@ class AdminCell:
         return f"data{self.df}"
 
 
-admin_visualize = AdminCell("data/GADM_data/")
+if __name__ == "__main__":
+    admin_visualize = AdminCell("data/GADM_data/")
 
-print(admin_visualize)
+    print(admin_visualize)
