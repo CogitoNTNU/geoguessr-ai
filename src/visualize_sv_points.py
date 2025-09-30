@@ -7,49 +7,60 @@ Creates an interactive HTML map showing all the sampled points with Street View 
 import json
 import os
 
-def create_sv_points_map(input_file="data/out/sv_points.json", output_file="sv_points_map.html"):
+
+def create_sv_points_map(
+    input_file="data/out/sv_points.json",
+    candidate_file="data/out/candidate_points.json",
+    output_file="sv_points_map.html",
+):
     """Create an interactive map of Street View points."""
-    
+
     if not os.path.exists(input_file):
         print(f"Error: {input_file} not found!")
         print("Make sure you've run the sampling script first.")
         return
-    
+
     # Load the Street View points
-    with open(input_file, 'r') as f:
+    with open(input_file, "r") as f:
         sv_points = json.load(f)
-    
+
     if not sv_points:
         print("No Street View points found in the data file.")
         return
-    
+
+    # Load candidate points if available
+    num_candidates = 0
+    if os.path.exists(candidate_file):
+        with open(candidate_file, "r") as f:
+            candidate_points = json.load(f)
+            num_candidates = len(candidate_points)
+
     # Calculate center point
     avg_lat = sum(point["lat"] for point in sv_points) / len(sv_points)
     avg_lon = sum(point["lon"] for point in sv_points) / len(sv_points)
-    
+
+    # Calculate success rate if we have candidate data
+    success_rate = (
+        (len(sv_points) / num_candidates * 100) if num_candidates > 0 else None
+    )
+
     # Convert to GeoJSON format
     point_features = []
     for i, point in enumerate(sv_points):
         feature = {
             "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [point["lon"], point["lat"]]
-            },
+            "geometry": {"type": "Point", "coordinates": [point["lon"], point["lat"]]},
             "properties": {
                 "id": i,
                 "lat": point["lat"],
                 "lon": point["lon"],
-                "type": "street_view_point"
-            }
+                "type": "street_view_point",
+            },
         }
         point_features.append(feature)
-    
-    points_geojson = {
-        "type": "FeatureCollection",
-        "features": point_features
-    }
-    
+
+    points_geojson = {"type": "FeatureCollection", "features": point_features}
+
     # Create HTML map
     html_content = f"""<!DOCTYPE html>
 <html>
@@ -99,8 +110,9 @@ def create_sv_points_map(input_file="data/out/sv_points.json", output_file="sv_p
 <body>
     <div class="info">
         <h3>🗺️ Street View Points</h3>
-        <p><strong>Total Points:</strong> {len(sv_points):,}</p>
-        <p><strong>Countries:</strong> Norway, Sweden</p>
+        <p><strong>SV Points:</strong> {len(sv_points):,}</p>
+        {"<p><strong>Candidates:</strong> " + f"{num_candidates:,}</p>" if num_candidates > 0 else ""}
+        {"<p><strong>Success Rate:</strong> " + f"{success_rate:.1f}%</p>" if success_rate is not None else ""}
         <div class="stats">
             <p>✅ All points have confirmed Street View coverage</p>
             <p>📍 Click any point for coordinates</p>
@@ -213,23 +225,25 @@ def create_sv_points_map(input_file="data/out/sv_points.json", output_file="sv_p
 </html>"""
 
     # Write the HTML file
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     print(f"✅ Visualization created: {output_file}")
     print(f"📊 Showing {len(sv_points):,} Street View points")
     print(f"🌍 Center: {avg_lat:.4f}, {avg_lon:.4f}")
     print("🚀 Open the file in your browser to view the interactive map!")
-    
+
     # Try to open in browser
     try:
         import webbrowser
+
         file_path = os.path.abspath(output_file)
         webbrowser.open(f"file://{file_path}")
         print("🌐 Map opened in your default browser!")
     except Exception as e:
         print(f"Could not auto-open browser: {e}")
         print(f"Please manually open: {os.path.abspath(output_file)}")
+
 
 if __name__ == "__main__":
     create_sv_points_map()
