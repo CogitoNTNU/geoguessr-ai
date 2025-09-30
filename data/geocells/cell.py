@@ -52,13 +52,15 @@ class Cell:
             other.polygons = []
 
             for n in other.neighbours:
-                n.neighbours.remove(other)
+                if other in n.neighbours:
+                    n.neighbours.remove(other)
                 n.neighbours.append(self)
 
             other.neighbours = []
-
-            self.neighbours.remove(other)
-            self.neighbours.remove(self)
+            if other in self.neighbours:
+                self.neighbours.remove(other)
+            if self in self.neighbours:
+                self.neighbours.remove(self)
         self.current_shape = self.shape()
 
     def split(self):
