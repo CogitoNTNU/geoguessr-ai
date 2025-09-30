@@ -16,6 +16,7 @@ class Cell:
 
         self.polygons = polygons
 
+        self.current_shape = self.shape()
         self.country = country
         self.admin_1 = admin_1
 
@@ -67,9 +68,9 @@ class Cell:
 
     def contains(self, point):
         try:
-            return self.shape().contains(point)
+            return self.current_shape.contains(point)
         except TypeError:
-            return self.shape().contains(Point(point.lng, point.lat))
+            return self.current_shape.contains(Point(point.lng, point.lat))
         except Exception as e:
             logger.warning(e)
 
