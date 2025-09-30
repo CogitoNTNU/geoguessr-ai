@@ -167,7 +167,7 @@ class CellVisualizer:
 # points = generate_points(1000)
 # partition_output = partition(10, points)
 
-admin_cell = AdminCell("data/GADM_data/")
+admin_cell = AdminCell("data/GADM_data/GADM_admin_2")
 
 visualizer = CellVisualizer(admin_cell)
 visualizer.show()

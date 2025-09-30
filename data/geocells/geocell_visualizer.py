@@ -168,11 +168,12 @@ class CellVisualizer:
 
 # Sample output ============================================================================================================================================================
 
-points = generate_points(10)
+points = generate_points(100000)
 [print(x.lat, x.lng) for x in points]
 # partition_output = partition(10, points)
 
-geocells = GenerateGeocells("data/GADM_data/", points)
+
+geocells = GenerateGeocells(points)
 
 visualizer = CellVisualizer(geocells)
 visualizer.show()
