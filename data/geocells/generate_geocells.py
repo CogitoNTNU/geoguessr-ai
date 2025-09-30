@@ -30,8 +30,10 @@ class GenerateGeocells:
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
+        self.cells.sort(key=lambda x: -len(x.points))
 
-        print(self.country_cells)
+        # print(self.country_cells)
+        self.generate_geocells()
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -130,7 +132,8 @@ class GenerateGeocells:
                     break
 
     def generate_geocells(self):
-        pass
+        for cell in self.cells[0:10]:
+            print(len(cell.points))
 
     def __str__(self):
         return f"{self.cells}"

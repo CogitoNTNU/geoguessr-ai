@@ -37,7 +37,8 @@ class CellVisualizer:
         points = []
         for cell in self.all_geocells.cells:
             if len(cell) > 0:
-                print(cell)
+                # print(cell)
+                pass
             for p in cell.points:
                 points.append(
                     {
@@ -45,7 +46,7 @@ class CellVisualizer:
                         "id": getattr(p, "id", None),
                     }
                 )
-        print(points)
+        # print(points)
         return points
 
     def create_deck(self, **kwargs):
