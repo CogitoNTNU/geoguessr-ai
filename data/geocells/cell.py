@@ -53,7 +53,7 @@ class Cell:
 
             for n in other.neighbours:
                 n.neighbours.remove(other)
-                n.append(self)
+                n.neighbours.append(self)
 
             other.neighbours = []
 
