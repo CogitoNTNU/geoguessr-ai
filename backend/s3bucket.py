@@ -33,6 +33,11 @@ def ensure_epsg4326(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         gdf2 = gdf2.copy()
         gdf2["geometry"] = gdf2.geometry.centroid
     return gdf2
+"""
+Takes in GeodataFrame and insures it is a standard coordinate reference system(CRS) of EPSG:4326.
+This means it uses latitude and longitude coordinates for a place on earth, and sets it as Point. If not,
+it sets it as centroid(idk why).
+"""
 
 
 def loc_id_from_geometry(geom: Point) -> str:
@@ -41,10 +46,15 @@ def loc_id_from_geometry(geom: Point) -> str:
     """
     wkb = geom.wkb
     return hashlib.sha1(wkb).hexdigest()[:10]
-
+""" 
+Takes a Point geometry and returns a 10 hexadecimal string(SHA-1 hash) as a identifier(location id) for that point.
+"""
 
 def img_key(location_id: str, heading_deg: int) -> str:
     return f"{BASE_PREFIX}/images/{VERSION}/location_id={location_id}/heading={heading_deg:03d}.jpg"
+""" 
+Create Filepath for S3 bucket based on given hash and heading
+"""
 
 
 def put_json(obj: dict, bucket: str, key: str):
@@ -54,7 +64,9 @@ def put_json(obj: dict, bucket: str, key: str):
         Body=json.dumps(obj).encode("utf-8"),
         ContentType="application/json",
     )
+""" 
 
+"""
 
 def get_json(bucket: str, key: str) -> dict | None:
     try:

@@ -122,6 +122,87 @@ This project would not have been possible without the hard work and dedication o
 
 ![Group picture](docs/img/team.png)
 
+## Project structure
+```bash
+data/
+  README.md                    # Data layout & sources
+  benchmarks/                  # Public benchmarks (manifests/configs)
+
+storage/                       #Database related stuff
+  __init__.py
+  s3_client.py                 # creates boto3 client (AWS or Brage/ECS)
+  s3_images.py                 # upload/download image bytes, presigned URLs, metadata
+  parquet_io.py                # upload/download parquet files (and list by prefix)
+
+dataset_creation/              # uses storage/parquet_io.py to write/read manifests
+  data_collection/
+    collectors/
+      streetview.py            # talks to provider APIs/SDKs
+      local_ingest.py          # import from disks/zips
+    pipelines/
+      sv_grid_sweep.py         # e.g., sweep lat/lon grid, fetch headings
+      sv_place_ids.py          # fetch by place IDs/list
+    schemas.py                 # record schema (id, lat/lon, ts, source, license…)
+    validate.py                # sanity checks (CRS, bounds, image dims)
+    dedupe.py                  # SHA256/near-dup detection
+    rate_limit.py              # backoff, retries
+    utils.py
+  geocell/
+    h3_indexer.py              # Or s2/naive bins; compute geocells
+    __init__.py
+  builders/
+    pretrain_builder.py        # Build pretrain parquet/manifests
+    finetune_builder.py        # Build finetune datasets
+    eval_builder.py            # Build eval/benchmark sets
+  README.md
+  __init__.py
+
+preprocessing/
+  embed.py                     # Feature extraction (e.g., CLIP)
+  geo_augmentor.py             # Geo-specific augmentations
+  dataset_preprocessing.py     # Image/label transforms
+  geo_utils.py                 # CRS, distance, bounding-box helpers
+  utils.py
+  README.md
+  __init__.py
+
+models/
+  encoder.py                   # Backbone or CLIP wrapper
+  head.py                      # Prediction head
+  layers/
+    positional_encoder.py
+    hedge.py
+    __init__.py
+  proto_refiner.py             # Optional refinement module
+  utils.py
+  __init__.py
+  README.md
+
+training/
+  train_eval_loop.py           # Unified loop with checkpointing/logging
+  train_modes.py               # Pretrain/finetune modes and configs
+  __init__.py
+  README.md
+
+evaluation/
+  metrics.py                   # Distance/top-k/cell metrics
+  evaluate.py                  # Offline evaluation entrypoint
+  __init__.py
+  README.md
+
+saved_models/                  # Checkpoints (git-ignored)
+runs/                          # Logs (tensorboard/W&B) (git-ignored)
+
+scripts/
+  get_auxiliary_data.sh        # Download side data (coastlines, POIs, etc.)
+
+config/
+  settings.py                  # Central runtime config (paths, S3, hyperparams)
+
+run.py                         # CLI to run preprocess/train/eval
+
+```
+
 ### License
 
 ______________________________________________________________________
