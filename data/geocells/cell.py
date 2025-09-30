@@ -29,7 +29,7 @@ class Cell:
         for cell in geocells:
             if cell == self:
                 continue
-            if cell.shape().intersects(self.shape()):
+            if cell.current_shape.intersects(self.shape()):
                 self.neighbours.append(geocells.id)
 
     def shape(self):
@@ -57,8 +57,9 @@ class Cell:
 
             other.neighbours = []
 
-            # self.neighbours.remove(other.id)
-            # self.neighbours.remove(self.id)
+            self.neighbours.remove(other.id)
+            self.neighbours.remove(self.id)
+        self.current_shape = self.shape()
 
     def split(self):
         pass
