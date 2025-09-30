@@ -139,4 +139,5 @@ class GenerateGeocells:
         return f"{self.cells}"
 
 
-gen = GenerateGeocells(set())
+if __name__ == "__main__":
+    gen = GenerateGeocells(set())

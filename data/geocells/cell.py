@@ -105,6 +105,7 @@ class Cell:
         return hash(self.id)
 
 
-cell = Cell("Hallo", [], [], "Norway", "Rogaland")
-print(hash(cell))
-print(cell.is_empty())
+if __name__ == "__main__":
+    cell = Cell("Hallo", [], [], "Norway", "Rogaland")
+    print(hash(cell))
+    print(cell.is_empty())

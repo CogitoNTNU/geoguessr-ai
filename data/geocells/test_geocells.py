@@ -30,7 +30,8 @@ def partition(min_cell_size, points):
     return cells
 
 
-points = generate_points(100)
-cells = partition(10, points)
+if __name__ == "__main__":
+    points = generate_points(100)
+    cells = partition(10, points)
 
-print(cells[0][1])
+    print(cells[0][1])
