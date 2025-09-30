@@ -36,21 +36,7 @@ def load_gadm_admin0(gadm_dir: str) -> gpd.GeoDataFrame:
     Last ned her: https://gadm.org/download_country.html (eller world gpkg)
     Eksempel: gadm_410.gpkg -> layer 'ADM_0'
     """
-    # Prøv GPKG først
-    gpkg_path = None
-    for fn in os.listdir(gadm_dir):
-        if fn.endswith(".gpkg"):
-            gpkg_path = os.path.join(gadm_dir, fn)
-            break
-    if gpkg_path:
-        # Vanlige layer-navn i GADM 4.x: 'ADM_0'
-        return gpd.read_file(gpkg_path, layer="ADM_0")
-
-    # Prøv shapefile
-    for fn in os.listdir(gadm_dir):
-        if fn.endswith(".shp"):
-            return gpd.read_file(os.path.join(gadm_dir, fn))
-
+    
     # Prøv JSON/GeoJSON filer og kombiner dem
     json_files = []
     for fn in os.listdir(gadm_dir):
