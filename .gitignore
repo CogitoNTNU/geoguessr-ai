@@ -252,3 +252,6 @@ lerna-debug.log
 # System Files
 .DS_Store
 Thumbs.db
+
+# Don't push HTML visualization-files
+*.html

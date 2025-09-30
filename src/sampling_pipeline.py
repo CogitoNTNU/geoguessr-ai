@@ -123,13 +123,15 @@ def sample_sv_points_from_gadm(gadm_dir: str,
                                sv_country_names: list[str],
                                pts_per_country: int,
                                api_key: str,
-                               radius_m: int = 60):
+                               radius_m: int = 60,
+                               return_candidates: bool = False):
     """
     - Leser GADM (admin0)
     - Fjerner vann implisitt ved å sample *inne i landegrense-polygons*
     - Begrenser til land med Street View (sv_country_names)
     - Sjekker hvert punkt mot Street View metadata
     Returnerer liste av (lat, lon) som har Street View.
+    Hvis return_candidates=True, returnerer (kandidater, sv_points) istedenfor bare sv_points.
     """
     world = load_gadm_admin0(gadm_dir)
     gdf, name_col = filter_countries_by_sv(world, sv_country_names)
@@ -155,4 +157,7 @@ def sample_sv_points_from_gadm(gadm_dir: str,
 
     # Steg 3: sjekk Street View metadata for alle kandidater
     sv_points = check_points_streetview(all_candidates, api_key, radius=radius_m)
+    
+    if return_candidates:
+        return all_candidates, sv_points
     return sv_points
