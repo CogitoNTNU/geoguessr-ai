@@ -11,13 +11,13 @@ import argparse
 parser = argparse.ArgumentParser("simple_example")
 parser.add_argument(
     "mode",
-    help="""Mode:
-                     0: geocell_visualizer
-                     1: admin_visualizer
-                     2: generate_geocells
-                     3: cell_visualizer
-                     4: load_admin_data
-                     5: cell
+    help="""Mode:\n
+                     0: geocell_visualizer \n
+                     1: admin_visualizer \n
+                     2: generate_geocells \n
+                     3: cell_visualizer \n
+                     4: load_admin_data \n
+                     5: cell \n
                      6: test_geocells""",
     type=int,
 )
@@ -27,7 +27,8 @@ args = parser.parse_args()
 def main():
     print(f"Mode {args.mode} selected")
     if args.mode == 0:
-        points = geocell_visualizer.generate_points(100000)
+        num_points = int(input("How many points? "))
+        points = geocell_visualizer.generate_points(num_points)
         [print(x.lat, x.lng) for x in points]
         # partition_output = partition(10, points)
 
