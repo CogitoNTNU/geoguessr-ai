@@ -29,8 +29,8 @@ class Cell:
         for cell in geocells:
             if cell == self:
                 continue
-            if cell.shape().intersects(self.shape()):
-                self.neighbours.append(geocells.id)
+            if cell.current_shape.intersects(self.current_shape):
+                self.neighbours.append(cell)
 
     def shape(self):
         union = shapely.ops.unary_union(self.polygons)
@@ -52,13 +52,14 @@ class Cell:
             other.polygons = []
 
             for n in other.neighbours:
-                n.neighbours.remove(other.id)
-                n.append(self.id)
+                n.neighbours.remove(other)
+                n.neighbours.append(self)
 
             other.neighbours = []
 
-            # self.neighbours.remove(other.id)
-            # self.neighbours.remove(self.id)
+            self.neighbours.remove(other)
+            self.neighbours.remove(self)
+        self.current_shape = self.shape()
 
     def split(self):
         pass
@@ -105,6 +106,7 @@ class Cell:
         return hash(self.id)
 
 
-cell = Cell("Hallo", [], [], "Norway", "Rogaland")
-print(hash(cell))
-print(cell.is_empty())
+if __name__ == "__main__":
+    cell = Cell("Hallo", [], [], "Norway", "Rogaland")
+    print(hash(cell))
+    print(cell.is_empty())

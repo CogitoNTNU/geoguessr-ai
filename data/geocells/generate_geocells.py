@@ -30,8 +30,10 @@ class GenerateGeocells:
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
+        self.cells.sort(key=lambda x: -len(x.points))
 
-        print(self.country_cells)
+        # print(self.country_cells)
+        self.generate_geocells()
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -103,8 +105,12 @@ class GenerateGeocells:
             cell = Cell(name, [], polygons, country, admin_1)
 
             self.country_cells[country][admin_1].append(cell)
+            self.country_cells[country][country].append(cell)
             cells.append(cell)
 
+        for i in trange(len(cells)):
+            cell = cells[i]
+            cell.get_neighbours(self.country_cells[cell.country][cell.country][1:])
         return cells
 
     def add_points_to_cells(self):
@@ -130,10 +136,12 @@ class GenerateGeocells:
                     break
 
     def generate_geocells(self):
-        pass
+        for cell in self.cells[0:10]:
+            print(len(cell.points))
 
     def __str__(self):
         return f"{self.cells}"
 
 
-gen = GenerateGeocells(set())
+if __name__ == "__main__":
+    gen = GenerateGeocells(set())

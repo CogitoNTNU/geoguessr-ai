@@ -25,7 +25,7 @@ class CellVisualizer:
                     "type": "Feature",
                     "geometry": polygon.__geo_interface__,
                     "properties": {
-                        "point_count": len(polygon.exterior.coords),
+                        "point_count": len(cell.points),
                         "kommune": cell.id,
                     },
                 }
@@ -37,7 +37,8 @@ class CellVisualizer:
         points = []
         for cell in self.all_geocells.cells:
             if len(cell) > 0:
-                print(cell)
+                # print(cell)
+                pass
             for p in cell.points:
                 points.append(
                     {
@@ -45,7 +46,7 @@ class CellVisualizer:
                         "id": getattr(p, "id", None),
                     }
                 )
-        print(points)
+        # print(points)
         return points
 
     def create_deck(self, **kwargs):
@@ -167,13 +168,12 @@ class CellVisualizer:
 
 
 # Sample output ============================================================================================================================================================
+if __name__ == "__main__":
+    points = generate_points(100000)
+    [print(x.lat, x.lng) for x in points]
+    # partition_output = partition(10, points)
 
-points = generate_points(100000)
-[print(x.lat, x.lng) for x in points]
-# partition_output = partition(10, points)
+    geocells = GenerateGeocells(points)
 
-
-geocells = GenerateGeocells(points)
-
-visualizer = CellVisualizer(geocells)
-visualizer.show()
+    visualizer = CellVisualizer(geocells)
+    visualizer.show()
