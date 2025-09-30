@@ -105,8 +105,12 @@ class GenerateGeocells:
             cell = Cell(name, [], polygons, country, admin_1)
 
             self.country_cells[country][admin_1].append(cell)
+            self.country_cells[country][country].append(cell)
             cells.append(cell)
 
+        for i in trange(len(cells)):
+            cell = cells[i]
+            cell.get_neighbours(self.country_cells[cell.country][cell.country][1:])
         return cells
 
     def add_points_to_cells(self):

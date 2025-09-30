@@ -29,7 +29,7 @@ class Cell:
         for cell in geocells:
             if cell == self:
                 continue
-            if cell.current_shape.intersects(self.shape()):
+            if cell.current_shape.intersects(self.current_shape):
                 self.neighbours.append(cell.id)
 
     def shape(self):
