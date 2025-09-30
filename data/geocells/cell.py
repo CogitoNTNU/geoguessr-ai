@@ -30,7 +30,7 @@ class Cell:
             if cell == self:
                 continue
             if cell.current_shape.intersects(self.current_shape):
-                self.neighbours.append(cell.id)
+                self.neighbours.append(cell)
 
     def shape(self):
         union = shapely.ops.unary_union(self.polygons)
