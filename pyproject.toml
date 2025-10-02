@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.12"
 license-files = ["LICENSE"]
 dependencies = [
+    "pandas>=2.3.3",
     "tensorflow>=2.20.0",
 ]
 

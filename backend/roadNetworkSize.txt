@@ -1,0 +1,121 @@
+country,road_km
+Botswana,32565
+Egypt,165521
+Eswatini,1500
+Ghana,109515
+Kenya,239122
+Lesotho,5940
+Madagascar,34178
+Mali,89024
+Namibia,48540
+Nigeria,195000
+Rwanda,6674
+Sao Tome and Principe,1300
+Senegal,47313
+South Africa,767608
+Tanzania,180791
+Tunisia,19963
+Uganda,144785
+Afghanistan,44747
+Bangladesh,501334
+Bhutan,18343
+Cambodia,67715
+Hong Kong,2239
+India,6360004
+Indonesia,543720
+Iraq,46424
+Israel,21158
+Japan,1231084
+Jordan,8631
+Kazakhstan,94902
+Kyrgyzstan,34000
+Laos,59646
+Lebanon,7000
+Macau,471
+Malaysia,327621
+Mongolia,111917
+Nepal,35809
+Oman,77749
+Pakistan,500591
+Palestine,3469
+Philippines,35164
+Qatar,20760
+Russia,1579923
+Singapore,9644
+South Korea,107149
+Sri Lanka,31607
+Taiwan,41475    
+Thailand,703594
+United Arab Emirates,90432
+Albania,3606
+Andorra,320
+Austria,128267
+Belgium,118414
+Bosnia and Herzegovina,9452
+Bulgaria,19512
+Croatia,26495
+Cyprus,13402
+Czech Republic,130784
+Denmark,74853
+Estonia,89452
+Faroe Islands,960
+Finland,77804
+France,1118600
+Germany,829530
+Gibraltar,29
+Greece,117899
+Hungary,220577
+Iceland,12950
+Ireland,103524
+Isle of Man,1107
+Italy,236146
+Jersey,576
+Latvia,57905
+Liechtenstein,845
+Lithuania,83503
+Luxembourg,2914
+Malta,2841
+Monaco,57
+Montenegro,9912
+Netherlands,187620
+North Macedonia,14902
+Norway,95052
+Poland,428362
+Portugal,14339
+Romania,118488
+San Marino,350
+Serbia,46371
+Slovakia,58998
+Slovenia,38995
+Spain,538577
+Sweden,215690
+Switzerland,85009
+Turkey,261156
+Ukraine,162308
+Bermuda,551
+Canada,1042718
+Costa Rica,45898
+Curacao,550
+Dominican Republic,5766 
+Guatemala,18871
+Mexico,407783
+Panama,17803
+Puerto Rico,32129
+Saint Pierre and Miquelon,117
+United States of America,6645582
+United States Virgin Islands,1260
+American Samoa,241
+Australia,1322245
+Guam,1045
+New Zealand,97231
+Northern Mariana Islands,536
+Vanuatu,2039
+Argentina,204663
+Bolivia,207508
+Brazil,1563600
+Chile,88267
+Colombia,205376
+Ecuador,82359
+Falkland Islands,440
+Peru,174108
+Uruguay,8833    
