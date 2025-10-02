@@ -279,5 +279,36 @@ def upload_dataset_from_folder(
     }
 
 
+def download(dest_dir: str, overwrite: bool, row):
+    path = row["image_path"]
+    if not path.startswith("s3://"):
+        return (path, "skipped (not s3)")
+    bucket, key = path[5:].split("/", 1)
+    local_path = os.path.join(dest_dir, os.path.basename(key))
+    if not overwrite and os.path.exists(local_path):
+        return (local_path, "skipped (exists)")
+    try:
+        s3.download_file(bucket, key, local_path)
+        return (local_path, "downloaded")
+    except Exception as e:
+        return (local_path, f"failed: {e}")
+
+
+def download_latest_images(
+    dest_dir: str, overwrite: bool = False, max_workers: int = 16
+):
+    df = load_latest_snapshot_df()
+    os.makedirs(dest_dir, exist_ok=True)
+    results = []
+    with ThreadPoolExecutor(max_workers=max_workers) as ex:
+        futs = [
+            ex.submit(download, dest_dir, overwrite, row) for _, row in df.iterrows()
+        ]
+        for fut in as_completed(futs):
+            results.append(fut.result())
+
+    return results
+
+
 result = upload_dataset_from_folder("./dataset", max_workers=24)
 print(result)
