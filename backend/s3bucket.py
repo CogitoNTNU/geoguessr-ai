@@ -84,7 +84,7 @@ def build_records_from_gdf(
     headings=(0, 90, 180, 270),
     image_path_resolver=None,
     pitch: float | None = None,
-):
+):  
     """
     Expands each row in gdf to N= len(headings) records.
     - gdf must have a geometry column (Point) and be convertible to EPSG:4326
