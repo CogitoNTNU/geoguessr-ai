@@ -65,7 +65,7 @@ def put_json(obj: dict, bucket: str, key: str):
         ContentType="application/json",
     )
 """ 
-
+Uploads a Python dictionary as a json-file. The dictionary is the image with loc-id and correct heading.
 """
 
 def get_json(bucket: str, key: str) -> dict | None:
@@ -74,6 +74,9 @@ def get_json(bucket: str, key: str) -> dict | None:
         return json.loads(b.decode("utf-8"))
     except s3.exceptions.NoSuchKey:
         return None
+""" 
+Retrives object from S3, and converts the bytes to string and JSON to dictionary.
+"""
 
 
 def build_records_from_gdf(
@@ -114,7 +117,10 @@ def build_records_from_gdf(
                 }
             )
     return records
-
+""" 
+Gets lat, log, loc id, and image path then iterates trough all GeoDataFrames and makes related images
+based on headings into records(4 dictionaries).
+"""
 
 def upload_one_image(rec: dict) -> dict:
     """
