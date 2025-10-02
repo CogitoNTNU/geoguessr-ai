@@ -20,7 +20,7 @@ class Cell:
         self.country = country
         self.admin_1 = admin_1
 
-        self.neighbours = []
+        self.neighbours = set()
 
     def add_point(self, point):
         self.points.append(point)
@@ -30,7 +30,7 @@ class Cell:
             if cell == self:
                 continue
             if cell.current_shape.intersects(self.current_shape):
-                self.neighbours.append(cell)
+                self.neighbours.add(cell)
 
     def shape(self):
         union = shapely.ops.unary_union(self.polygons)
@@ -44,19 +44,21 @@ class Cell:
         return len(self) == 0
 
     def combine(self, others):
-        for other in others:
+        for other in others.copy():
+            if other == self:
+                continue
             self.points += other.points
             self.polygons += other.polygons
-            self.neighbours += other.neighbours
+            self.neighbours.union(other.neighbours)
             other.points = []
             other.polygons = []
 
             for n in other.neighbours:
                 if other in n.neighbours:
                     n.neighbours.remove(other)
-                n.neighbours.append(self)
+                n.neighbours.add(self)
 
-            other.neighbours = []
+            other.neighbours = set()
             if other in self.neighbours:
                 self.neighbours.remove(other)
             if self in self.neighbours:

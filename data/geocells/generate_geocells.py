@@ -75,6 +75,7 @@ class GenerateGeocells:
         return admin_1_df
 
     def init_cells(self):
+        print("Initializing cells")
         cells = []
         for i in range(len(self.countries)):
             name = self.countries.iloc[i]["COUNTRY"]
@@ -108,13 +109,13 @@ class GenerateGeocells:
             self.country_cells[country][country].append(cell)
             cells.append(cell)
 
-        for i in trange(len(cells)):
+        for i in trange(len(cells), desc="Legg til naboer", colour="GREEN"):
             cell = cells[i]
             cell.get_neighbours(self.country_cells[cell.country][cell.country][1:])
         return cells
 
     def add_points_to_cells(self):
-        for i in trange(len(self.points)):
+        for i in trange(len(self.points), desc="Legg til punkter", colour="BLUE"):
             point = self.points[i]
             # TODO legg til database med punkt
             # if point.geocell != None:
@@ -136,9 +137,10 @@ class GenerateGeocells:
                     break
 
     def generate_geocells(self):
-        for cell in self.cells:
-            print(cell.neighbours)
-            cell.combine(cell.neighbours)
+        # for cell in self.cells:
+        cell = self.cells[0]
+        print(cell.neighbours)
+        cell.combine(cell.neighbours)
 
     def __str__(self):
         return f"{self.cells}"
