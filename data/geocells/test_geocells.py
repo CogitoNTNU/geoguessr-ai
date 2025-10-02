@@ -6,7 +6,7 @@ import heapq
 def generate_points(n):
     points = set()
     for i in range(n):
-        points.add(Point(id=i, lng=random.uniform(10, 15), lat=random.uniform(60, 63)))
+        points.add(Point(id=i, lng=random.uniform(5, 140), lat=random.uniform(50, 75)))
     return points
 
 

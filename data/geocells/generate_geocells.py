@@ -27,6 +27,8 @@ class GenerateGeocells:
 
         # Hvert land har først en cell som dekker hele landet, så resten av cellene i landet
         self.country_cells = {}
+        # self.max_points = len(self.points)//10
+        self.max_points = 5
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
@@ -77,7 +79,7 @@ class GenerateGeocells:
     def init_cells(self):
         print("Initializing cells")
         cells = []
-        for i in range(len(self.countries)):
+        for i in trange(len(self.countries), desc="Celler av land: "):
             name = self.countries.iloc[i]["COUNTRY"]
             admin_1 = name
             country = name
@@ -87,7 +89,7 @@ class GenerateGeocells:
 
             self.country_cells[country] = {country: [cell]}
 
-        for i in range(len(self.admin_1)):
+        for i in trange(len(self.admin_1), desc="Celler av admin 1"):
             name = self.admin_1.iloc[i]["NAME_1"]
             admin_1 = name
             country = self.admin_1.iloc[i]["COUNTRY"]
@@ -97,7 +99,7 @@ class GenerateGeocells:
 
             self.country_cells[country][admin_1] = [cell]
 
-        for i in range(len(self.admin_2)):
+        for i in trange(len(self.admin_2), desc="Celler av admin 2"):
             name = self.admin_2.iloc[i]["NAME_2"]
             admin_1 = self.admin_2.iloc[i]["NAME_1"]
             country = self.admin_2.iloc[i]["COUNTRY"]
@@ -137,10 +139,28 @@ class GenerateGeocells:
                     break
 
     def generate_geocells(self):
-        # for cell in self.cells:
-        cell = self.cells[0]
-        print(cell.neighbours)
-        cell.combine(cell.neighbours)
+        cells_to_combine = [i for i in self.cells if len(i) < self.max_points]
+        for i in trange(len(cells_to_combine), desc="Slå sammen celler"):
+            cell = cells_to_combine[i]
+            total_points = len(cell)
+
+            queue = [i for i in cell.neighbours]
+            visited = set()
+            while (total_points < self.max_points) and queue:
+                # print(len(queue), len(visited))
+                cell_to_add = queue.pop(0)
+                for j in cell_to_add.neighbours:
+                    if j in visited:
+                        continue
+                    if j in queue:
+                        continue
+                    queue.append(j)
+
+                visited.add(cell_to_add)
+                total_points += len(cell_to_add)
+
+            if visited:
+                cell.combine(visited)
 
     def __str__(self):
         return f"{self.cells}"

@@ -49,7 +49,7 @@ class Cell:
                 continue
             self.points += other.points
             self.polygons += other.polygons
-            self.neighbours.union(other.neighbours)
+            self.neighbours = self.neighbours.union(other.neighbours)
             other.points = []
             other.polygons = []
 
