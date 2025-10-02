@@ -3,51 +3,52 @@ import json
 import hashlib
 import tempfile
 import datetime
+import struct
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import boto3
 import pandas as pd
-import geopandas as gpd
 from typing import Iterable, Dict, Any
-from shapely.geometry import Point
 from botocore.config import Config
+from botocore.exceptions import ClientError
 
 
 # ---------- CONFIG ----------
 BUCKET = "cogito-geoguessr"
-BASE_PREFIX = "geoguessr-ai"
 VERSION = "v1"
-MANIFEST_PREFIX = f"{BASE_PREFIX}/manifest/{VERSION}"
-SNAPSHOT_PREFIX = f"{BASE_PREFIX}/manifest_snapshot/{VERSION}"
+MANIFEST_PREFIX = f"{VERSION}/manifest"
+SNAPSHOT_PREFIX = f"{VERSION}/snapshot"
 HEADINGS_DEFAULT = (0, 90, 180, 270)
 REGION = "eu-north-1"
-s3 = boto3.client("s3", region_name=REGION, config=Config(max_pool_connections=50))
+_Q = 10_000_000  # 1e-7° grid (~1.1 cm)
+s3 = boto3.client(
+    "s3",
+    region_name=REGION,
+    config=Config(
+        retries={"max_attempts": 10, "mode": "adaptive"},
+        max_pool_connections=50,
+        read_timeout=120,
+        connect_timeout=10,
+    ),
+)
 
 
 # ---------- UTILS ----------
-def ensure_epsg4326(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """Ensure geometry is Point in EPSG:4326. If not Point, use centroid."""
-    if gdf.crs is None:
-        raise ValueError(
-            "Input GeoDataFrame has no CRS. Set gdf.set_crs('EPSG:XXXX') first."
-        )
-    gdf2 = gdf.to_crs(4326)
-    if not all(gdf2.geometry.geom_type == "Point"):
-        gdf2 = gdf2.copy()
-        gdf2["geometry"] = gdf2.geometry.centroid
-    return gdf2
-
-
-def loc_id_from_geometry(geom: Point) -> str:
-    """
-    Stable id from WKB; trimming keeps it short but collision-resistant for practical use.
-    """
-    wkb = geom.wkb
-    return hashlib.sha1(wkb).hexdigest()[:10]
+def make_location_id(lat: float, lon: float, hex_len: int = 12) -> str:
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        raise ValueError("lat/lon out of bounds")
+    if lat == 0.0:
+        lat = 0.0
+    if lon == 0.0:
+        lon = 0.0
+    lat_i = int(round(lat * _Q))
+    lon_i = int(round(lon * _Q))
+    payload = struct.pack(">ii", lat_i, lon_i)
+    return hashlib.sha1(b"geo:v1:" + payload).hexdigest()[:hex_len]
 
 
 def img_key(location_id: str, heading_deg: int) -> str:
-    return f"{BASE_PREFIX}/images/{VERSION}/location_id={location_id}/heading={heading_deg:03d}.jpg"
+    return f"{VERSION}/images/location_id={location_id}/heading={heading_deg:03d}.jpg"
 
 
 def put_json(obj: dict, bucket: str, key: str):
@@ -63,130 +64,74 @@ def get_json(bucket: str, key: str) -> dict | None:
     try:
         b = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
         return json.loads(b.decode("utf-8"))
-    except s3.exceptions.NoSuchKey:
-        return None
-
-
-def build_records_from_gdf(
-    gdf: gpd.GeoDataFrame,
-    headings=(0, 90, 180, 270),
-    image_path_resolver=None,
-    pitch: float | None = None,
-):
-    """
-    Expands each row in gdf to N= len(headings) records.
-    - gdf must have a geometry column (Point) and be convertible to EPSG:4326
-    - image_path_resolver(loc_id, heading, row) -> local path to the JPG for that (loc, heading)
-    """
-    gdf2 = ensure_epsg4326(gdf)
-    gdf2 = gdf2.copy()
-    gdf2["location_id"] = gdf2.geometry.apply(loc_id_from_geometry)
-    gdf2["lon"] = gdf2.geometry.x
-    gdf2["lat"] = gdf2.geometry.y
-
-    if image_path_resolver is None:
-
-        def image_path_resolver(loc_id, heading, row):
-            return f"./images/{loc_id}_{heading:03d}.jpg"
-
-    records = []
-    for _, row in gdf2.iterrows():
-        for h in headings:
-            records.append(
-                {
-                    "location_id": row["location_id"],
-                    "lat": float(row["lat"]),
-                    "lon": float(row["lon"]),
-                    "heading": int(h),
-                    "pitch": pitch,
-                    "row_ctx": row,
-                    "image_path": image_path_resolver(row["location_id"], int(h), row),
-                    "geometry": row.geometry,
-                }
-            )
-    return records
+    except ClientError as e:
+        if e.response.get("Error", {}).get("Code") in {"NoSuchKey", "404"}:
+            return None
+        raise
 
 
 def upload_one_image(rec: dict) -> dict:
-    """
-    rec must include: location_id, lat, lon, heading, image_path, geometry (Point)
-    Returns one manifest row (dict).
-    """
     key = img_key(rec["location_id"], rec["heading"])
-    with open(rec["image_path"], "rb") as f:
-        data = f.read()
-    s3.put_object(
-        Bucket=BUCKET,
-        Key=key,
-        Body=data,
-        ContentType="image/jpeg",
+    s3.upload_file(
+        rec["image_path"], BUCKET, key, ExtraArgs={"ContentType": "image/jpeg"}
     )
     return {
         "location_id": rec["location_id"],
         "lat": rec["lat"],
         "lon": rec["lon"],
         "heading": rec["heading"],
-        "pitch": rec.get("pitch"),
-        "pano_id": rec.get("pano_id"),
         "capture_date": rec.get("capture_date"),
-        "s3_uri": f"s3://{BUCKET}/{key}",
-        "sha256": hashlib.sha256(data).hexdigest(),
-        "bytes": len(data),
-        "license_source": "Google Street View",
-        "version": VERSION,
-        "geometry": rec["geometry"],
+        "image_path": f"s3://{BUCKET}/{key}",
     }
 
 
-def upload_batch(records: list[dict], max_workers=16) -> gpd.GeoDataFrame:
+def upload_batch(records: list[dict], max_workers=16) -> pd.DataFrame:
     rows = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         futs = [ex.submit(upload_one_image, r) for r in records]
         for fut in as_completed(futs):
             rows.append(fut.result())
-    gdf = gpd.GeoDataFrame(rows, geometry="geometry", crs="EPSG:4326")
-    return gdf
+    df = pd.DataFrame(rows)
+    return df
 
 
-def write_batch_manifest(gdf_batch: gpd.GeoDataFrame, batch_date: str) -> str:
-    key = f"{MANIFEST_PREFIX}/batch_date={batch_date}/part-000.parquet"
+def write_batch_manifest(df_batch: pd.DataFrame, batch_date: str) -> str:
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime(
+        "%Y-%m-%dT%H%M%SZ"
+    )
+    key = f"{MANIFEST_PREFIX}/run={run_id}/part-000.parquet"
     with tempfile.TemporaryDirectory() as td:
         p = os.path.join(td, "part-000.parquet")
-        gdf_batch.to_parquet(p, index=False)
+        df_batch.to_parquet(p, index=False)
         s3.upload_file(p, BUCKET, key)
     return key
 
 
-def load_previous_snapshot() -> gpd.GeoDataFrame | None:
-    pointer_key = f"{SNAPSHOT_PREFIX}/_latest.json"
-    ptr = get_json(BUCKET, pointer_key)
+def load_previous_snapshot() -> pd.DataFrame | None:
+    ptr = get_json(BUCKET, f"{SNAPSHOT_PREFIX}/_latest.json")
     if not ptr:
         return None
     snap_prefix = ptr["s3"].replace(f"s3://{BUCKET}/", "")
-    objs = s3.list_objects_v2(Bucket=BUCKET, Prefix=snap_prefix).get("Contents", [])
-    parts = []
-    with tempfile.TemporaryDirectory() as td:
-        for o in objs or []:
-            if o["Key"].endswith(".parquet"):
-                lp = os.path.join(td, os.path.basename(o["Key"]))
-                s3.download_file(BUCKET, o["Key"], lp)
-                parts.append(gpd.read_parquet(lp))
-    if not parts:
-        return None
-    parts = [ensure_epsg4326(g) for g in parts]
-    return gpd.GeoDataFrame(
-        pd.concat(parts, ignore_index=True), geometry="geometry", crs="EPSG:4326"
-    )
+    return read_parquet_prefix(snap_prefix)
 
 
-def merge_snapshot(
-    prev: gpd.GeoDataFrame | None, batch_gdf: gpd.GeoDataFrame
-) -> gpd.GeoDataFrame:
+def load_latest_snapshot_df() -> pd.DataFrame:
+    ptr = get_json(BUCKET, f"{SNAPSHOT_PREFIX}/_latest.json")
+    if not ptr:
+        raise FileNotFoundError("No snapshot pointer found.")
+    snap_prefix = ptr["s3"].replace(f"s3://{BUCKET}/", "")
+    df = read_parquet_prefix(snap_prefix)
+    if df is None or df.empty:
+        raise FileNotFoundError("Snapshot folder has no Parquet parts.")
+    return df
+
+
+def merge_snapshot(prev: pd.DataFrame | None, batch_df: pd.DataFrame) -> pd.DataFrame:
     if prev is None or prev.empty:
-        return batch_gdf.copy()
-    all_cols = sorted(set(prev.columns) | set(batch_gdf.columns))
+        return batch_df.copy()
+    all_cols = sorted(set(prev.columns) | set(batch_df.columns))
     prev2 = prev.reindex(columns=all_cols)
-    batch2 = batch_gdf.reindex(columns=all_cols)
+    batch2 = batch_df.reindex(columns=all_cols)
 
     prev2["_is_new"] = 0
     batch2["_is_new"] = 1
@@ -196,19 +141,19 @@ def merge_snapshot(
     latest = cat.drop_duplicates(subset=["location_id", "heading"], keep="last").drop(
         columns=["_is_new"]
     )
-    latest = gpd.GeoDataFrame(latest, geometry="geometry", crs="EPSG:4326").reset_index(
-        drop=True
-    )
+    latest = pd.DataFrame(latest).reset_index(drop=True)
     return latest
 
 
-def write_new_snapshot(gdf_latest: gpd.GeoDataFrame) -> str:
-    run_id = "run_ts=" + datetime.datetime.utcnow().strftime("%Y-%m-%dT%H%M%SZ")
+def write_new_snapshot(df_latest: pd.DataFrame) -> str:
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime(
+        "%Y-%m-%dT%H%M%SZ"
+    )
     snap_prefix = f"{SNAPSHOT_PREFIX}/{run_id}"
     key = f"{snap_prefix}/part-000.parquet"
     with tempfile.TemporaryDirectory() as td:
         p = os.path.join(td, "part-000.parquet")
-        gdf_latest.to_parquet(p, index=False)
+        df_latest.to_parquet(p, index=False)
         s3.upload_file(p, BUCKET, key)
     put_json(
         {"s3": f"s3://{BUCKET}/{snap_prefix}/"},
@@ -218,77 +163,7 @@ def write_new_snapshot(gdf_latest: gpd.GeoDataFrame) -> str:
     return key
 
 
-def ingest_geo_batch(
-    gdf_locations: gpd.GeoDataFrame,
-    batch_date: str | None = None,
-    max_workers=16,
-    headings=(0, 90, 180, 270),
-    image_path_resolver=None,
-    pitch=None,
-):
-    batch_date = batch_date or datetime.date.today().isoformat()
-
-    records = build_records_from_gdf(
-        gdf_locations,
-        headings=headings,
-        image_path_resolver=image_path_resolver,
-        pitch=pitch,
-    )
-
-    gdf_batch = upload_batch(records, max_workers=max_workers)
-    gdf_batch["batch_date"] = batch_date
-
-    batch_key = write_batch_manifest(gdf_batch, batch_date)
-
-    prev = load_previous_snapshot()
-    latest = merge_snapshot(prev, gdf_batch)
-    snapshot_key = write_new_snapshot(latest)
-
-    return {
-        "batch_manifest_key": batch_key,
-        "snapshot_key": snapshot_key,
-        "rows_in_batch": len(gdf_batch),
-        "rows_in_latest": len(latest),
-    }
-
-
-def load_latest_snapshot_gdf() -> gpd.GeoDataFrame:
-    pointer_key = f"{SNAPSHOT_PREFIX}/_latest.json"
-    ptr = get_json(BUCKET, pointer_key)
-    if not ptr:
-        raise FileNotFoundError("No snapshot pointer found.")
-    snap_prefix = ptr["s3"].replace(f"s3://{BUCKET}/", "")
-    objs = s3.list_objects_v2(Bucket=BUCKET, Prefix=snap_prefix).get("Contents", [])
-    parts = []
-    with tempfile.TemporaryDirectory() as td:
-        for o in objs or []:
-            if o["Key"].endswith(".parquet"):
-                lp = os.path.join(td, os.path.basename(o["Key"]))
-                s3.download_file(BUCKET, o["Key"], lp)
-                parts.append(gpd.read_parquet(lp))
-    if not parts:
-        raise FileNotFoundError("Snapshot folder has no Parquet parts.")
-    gdf = gpd.GeoDataFrame(pd.concat(parts, ignore_index=True), geometry="geometry")
-    if gdf.crs is None:
-        gdf.set_crs(4326, inplace=True)
-    return gdf
-
-
-def _parse_location_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
-    """
-    Scans `root_dir` for files shaped like:
-      <pano_id>_0.jpg, <pano_id>_90.jpg, <pano_id>_180.jpg, <pano_id>_270.jpg
-      <pano_id>_metadata.json
-
-    Returns a dict: pano_id -> {
-        'pano_id': str,
-        'lat': float,
-        'lon': float,
-        'geometry': Point(lon, lat),
-        'polygon_wkt': None,   # placeholder
-        'images': {heading(int): local_path(str)}
-    }
-    """
+def parse_location_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
     index: Dict[str, Dict[str, Any]] = {}
 
     for name in os.listdir(root_dir):
@@ -306,8 +181,6 @@ def _parse_location_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
             "pano_id": base,
             "lat": lat,
             "lon": lon,
-            "geometry": Point(lon, lat),  # EPSG:4326
-            "polygon_wkt": None,  # placeholder for later polygon geometry
             "images": {},
         }
 
@@ -329,14 +202,9 @@ def _parse_location_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
     return index
 
 
-def _records_from_folder_index(
+def records_from_folder_index(
     idx: Dict[str, Dict[str, Any]], headings: Iterable[int] = HEADINGS_DEFAULT
 ) -> list[dict]:
-    """
-    Turns the folder index into upload records your existing `upload_batch(...)` understands.
-    Uses the pano_id/hash as location_id directly (so keys stay stable).
-    Skips headings that are missing locally.
-    """
     records: list[dict] = []
     for loc in idx.values():
         for h in headings:
@@ -345,58 +213,71 @@ def _records_from_folder_index(
                 continue
             records.append(
                 {
-                    "location_id": loc["pano_id"],
+                    "location_id": make_location_id(
+                        float(loc["lat"]), float(loc["lon"])
+                    ),
                     "lat": loc["lat"],
                     "lon": loc["lon"],
                     "heading": int(h),
-                    "pitch": None,
                     "image_path": img_path,
-                    "geometry": loc["geometry"],
-                    "polygon_wkt": loc["polygon_wkt"],
                 }
             )
     return records
 
 
-def ingest_from_folder(
+def list_keys(prefix: str) -> list[str]:
+    paginator = s3.get_paginator("list_objects_v2")
+    keys = []
+    for page in paginator.paginate(Bucket=BUCKET, Prefix=prefix):
+        for o in page.get("Contents", []):
+            keys.append(o["Key"])
+    return keys
+
+
+def read_parquet_prefix(prefix: str) -> pd.DataFrame | None:
+    parts, keys = [], list_keys(prefix)
+    if not keys:
+        return None
+    with tempfile.TemporaryDirectory() as td:
+        for k in keys:
+            if not k.endswith(".parquet"):
+                continue
+            lp = os.path.join(td, os.path.basename(k))
+            s3.download_file(BUCKET, k, lp)
+            parts.append(pd.read_parquet(lp))
+    return pd.concat(parts, ignore_index=True) if parts else None
+
+
+def upload_dataset_from_folder(
     folder: str,
     batch_date: str | None = None,
     headings: Iterable[int] = HEADINGS_DEFAULT,
     max_workers: int = 16,
 ):
-    """
-    Walk `folder`, read <pano_id>_metadata.json (lat/lon), pair with images, then:
-      1) upsert images to S3 (idempotent keys)
-      2) write append-only GeoParquet batch
-      3) refresh latest snapshot
-    """
     batch_date = batch_date or datetime.date.today().isoformat()
 
-    idx = _parse_location_folder(folder)
-    records = _records_from_folder_index(idx, headings=headings)
+    idx = parse_location_folder(folder)
+    records = records_from_folder_index(idx, headings=headings)
     if not records:
         return {"message": "No records found to ingest.", "rows_in_batch": 0}
 
-    gdf_batch = upload_batch(records, max_workers=max_workers)
-    gdf_batch["batch_date"] = batch_date
+    df_batch = upload_batch(records, max_workers=max_workers)
+    df_batch["batch_date"] = batch_date
 
-    if "polygon_wkt" not in gdf_batch.columns:
-        gdf_batch["polygon_wkt"] = None
-
-    batch_key = write_batch_manifest(gdf_batch, batch_date)
+    batch_key = write_batch_manifest(df_batch, batch_date)
 
     prev = load_previous_snapshot()
-    latest = merge_snapshot(prev, gdf_batch)
+    latest = merge_snapshot(prev, df_batch)
     snapshot_key = write_new_snapshot(latest)
 
     return {
         "batch_manifest_key": batch_key,
         "snapshot_key": snapshot_key,
-        "rows_in_batch": len(gdf_batch),
+        "rows_in_batch": len(df_batch),
         "rows_in_latest": len(latest),
         "ingested_locations": len({r["location_id"] for r in records}),
     }
 
 
-result = ingest_from_folder("./dataset", batch_date="2025-09-25", max_workers=24)
+result = upload_dataset_from_folder("./dataset", max_workers=24)
 print(result)
