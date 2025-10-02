@@ -222,7 +222,7 @@ if __name__ == "__main__":
     print(f"✅ Loaded: {country_name}")
 
     # Sample candidate points across all of Norway
-    num_candidates = 1000
+    num_candidates = 10000
     point_density_scalar = (
         10.0  # Adjust this to bias sampling (e.g., 2.0 for mainland, 0.5 for islands)
     )
@@ -267,7 +267,7 @@ if __name__ == "__main__":
 
     # Check Street View availability
     print("\n🔍 Checking Street View availability...")
-    sv_points = check_points_streetview(all_candidates, api_key, radius=60)
+    sv_points = check_points_streetview(all_candidates, api_key, radius=1000)
 
     # Print results
     print("\n✅ Results for Norway:")
@@ -294,10 +294,13 @@ if __name__ == "__main__":
     print("\n🗺️  Creating comparison visualization...")
     try:
         # Import and run comparison visualization
+        # When adding the 'src' folder to sys.path, import packages WITHOUT the 'src.' prefix
         sys.path.insert(0, "src")
-        from src.point_visualization.compare_point import create_comparison_map
+        from point_visualization.compare_point import create_comparison_map
 
         create_comparison_map()
     except Exception as e:
         print(f"⚠️  Could not create visualization: {e}")
-        print("   You can manually run: python src/compare_point.py")
+        print("   You can manually run one of:")
+        print("     • python src/point_visualization/compare_point.py")
+        print("     • python -m src.point_visualization.compare_point")
