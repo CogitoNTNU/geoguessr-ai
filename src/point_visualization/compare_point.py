@@ -7,27 +7,30 @@ This helps understand why points cluster in certain areas.
 import json
 import os
 
-def create_comparison_map(candidate_file="data/out/candidate_points.json", 
-                         sv_file="data/out/sv_points.json", 
-                         output_file="comparison_map.html"):
+
+def create_comparison_map(
+    candidate_file="data/out/candidate_points.json",
+    sv_file="data/out/sv_points.json",
+    output_file="comparison_map.html",
+):
     """Create a comparison map showing candidate vs Street View points."""
-    
+
     # Load candidate points
     candidate_points = []
     if os.path.exists(candidate_file):
-        with open(candidate_file, 'r') as f:
+        with open(candidate_file, "r") as f:
             candidate_points = json.load(f)
-    
+
     # Load Street View points
     sv_points = []
     if os.path.exists(sv_file):
-        with open(sv_file, 'r') as f:
+        with open(sv_file, "r") as f:
             sv_points = json.load(f)
-    
+
     if not candidate_points and not sv_points:
         print("No data files found. Run the sampling script first.")
         return
-    
+
     # Calculate center point
     all_points = candidate_points + sv_points
     if all_points:
@@ -35,55 +38,45 @@ def create_comparison_map(candidate_file="data/out/candidate_points.json",
         avg_lon = sum(point["lon"] for point in all_points) / len(all_points)
     else:
         avg_lat, avg_lon = 60, 15
-    
+
     # Convert to GeoJSON format
     candidate_features = []
     for i, point in enumerate(candidate_points):
         feature = {
             "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [point["lon"], point["lat"]]
-            },
+            "geometry": {"type": "Point", "coordinates": [point["lon"], point["lat"]]},
             "properties": {
                 "id": i,
                 "lat": point["lat"],
                 "lon": point["lon"],
-                "type": "candidate"
-            }
+                "type": "candidate",
+            },
         }
         candidate_features.append(feature)
-    
+
     sv_features = []
     for i, point in enumerate(sv_points):
         feature = {
             "type": "Feature",
-            "geometry": {
-                "type": "Point",
-                "coordinates": [point["lon"], point["lat"]]
-            },
+            "geometry": {"type": "Point", "coordinates": [point["lon"], point["lat"]]},
             "properties": {
                 "id": i,
                 "lat": point["lat"],
                 "lon": point["lon"],
-                "type": "street_view"
-            }
+                "type": "street_view",
+            },
         }
         sv_features.append(feature)
-    
-    candidates_geojson = {
-        "type": "FeatureCollection",
-        "features": candidate_features
-    }
-    
-    sv_geojson = {
-        "type": "FeatureCollection",
-        "features": sv_features
-    }
-    
+
+    candidates_geojson = {"type": "FeatureCollection", "features": candidate_features}
+
+    sv_geojson = {"type": "FeatureCollection", "features": sv_features}
+
     # Calculate success rate
-    success_rate = (len(sv_points) / len(candidate_points) * 100) if candidate_points else 0
-    
+    success_rate = (
+        (len(sv_points) / len(candidate_points) * 100) if candidate_points else 0
+    )
+
     # Create HTML map
     html_content = f"""<!DOCTYPE html>
 <html>
@@ -328,24 +321,26 @@ def create_comparison_map(candidate_file="data/out/candidate_points.json",
 </html>"""
 
     # Write the HTML file
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(html_content)
-    
+
     print(f"✅ Comparison visualization created: {output_file}")
     print(f"📊 Candidate points: {len(candidate_points):,}")
     print(f"🎯 Street View points: {len(sv_points):,}")
     print(f"📈 Success rate: {success_rate:.1f}%")
     print("🚀 Open the file in your browser to see the comparison!")
-    
+
     # Try to open in browser
     try:
         import webbrowser
+
         file_path = os.path.abspath(output_file)
         webbrowser.open(f"file://{file_path}")
         print("🌐 Comparison map opened in your default browser!")
     except Exception as e:
         print(f"Could not auto-open browser: {e}")
         print(f"Please manually open: {os.path.abspath(output_file)}")
+
 
 if __name__ == "__main__":
     create_comparison_map()

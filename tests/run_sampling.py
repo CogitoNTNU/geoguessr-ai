@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # Add the parent directory to Python path so we can import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.sampling_pipeline import sample_sv_points_from_gadm
+from src.point_sampling_algorithm.sampling_pipeline import sample_sv_points_from_gadm
 
 # Load environment variables from .env.local file
 load_dotenv(".env.local")
@@ -20,11 +20,11 @@ with open("data/sv_countries.txt") as f:
 API_KEY = os.environ["GOOGLE_MAPS_API_KEY"]  # sett miljøvariabel
 candidate_points, sv_points = sample_sv_points_from_gadm(
     gadm_dir="data/GADM_data/GADM_admin_2",  # admin 2 data directory
-    sv_country_names=countries,              # land med SV
-    pts_per_country=50,                      # f.eks. 50 pr land (juster)
+    sv_country_names=countries,  # land med SV
+    pts_per_country=50,  # f.eks. 50 pr land (juster)
     api_key=API_KEY,
     radius_m=60,
-    return_candidates=True                   # få både kandidater og verifiserte punkter
+    return_candidates=True,  # få både kandidater og verifiserte punkter
 )
 
 print(f"Samlet {len(candidate_points)} kandidatpunkter.")

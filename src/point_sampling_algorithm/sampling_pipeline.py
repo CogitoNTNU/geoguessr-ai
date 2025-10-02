@@ -36,7 +36,7 @@ def load_gadm_admin0(gadm_dir: str) -> gpd.GeoDataFrame:
     Last ned her: https://gadm.org/download_country.html (eller world gpkg)
     Eksempel: gadm_410.gpkg -> layer 'ADM_0'
     """
-    
+
     # Prøv JSON/GeoJSON filer og kombiner dem
     json_files = []
     for fn in os.listdir(gadm_dir):
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     try:
         # Import and run comparison visualization
         sys.path.insert(0, "src")
-        from compare_point import create_comparison_map
+        from src.point_visualization.compare_point import create_comparison_map
 
         create_comparison_map()
     except Exception as e:
