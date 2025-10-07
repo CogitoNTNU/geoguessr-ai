@@ -57,16 +57,16 @@ Latvia, 0.98
 Lebanon, 0.50
 Lesotho, 0.70
 Liechtenstein, 0.80
-Lithuania
-Luxembourg
-Macau
-Malaysia
-Malta
-Mexico
+Lithuania, 0.65
+Luxembourg, 0.50
+Macau,0.35
+Malaysia,0.75
+Malta, 0.83
+Mexico, 0.72
 Monaco,0.99
 Mongolia,0.50
-Montenegro
-Namibia
+Montenegro,0.70
+Namibia,0.40
 Nepal, 0.3
 Netherlands, 0.95
 New Zealand, 0.8
