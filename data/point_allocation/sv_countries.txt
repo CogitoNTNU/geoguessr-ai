@@ -95,23 +95,23 @@ Singapore
 Slovakia
 Slovenia
 South Africa
-South Korea
-Spain
-Sri Lanka
-Svalbard and Jan Mayen
-Sweden
-Switzerland
-São Tomé and Príncipe
-Taiwan
-Thailand
-Tunisia
-Turkey
-Uganda
-Ukraine
-United Arab Emirates
-United Kingdom
-United States
-United States Virgin Islands
-Uruguay
-Vietnam
-Åland Islands
+South Korea,0.35
+Spain,0.99
+Sri Lanka,0.95
+Svalbard and Jan Mayen,0.01
+Sweden,0.99
+Switzerland,0.99
+São Tomé and Príncipe,0.80
+Taiwan,0.99
+Thailand,0.70
+Tunisia,0.04
+Turkey,0.85
+Uganda,0.10
+Ukraine,0.20
+United Arab Emirates,0.40
+United Kingdom,0.95
+United States,0.90
+United States Virgin Islands,0.85
+Uruguay,0.80
+Vietnam,0.65
+Åland Islands,0.90
