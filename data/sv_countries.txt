@@ -81,20 +81,20 @@ Peru
 Philippines
 Pitcairn Islands
 Poland
-Portugal
-Puerto Rico
-Qatar
-Romania
-Russia
-Rwanda
-Réunion
-San Marino
-Senegal
-Serbia
-Singapore
-Slovakia
-Slovenia
-South Africa
+Portugal, 0.6
+Puerto Rico, 0.5
+Qatar, 0.7
+Romania, 0.6
+Russia, 0.3
+Rwanda, 0.5
+Réunion, 0.5
+San Marino, 0.7
+Senegal, 0.5
+Serbia, 0.2
+Singapore, 0.9
+Slovakia, 0.5
+Slovenia, 0.6
+South Africa 0.25
 South Korea
 Spain
 Sri Lanka
