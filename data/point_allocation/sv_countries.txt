@@ -7,7 +7,7 @@ Austria
 Bangladesh
 Belarus
 Belgium
-Bermuda0.60
+Bermuda,0.60
 Bhutan,0.60
 Bolivia,0.20
 Botswana,0.70
