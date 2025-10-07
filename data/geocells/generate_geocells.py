@@ -13,17 +13,18 @@ FILEPATHS = [
     "data/GADM_data/GADM_admin_2",
     "data/GADM_data/GADM_country",
 ]
+POINT_PATHS = [
+    "data/point_data",
+]
 
 
 class GenerateGeocells:
-    def __init__(self, points):
+    def __init__(self):
         self.admin_2 = self.get_dataframe(FILEPATHS[1])
         self.countries = self.init_country_cells(FILEPATHS[2])
         self.admin_1 = self.init_admin_1_cells(FILEPATHS[0])
-        # TODO bytt punkt til å være i database, slik at de er koblet til bilder og har hvilken geocell de er i osv.
-        # self.df = df
-        # self.points = self.init_points()
-        self.points = self.init_points(points)
+
+        self.points = self.init_points(POINT_PATHS[0])
 
         # Hvert land har først en cell som dekker hele landet, så resten av cellene i landet
         self.country_cells = {}
@@ -47,9 +48,13 @@ class GenerateGeocells:
 
         return df
 
-    def init_points(self, points):
-        # TODO fiks dette med database
-        points = [point for point in points]
+    def init_points(self, filename):
+        points = gpd.GeoDataFrame()
+        for file in list(os.walk(filename))[0][2]:
+            points = pd.concat(
+                [points, gpd.GeoDataFrame.from_file(f"{filename}/{file}")]
+            )
+
         return points
 
     def init_country_cells(self, filename):
@@ -118,22 +123,25 @@ class GenerateGeocells:
 
     def add_points_to_cells(self):
         for i in trange(len(self.points), desc="Legg til punkter", colour="BLUE"):
-            point = self.points[i]
+            point = self.points.iloc[i]
+            point_coords = [point["lng"], point["lat"]]
             # TODO legg til database med punkt
-            # if point.geocell != None:
-            #     continue
+            if point["geocell"] is not None:
+                continue
             for country in self.country_cells:
-                if self.country_cells[country][country][0].contains(point):
+                if self.country_cells[country][country][0].contains(point_coords):
                     # print(self.country_cells[country])
 
                     for admin_1 in self.country_cells[country]:
                         if admin_1 == country:
                             continue
-                        if self.country_cells[country][admin_1][0].contains(point):
+                        if self.country_cells[country][admin_1][0].contains(
+                            point_coords
+                        ):
                             for cell in self.country_cells[country][admin_1][1:]:
-                                if cell.contains(point):
+                                if cell.contains(point_coords):
                                     cell.add_point(point)
-                                    # TODO legg til hvilken geocell et punkt er i
+                                    point["geocell"] = cell.id
                                     break
                             break
                     break
@@ -147,7 +155,6 @@ class GenerateGeocells:
             queue = [i for i in cell.neighbours]
             visited = set()
             while (total_points < self.max_points) and queue:
-                # print(len(queue), len(visited))
                 cell_to_add = queue.pop(0)
                 for j in cell_to_add.neighbours:
                     if j in visited:

@@ -43,7 +43,7 @@ class CellVisualizer:
             for p in cell.points:
                 points.append(
                     {
-                        "position": [p.lng, p.lat],
+                        "position": [p["lng"], p["lat"]],
                         "id": getattr(p, "id", None),
                     }
                 )
