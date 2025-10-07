@@ -26,7 +26,7 @@ Czech Republic,0.8
 Denmark,0.9
 Dominican Republic,0.1
 Ecuador,0.65
-Estonia
+Estonia,0.9
 Eswatini (Swaziland), 0.09
 Faroe Islands, 0.95
 Finland, 0.99
