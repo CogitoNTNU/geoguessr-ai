@@ -27,21 +27,21 @@ Denmark
 Dominican Republic
 Ecuador
 Estonia
-Eswatini (Swaziland)
-Faroe Islands
-Finland
-France
-Germany
-Ghana
-Gibraltar
-Greece
-Greenland
-Guatemala
-Hong Kong
-Hungary
-Iceland
-India
-Indonesia
+Eswatini (Swaziland), 0.09
+Faroe Islands, 0.95
+Finland, 0.99
+France, 0.92
+Germany, 0.87
+Ghana, 0.08 
+Gibraltar, 0.5
+Greece, 0.42
+Greenland, 0.93
+Guatemala, 0.04
+Hong Kong, 0.85
+Hungary, 0.63
+Iceland, 0.73
+India, 0.61
+Indonesia, 0.79
 Ireland
 Isle of Man
 Israel
