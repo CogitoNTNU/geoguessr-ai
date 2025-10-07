@@ -3,6 +3,7 @@ import pandas as pd
 import os
 from cell import Cell
 from tqdm import trange
+from cluster import cluster
 
 COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
@@ -26,7 +27,6 @@ class GenerateGeocells:
 
         self.points = self.init_points(POINT_PATHS[0])
 
-        # Hvert land har først en cell som dekker hele landet, så resten av cellene i landet
         self.country_cells = {}
         # self.max_points = len(self.points)//10
         self.max_points = 5
@@ -35,8 +35,9 @@ class GenerateGeocells:
         self.add_points_to_cells()
         self.cells.sort(key=lambda x: -len(x.points))
 
-        # print(self.country_cells)
         self.generate_geocells()
+
+        cluster()
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
