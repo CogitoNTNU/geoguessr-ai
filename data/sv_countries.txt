@@ -67,20 +67,20 @@ Monaco
 Mongolia
 Montenegro
 Namibia
-Nepal
-Netherlands
-New Zealand
-Nigeria
-North Macedonia
-Northern Mariana Islands
-Norway
-Oman
-Palestine
-Panama
-Peru
-Philippines
-Pitcairn Islands
-Poland
+Nepal, 0.3
+Netherlands, 0.95
+New Zealand, 0.8
+Nigeria, 0.30
+North Macedonia, 0.20
+Northern Mariana Islands, 0.40
+Norway, 0.90
+Oman, 0.60
+Palestine, 0.20
+Panama, 0.40
+Peru, 0.50
+Philippines, 0.70
+Pitcairn Islands, 1
+Poland, 0.95
 Portugal
 Puerto Rico
 Qatar
