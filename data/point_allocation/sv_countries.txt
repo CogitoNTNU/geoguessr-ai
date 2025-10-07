@@ -7,10 +7,10 @@ Austria
 Bangladesh
 Belarus
 Belgium
-Bermuda
-Bhutan
-Bolivia
-Botswana
+Bermuda0.60
+Bhutan,0.60
+Bolivia,0.20
+Botswana,0.70
 Brazil
 Bulgaria
 Cambodia
