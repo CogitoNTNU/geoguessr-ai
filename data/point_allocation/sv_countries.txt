@@ -42,21 +42,21 @@ Hungary
 Iceland
 India
 Indonesia
-Ireland
-Isle of Man
-Israel
-Italy
-Japan
-Jersey
-Jordan
-Kazakhstan
-Kenya
-Kyrgyzstan
-Laos
-Latvia
-Lebanon
-Lesotho
-Liechtenstein
+Ireland, 0.85
+Isle of Man, 0.90
+Israel, 0.50
+Italy, 0.90
+Japan, 0.98
+Jersey, 0.95
+Jordan, 0.25
+Kazakhstan, 0.35
+Kenya, 0.70
+Kyrgyzstan, 0.80
+Laos, 0.03
+Latvia, 0.98
+Lebanon, 0.50
+Lesotho, 0.70
+Liechtenstein, 0.80
 Lithuania
 Luxembourg
 Macau
