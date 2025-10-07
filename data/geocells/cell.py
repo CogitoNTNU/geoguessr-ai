@@ -74,6 +74,13 @@ class Cell:
     def subtract(self, other):
         pass
 
+    def separate_points(self, points, polygons):
+        coords = ((p.x, p.y) for p in points)
+        id = self.name + str(hash(coords)[:12])
+
+        new_cell = Cell(id, points, polygons, self.country, self.admin1)
+        return new_cell
+
     def contains(self, point):
         try:
             return self.current_shape.contains(point)
