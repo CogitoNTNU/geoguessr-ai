@@ -12,20 +12,20 @@ Bhutan,0.60
 Bolivia,0.20
 Botswana,0.70
 Brazil
-Bulgaria
-Cambodia
-Canada
-Chile
-Christmas Island
-Cocos (Keeling) Islands
-Colombia
-Costa Rica
-Croatia
-Curaçao
-Czech Republic
-Denmark
-Dominican Republic
-Ecuador
+Bulgaria,0.65
+Cambodia,0.4
+Canada,0.87
+Chile,0.6
+Christmas Island,0.55
+Cocos (Keeling) Islands,0.69
+Colombia,0.62
+Costa Rica,0.4
+Croatia,0.45
+Curaçao,0.33
+Czech Republic,0.8
+Denmark,0.9
+Dominican Republic,0.1
+Ecuador,0.65
 Estonia
 Eswatini (Swaziland), 0.09
 Faroe Islands, 0.95
