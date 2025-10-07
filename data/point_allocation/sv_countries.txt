@@ -63,8 +63,8 @@ Macau
 Malaysia
 Malta
 Mexico
-Monaco
-Mongolia
+Monaco,0.99
+Mongolia,0.50
 Montenegro
 Namibia
 Nepal, 0.3
