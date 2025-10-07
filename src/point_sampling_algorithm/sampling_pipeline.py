@@ -188,26 +188,22 @@ def sample_sv_points_from_gadm(
 if __name__ == "__main__":
     """
     Quick test of the sampling pipeline - samples points across all of Norway.
-    Usage: python src/sampling_pipeline.py
+    Usage: GOOGLE_MAPS_API_KEY="your_key" python src/sampling_pipeline.py
     Requires: GOOGLE_MAPS_API_KEY environment variable set
     """
     import sys
-    from dotenv import load_dotenv
-
-    # Load environment variables
-    load_dotenv(".env.local")
 
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
     if not api_key:
         print("❌ Error: GOOGLE_MAPS_API_KEY environment variable not set")
-        print("   Set it in .env.local or export it in your shell")
+        print("   Usage: GOOGLE_MAPS_API_KEY='your_key' python src/sampling_pipeline.py")
         sys.exit(1)
 
-    # Load Norway country data (admin-0)
-    country_file = "data/GADM_data/GADM_country/gadm41_NOR_0.json"
+    # Load Norway admin-2 data
+    country_file = "data/GADM_data/GADM_admin_2/gadm41_NOR_2.json"
     if not os.path.exists(country_file):
         print(f"❌ Error: {country_file} not found")
-        print("   Download GADM admin-0 data for Norway")
+        print("   Download GADM admin-2 data for Norway")
         sys.exit(1)
 
     print("🌍 Loading Norway country boundary...")

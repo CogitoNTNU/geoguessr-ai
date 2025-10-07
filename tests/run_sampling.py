@@ -20,11 +20,20 @@ with open("data/sv_countries.txt") as f:
 API_KEY = os.environ["GOOGLE_MAPS_API_KEY"]  # sett miljøvariabel
 candidate_points, sv_points = sample_sv_points_from_gadm(
     gadm_dir="data/GADM_data/GADM_admin_2",  # admin 2 data directory
+<<<<<<< Updated upstream
     sv_country_names=countries,  # land med SV
     pts_per_country=50,  # f.eks. 50 pr land (juster)
     api_key=API_KEY,
     radius_m=60,
     return_candidates=True,  # få både kandidater og verifiserte punkter
+=======
+    sv_country_names=countries,              # land med SV
+    pts_per_country=50,                      # points per admin-2 region
+    api_key=API_KEY,
+    radius_m=60,
+    return_candidates=True,                  # få både kandidater og verifiserte punkter
+    point_density_scalar=1.0                 # 1.0 = uniform (includes islands), 10.0 = bias mainland
+>>>>>>> Stashed changes
 )
 
 print(f"Samlet {len(candidate_points)} kandidatpunkter.")
