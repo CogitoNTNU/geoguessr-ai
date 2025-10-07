@@ -61,8 +61,8 @@ Lithuania, 0.65
 Luxembourg, 0.50
 Macau
 Malaysia
-Malta
-Mexico
+Malta, 0.83
+Mexico, 0.72
 Monaco
 Mongolia
 Montenegro
