@@ -1,4 +1,4 @@
-Albania, 0.10
+Albania
 American Samoa
 Andorra
 Argentina
@@ -11,7 +11,7 @@ Bermuda
 Bhutan
 Bolivia
 Botswana
-Brazil, 0.65
+Brazil
 Bulgaria
 Cambodia
 Canada

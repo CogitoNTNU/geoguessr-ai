@@ -1,17 +1,17 @@
-Albania, 0.10
-American Samoa, 0.05
-Andorra, 0.10
-Argentina, 0.40
-Australia, 0.60
-Austria, 0.40
-Bangladesh, 0.60
-Belarus, 0.01
-Belgium, 0.80
-Bermuda 
+Albania
+American Samoa
+Andorra
+Argentina
+Australia
+Austria
+Bangladesh
+Belarus
+Belgium
+Bermuda
 Bhutan
 Bolivia
 Botswana
-Brazil, 0.65
+Brazil
 Bulgaria
 Cambodia
 Canada
