@@ -257,3 +257,6 @@ Thumbs.db
 *.html
 #AWS
 aws
+
+# env files
+*.env
