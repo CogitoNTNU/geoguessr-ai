@@ -13,10 +13,16 @@ dependencies = [
     "matplotlib>=3.10.6",
     "numpy>=2.3.2",
     "pydeck>=0.9.1",
-    "python-dotenv>=1.1.1",
     "shapely>=2.1.2",
-    "tensorflow>=2.20.0",
     "tqdm>=4.67.1",
+    "boto3>=1.40.36",
+    "dotenv>=0.9.9",
+    "fastapi[standard]>=0.116.1",
+    "geopandas>=1.1.1",
+    "pillow>=11.3.0",
+    "pyarrow>=21.0.0",
+    "python-dotenv>=1.1.1",
+    "uvicorn[standard]>=0.37.0",
 ]
 
 

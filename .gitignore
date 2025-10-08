@@ -255,3 +255,5 @@ Thumbs.db
 
 # Don't push HTML visualization-files
 *.html
+#AWS
+aws
