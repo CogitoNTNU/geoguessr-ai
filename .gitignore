@@ -260,3 +260,4 @@ aws
 
 # env files
 *.env
+out/*
