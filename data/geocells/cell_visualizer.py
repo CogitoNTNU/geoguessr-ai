@@ -164,9 +164,9 @@ class CellVisualizer:
 
 
 # Sample output ============================================================================================================================================================
+if __name__ == "__main__":
+    points = generate_points(1000)
+    partition_output = partition(10, points)
 
-points = generate_points(1000)
-partition_output = partition(10, points)
-
-visualizer = CellVisualizer(partition_output)
-visualizer.show()
+    visualizer = CellVisualizer(partition_output)
+    visualizer.show()

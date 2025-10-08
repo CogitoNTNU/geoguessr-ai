@@ -6,6 +6,15 @@ readme = "README.md"
 requires-python = ">=3.12"
 license-files = ["LICENSE"]
 dependencies = [
+    "fiona>=1.10.1",
+    "geopandas>=1.1.1",
+    "ipython>=9.5.0",
+    "loguru>=0.7.3",
+    "matplotlib>=3.10.6",
+    "numpy>=2.3.2",
+    "pydeck>=0.9.1",
+    "shapely>=2.1.2",
+    "tqdm>=4.67.1",
     "boto3>=1.40.36",
     "dotenv>=0.9.9",
     "fastapi[standard]>=0.116.1",

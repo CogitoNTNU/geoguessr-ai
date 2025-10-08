@@ -29,7 +29,6 @@ class CellVisualizer:
                 }
                 polygons.append(geojson_polygon)
 
-        print(polygons)
         return polygons
 
     # def _extract_points(self, cells):
@@ -167,8 +166,8 @@ class CellVisualizer:
 
 # points = generate_points(1000)
 # partition_output = partition(10, points)
+if __name__ == "__main__":
+    admin_cell = AdminCell("data/GADM_data/GADM_admin_2")
 
-admin_cell = AdminCell("data/GADM_data/")
-
-visualizer = CellVisualizer(admin_cell)
-visualizer.show()
+    visualizer = CellVisualizer(admin_cell)
+    visualizer.show()

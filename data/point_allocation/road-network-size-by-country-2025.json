@@ -1,0 +1,1563 @@
+[
+  {
+    "flagCode": "US",
+    "country": "United States",
+    "RoadNetworkSizeTotalKm_2025": 6645582,
+    "RoadNetworkSizeTotalMi_2025": 4129372,
+    "RoadNetworkSizeDataYear": 2020
+  },
+  {
+    "flagCode": "IN",
+    "country": "India",
+    "RoadNetworkSizeTotalKm_2025": 6360004,
+    "RoadNetworkSizeTotalMi_2025": 3951922,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CN",
+    "country": "China",
+    "RoadNetworkSizeTotalKm_2025": 5436845,
+    "RoadNetworkSizeTotalMi_2025": 3378298,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "RU",
+    "country": "Russia",
+    "RoadNetworkSizeTotalKm_2025": 1579923,
+    "RoadNetworkSizeTotalMi_2025": 981718,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BR",
+    "country": "Brazil",
+    "RoadNetworkSizeTotalKm_2025": 1563600,
+    "RoadNetworkSizeTotalMi_2025": 971576,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "AU",
+    "country": "Australia",
+    "RoadNetworkSizeTotalKm_2025": 1322245,
+    "RoadNetworkSizeTotalMi_2025": 821605,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "JP",
+    "country": "Japan",
+    "RoadNetworkSizeTotalKm_2025": 1231084,
+    "RoadNetworkSizeTotalMi_2025": 764960,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "FR",
+    "country": "France",
+    "RoadNetworkSizeTotalKm_2025": 1118600,
+    "RoadNetworkSizeTotalMi_2025": 695066,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CA",
+    "country": "Canada",
+    "RoadNetworkSizeTotalKm_2025": 1042718,
+    "RoadNetworkSizeTotalMi_2025": 647915,
+    "RoadNetworkSizeDataYear": 2020
+  },
+  {
+    "flagCode": "DE",
+    "country": "Germany",
+    "RoadNetworkSizeTotalKm_2025": 829530,
+    "RoadNetworkSizeTotalMi_2025": 515446,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "ZA",
+    "country": "South Africa",
+    "RoadNetworkSizeTotalKm_2025": 767608,
+    "RoadNetworkSizeTotalMi_2025": 476969,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TH",
+    "country": "Thailand",
+    "RoadNetworkSizeTotalKm_2025": 703594,
+    "RoadNetworkSizeTotalMi_2025": 437193,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "VN",
+    "country": "Vietnam",
+    "RoadNetworkSizeTotalKm_2025": 639993,
+    "RoadNetworkSizeTotalMi_2025": 397673,
+    "RoadNetworkSizeDataYear": 2020
+  },
+  {
+    "flagCode": "ID",
+    "country": "Indonesia",
+    "RoadNetworkSizeTotalKm_2025": 543720,
+    "RoadNetworkSizeTotalMi_2025": 337852,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "ES",
+    "country": "Spain",
+    "RoadNetworkSizeTotalKm_2025": 538577,
+    "RoadNetworkSizeTotalMi_2025": 334656,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BD",
+    "country": "Bangladesh",
+    "RoadNetworkSizeTotalKm_2025": 501334,
+    "RoadNetworkSizeTotalMi_2025": 311514,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "PK",
+    "country": "Pakistan",
+    "RoadNetworkSizeTotalKm_2025": 500591,
+    "RoadNetworkSizeTotalMi_2025": 311053,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "PL",
+    "country": "Poland",
+    "RoadNetworkSizeTotalKm_2025": 428362,
+    "RoadNetworkSizeTotalMi_2025": 266172,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MX",
+    "country": "Mexico",
+    "RoadNetworkSizeTotalKm_2025": 407783,
+    "RoadNetworkSizeTotalMi_2025": 253385,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "GB",
+    "country": "United Kingdom",
+    "RoadNetworkSizeTotalKm_2025": 395455,
+    "RoadNetworkSizeTotalMi_2025": 245724,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MY",
+    "country": "Malaysia",
+    "RoadNetworkSizeTotalKm_2025": 327621,
+    "RoadNetworkSizeTotalMi_2025": 203574,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SA",
+    "country": "Saudi Arabia",
+    "RoadNetworkSizeTotalKm_2025": 321259,
+    "RoadNetworkSizeTotalMi_2025": 199621,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TR",
+    "country": "Turkey",
+    "RoadNetworkSizeTotalKm_2025": 261156,
+    "RoadNetworkSizeTotalMi_2025": 162275,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "KE",
+    "country": "Kenya",
+    "RoadNetworkSizeTotalKm_2025": 239122,
+    "RoadNetworkSizeTotalMi_2025": 148583,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "IT",
+    "country": "Italy",
+    "RoadNetworkSizeTotalKm_2025": 236146,
+    "RoadNetworkSizeTotalMi_2025": 146734,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "IR",
+    "country": "Iran",
+    "RoadNetworkSizeTotalKm_2025": 221053,
+    "RoadNetworkSizeTotalMi_2025": 137356,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "HU",
+    "country": "Hungary",
+    "RoadNetworkSizeTotalKm_2025": 220577,
+    "RoadNetworkSizeTotalMi_2025": 137060,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SE",
+    "country": "Sweden",
+    "RoadNetworkSizeTotalKm_2025": 215690,
+    "RoadNetworkSizeTotalMi_2025": 134024,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "BO",
+    "country": "Bolivia",
+    "RoadNetworkSizeTotalKm_2025": 207508,
+    "RoadNetworkSizeTotalMi_2025": 128939,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CO",
+    "country": "Colombia",
+    "RoadNetworkSizeTotalKm_2025": 205376,
+    "RoadNetworkSizeTotalMi_2025": 127615,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "AR",
+    "country": "Argentina",
+    "RoadNetworkSizeTotalKm_2025": 204663,
+    "RoadNetworkSizeTotalMi_2025": 127172,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "NG",
+    "country": "Nigeria",
+    "RoadNetworkSizeTotalKm_2025": 195000,
+    "RoadNetworkSizeTotalMi_2025": 121167,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "NL",
+    "country": "Netherlands",
+    "RoadNetworkSizeTotalKm_2025": 187620,
+    "RoadNetworkSizeTotalMi_2025": 116582,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TZ",
+    "country": "Tanzania",
+    "RoadNetworkSizeTotalKm_2025": 180791,
+    "RoadNetworkSizeTotalMi_2025": 112338,
+    "RoadNetworkSizeDataYear": 2021
+  },
+  {
+    "flagCode": "PE",
+    "country": "Peru",
+    "RoadNetworkSizeTotalKm_2025": 174108,
+    "RoadNetworkSizeTotalMi_2025": 108186,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "ET",
+    "country": "Ethiopia",
+    "RoadNetworkSizeTotalKm_2025": 165863,
+    "RoadNetworkSizeTotalMi_2025": 103062,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "EG",
+    "country": "Egypt",
+    "RoadNetworkSizeTotalKm_2025": 165521,
+    "RoadNetworkSizeTotalMi_2025": 102850,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "UA",
+    "country": "Ukraine",
+    "RoadNetworkSizeTotalKm_2025": 162308,
+    "RoadNetworkSizeTotalMi_2025": 100854,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CD",
+    "country": "DR Congo",
+    "RoadNetworkSizeTotalKm_2025": 152373,
+    "RoadNetworkSizeTotalMi_2025": 94680,
+    "RoadNetworkSizeDataYear": 2015
+  },
+  {
+    "flagCode": "UG",
+    "country": "Uganda",
+    "RoadNetworkSizeTotalKm_2025": 144785,
+    "RoadNetworkSizeTotalMi_2025": 89965,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "DZ",
+    "country": "Algeria",
+    "RoadNetworkSizeTotalKm_2025": 141500,
+    "RoadNetworkSizeTotalMi_2025": 87924,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "CZ",
+    "country": "Czech Republic",
+    "RoadNetworkSizeTotalKm_2025": 130784,
+    "RoadNetworkSizeTotalMi_2025": 81265,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "AT",
+    "country": "Austria",
+    "RoadNetworkSizeTotalKm_2025": 128267,
+    "RoadNetworkSizeTotalMi_2025": 79701,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CM",
+    "country": "Cameroon",
+    "RoadNetworkSizeTotalKm_2025": 121873,
+    "RoadNetworkSizeTotalMi_2025": 75728,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "RO",
+    "country": "Romania",
+    "RoadNetworkSizeTotalKm_2025": 118488,
+    "RoadNetworkSizeTotalMi_2025": 73625,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BE",
+    "country": "Belgium",
+    "RoadNetworkSizeTotalKm_2025": 118414,
+    "RoadNetworkSizeTotalMi_2025": 73579,
+    "RoadNetworkSizeDataYear": 2015
+  },
+  {
+    "flagCode": "GR",
+    "country": "Greece",
+    "RoadNetworkSizeTotalKm_2025": 117899,
+    "RoadNetworkSizeTotalMi_2025": 73259,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MN",
+    "country": "Mongolia",
+    "RoadNetworkSizeTotalKm_2025": 111917,
+    "RoadNetworkSizeTotalMi_2025": 69542,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "GH",
+    "country": "Ghana",
+    "RoadNetworkSizeTotalKm_2025": 109515,
+    "RoadNetworkSizeTotalMi_2025": 68049,
+    "RoadNetworkSizeDataYear": 2009
+  },
+  {
+    "flagCode": "KR",
+    "country": "South Korea",
+    "RoadNetworkSizeTotalKm_2025": 107149,
+    "RoadNetworkSizeTotalMi_2025": 66579,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BY",
+    "country": "Belarus",
+    "RoadNetworkSizeTotalKm_2025": 104036,
+    "RoadNetworkSizeTotalMi_2025": 64645,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "IE",
+    "country": "Ireland",
+    "RoadNetworkSizeTotalKm_2025": 103524,
+    "RoadNetworkSizeTotalMi_2025": 64327,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "ZW",
+    "country": "Zimbabwe",
+    "RoadNetworkSizeTotalKm_2025": 97267,
+    "RoadNetworkSizeTotalMi_2025": 60439,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "NZ",
+    "country": "New Zealand",
+    "RoadNetworkSizeTotalKm_2025": 97231,
+    "RoadNetworkSizeTotalMi_2025": 60416,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "VE",
+    "country": "Venezuela",
+    "RoadNetworkSizeTotalKm_2025": 96189,
+    "RoadNetworkSizeTotalMi_2025": 59769,
+    "RoadNetworkSizeDataYear": 2014
+  },
+  {
+    "flagCode": "NO",
+    "country": "Norway",
+    "RoadNetworkSizeTotalKm_2025": 95052,
+    "RoadNetworkSizeTotalMi_2025": 59063,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "KZ",
+    "country": "Kazakhstan",
+    "RoadNetworkSizeTotalKm_2025": 94902,
+    "RoadNetworkSizeTotalMi_2025": 58969,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "AE",
+    "country": "United Arab Emirates",
+    "RoadNetworkSizeTotalKm_2025": 90432,
+    "RoadNetworkSizeTotalMi_2025": 56192,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SS",
+    "country": "South Sudan",
+    "RoadNetworkSizeTotalKm_2025": 90200,
+    "RoadNetworkSizeTotalMi_2025": 56048,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "EE",
+    "country": "Estonia",
+    "RoadNetworkSizeTotalKm_2025": 89452,
+    "RoadNetworkSizeTotalMi_2025": 55583,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "ML",
+    "country": "Mali",
+    "RoadNetworkSizeTotalKm_2025": 89024,
+    "RoadNetworkSizeTotalMi_2025": 55317,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "CL",
+    "country": "Chile",
+    "RoadNetworkSizeTotalKm_2025": 88267,
+    "RoadNetworkSizeTotalMi_2025": 54846,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CH",
+    "country": "Switzerland",
+    "RoadNetworkSizeTotalKm_2025": 85009,
+    "RoadNetworkSizeTotalMi_2025": 52822,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "LT",
+    "country": "Lithuania",
+    "RoadNetworkSizeTotalKm_2025": 83503,
+    "RoadNetworkSizeTotalMi_2025": 51886,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "EC",
+    "country": "Ecuador",
+    "RoadNetworkSizeTotalKm_2025": 82359,
+    "RoadNetworkSizeTotalMi_2025": 51176,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CI",
+    "country": "Ivory Coast",
+    "RoadNetworkSizeTotalKm_2025": 81996,
+    "RoadNetworkSizeTotalMi_2025": 50950,
+    "RoadNetworkSizeDataYear": 2007
+  },
+  {
+    "flagCode": "PY",
+    "country": "Paraguay",
+    "RoadNetworkSizeTotalKm_2025": 78713,
+    "RoadNetworkSizeTotalMi_2025": 48910,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "AZ",
+    "country": "Azerbaijan",
+    "RoadNetworkSizeTotalKm_2025": 78632,
+    "RoadNetworkSizeTotalMi_2025": 48860,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "FI",
+    "country": "Finland",
+    "RoadNetworkSizeTotalKm_2025": 77804,
+    "RoadNetworkSizeTotalMi_2025": 48345,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "OM",
+    "country": "Oman",
+    "RoadNetworkSizeTotalKm_2025": 77749,
+    "RoadNetworkSizeTotalMi_2025": 48311,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "AO",
+    "country": "Angola",
+    "RoadNetworkSizeTotalKm_2025": 76000,
+    "RoadNetworkSizeTotalMi_2025": 47224,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "DK",
+    "country": "Denmark",
+    "RoadNetworkSizeTotalKm_2025": 74853,
+    "RoadNetworkSizeTotalMi_2025": 46511,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "YE",
+    "country": "Yemen",
+    "RoadNetworkSizeTotalKm_2025": 71300,
+    "RoadNetworkSizeTotalMi_2025": 44304,
+    "RoadNetworkSizeDataYear": 2005
+  },
+  {
+    "flagCode": "CU",
+    "country": "Cuba",
+    "RoadNetworkSizeTotalKm_2025": 71138,
+    "RoadNetworkSizeTotalMi_2025": 44203,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SY",
+    "country": "Syria",
+    "RoadNetworkSizeTotalKm_2025": 69873,
+    "RoadNetworkSizeTotalMi_2025": 43417,
+    "RoadNetworkSizeDataYear": 2010
+  },
+  {
+    "flagCode": "KH",
+    "country": "Cambodia",
+    "RoadNetworkSizeTotalKm_2025": 67715,
+    "RoadNetworkSizeTotalMi_2025": 42076,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "ZM",
+    "country": "Zambia",
+    "RoadNetworkSizeTotalKm_2025": 67671,
+    "RoadNetworkSizeTotalMi_2025": 42049,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MM",
+    "country": "Myanmar",
+    "RoadNetworkSizeTotalKm_2025": 66017,
+    "RoadNetworkSizeTotalMi_2025": 41021,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "LA",
+    "country": "Laos",
+    "RoadNetworkSizeTotalKm_2025": 59646,
+    "RoadNetworkSizeTotalMi_2025": 37062,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "MA",
+    "country": "Morocco",
+    "RoadNetworkSizeTotalKm_2025": 59639,
+    "RoadNetworkSizeTotalMi_2025": 37058,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SK",
+    "country": "Slovakia",
+    "RoadNetworkSizeTotalKm_2025": 58998,
+    "RoadNetworkSizeTotalMi_2025": 36660,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "LV",
+    "country": "Latvia",
+    "RoadNetworkSizeTotalKm_2025": 57905,
+    "RoadNetworkSizeTotalMi_2025": 35980,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "NA",
+    "country": "Namibia",
+    "RoadNetworkSizeTotalKm_2025": 48540,
+    "RoadNetworkSizeTotalMi_2025": 30161,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SN",
+    "country": "Senegal",
+    "RoadNetworkSizeTotalKm_2025": 47313,
+    "RoadNetworkSizeTotalMi_2025": 29399,
+    "RoadNetworkSizeDataYear": 2020
+  },
+  {
+    "flagCode": "IQ",
+    "country": "Iraq",
+    "RoadNetworkSizeTotalKm_2025": 46424,
+    "RoadNetworkSizeTotalMi_2025": 28847,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "RS",
+    "country": "Serbia",
+    "RoadNetworkSizeTotalKm_2025": 46371,
+    "RoadNetworkSizeTotalMi_2025": 28814,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CR",
+    "country": "Costa Rica",
+    "RoadNetworkSizeTotalKm_2025": 45898,
+    "RoadNetworkSizeTotalMi_2025": 28520,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "GN",
+    "country": "Guinea",
+    "RoadNetworkSizeTotalKm_2025": 45300,
+    "RoadNetworkSizeTotalMi_2025": 28148,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "AF",
+    "country": "Afghanistan",
+    "RoadNetworkSizeTotalKm_2025": 44747,
+    "RoadNetworkSizeTotalMi_2025": 27804,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "UZ",
+    "country": "Uzbekistan",
+    "RoadNetworkSizeTotalKm_2025": 42869,
+    "RoadNetworkSizeTotalMi_2025": 26638,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TW",
+    "country": "Taiwan",
+    "RoadNetworkSizeTotalKm_2025": 41475,
+    "RoadNetworkSizeTotalMi_2025": 25771,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "GE",
+    "country": "Georgia",
+    "RoadNetworkSizeTotalKm_2025": 41098,
+    "RoadNetworkSizeTotalMi_2025": 25537,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "NE",
+    "country": "Niger",
+    "RoadNetworkSizeTotalKm_2025": 40098,
+    "RoadNetworkSizeTotalMi_2025": 24916,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SI",
+    "country": "Slovenia",
+    "RoadNetworkSizeTotalKm_2025": 38995,
+    "RoadNetworkSizeTotalMi_2025": 24230,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "LY",
+    "country": "Libya",
+    "RoadNetworkSizeTotalKm_2025": 37000,
+    "RoadNetworkSizeTotalMi_2025": 22991,
+    "RoadNetworkSizeDataYear": 2010
+  },
+  {
+    "flagCode": "NP",
+    "country": "Nepal",
+    "RoadNetworkSizeTotalKm_2025": 35809,
+    "RoadNetworkSizeTotalMi_2025": 22251,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "PH",
+    "country": "Philippines",
+    "RoadNetworkSizeTotalKm_2025": 35164,
+    "RoadNetworkSizeTotalMi_2025": 21850,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MG",
+    "country": "Madagascar",
+    "RoadNetworkSizeTotalKm_2025": 34178,
+    "RoadNetworkSizeTotalMi_2025": 21237,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "KG",
+    "country": "Kyrgyzstan",
+    "RoadNetworkSizeTotalKm_2025": 34000,
+    "RoadNetworkSizeTotalMi_2025": 21127,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "BW",
+    "country": "Botswana",
+    "RoadNetworkSizeTotalKm_2025": 32565,
+    "RoadNetworkSizeTotalMi_2025": 20235,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "PR",
+    "country": "Puerto Rico",
+    "RoadNetworkSizeTotalKm_2025": 32129,
+    "RoadNetworkSizeTotalMi_2025": 19964,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "LK",
+    "country": "Sri Lanka",
+    "RoadNetworkSizeTotalKm_2025": 31607,
+    "RoadNetworkSizeTotalMi_2025": 19640,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SD",
+    "country": "Sudan",
+    "RoadNetworkSizeTotalKm_2025": 31000,
+    "RoadNetworkSizeTotalMi_2025": 19263,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "MZ",
+    "country": "Mozambique",
+    "RoadNetworkSizeTotalKm_2025": 30616,
+    "RoadNetworkSizeTotalMi_2025": 19024,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TJ",
+    "country": "Tajikistan",
+    "RoadNetworkSizeTotalKm_2025": 26666,
+    "RoadNetworkSizeTotalMi_2025": 16570,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "HR",
+    "country": "Croatia",
+    "RoadNetworkSizeTotalKm_2025": 26495,
+    "RoadNetworkSizeTotalMi_2025": 16463,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "KP",
+    "country": "North Korea",
+    "RoadNetworkSizeTotalKm_2025": 25554,
+    "RoadNetworkSizeTotalMi_2025": 15879,
+    "RoadNetworkSizeDataYear": 2006
+  },
+  {
+    "flagCode": "NI",
+    "country": "Nicaragua",
+    "RoadNetworkSizeTotalKm_2025": 24781,
+    "RoadNetworkSizeTotalMi_2025": 15398,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "CF",
+    "country": "Central African Republic",
+    "RoadNetworkSizeTotalKm_2025": 24000,
+    "RoadNetworkSizeTotalMi_2025": 14913,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "TD",
+    "country": "Chad",
+    "RoadNetworkSizeTotalKm_2025": 23695,
+    "RoadNetworkSizeTotalMi_2025": 14723,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "CG",
+    "country": "Republic of the Congo",
+    "RoadNetworkSizeTotalKm_2025": 23324,
+    "RoadNetworkSizeTotalMi_2025": 14493,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "JM",
+    "country": "Jamaica",
+    "RoadNetworkSizeTotalKm_2025": 22198,
+    "RoadNetworkSizeTotalMi_2025": 13793,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SO",
+    "country": "Somalia",
+    "RoadNetworkSizeTotalKm_2025": 21933,
+    "RoadNetworkSizeTotalMi_2025": 13629,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "IL",
+    "country": "Israel",
+    "RoadNetworkSizeTotalKm_2025": 21158,
+    "RoadNetworkSizeTotalMi_2025": 13147,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "QA",
+    "country": "Qatar",
+    "RoadNetworkSizeTotalKm_2025": 20760,
+    "RoadNetworkSizeTotalMi_2025": 12900,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "TN",
+    "country": "Tunisia",
+    "RoadNetworkSizeTotalKm_2025": 19963,
+    "RoadNetworkSizeTotalMi_2025": 12404,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "BG",
+    "country": "Bulgaria",
+    "RoadNetworkSizeTotalKm_2025": 19512,
+    "RoadNetworkSizeTotalMi_2025": 12124,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "GT",
+    "country": "Guatemala",
+    "RoadNetworkSizeTotalKm_2025": 18871,
+    "RoadNetworkSizeTotalMi_2025": 11726,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BT",
+    "country": "Bhutan",
+    "RoadNetworkSizeTotalKm_2025": 18343,
+    "RoadNetworkSizeTotalMi_2025": 11398,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "PA",
+    "country": "Panama",
+    "RoadNetworkSizeTotalKm_2025": 17803,
+    "RoadNetworkSizeTotalMi_2025": null,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "HN",
+    "country": "Honduras",
+    "RoadNetworkSizeTotalKm_2025": 17596,
+    "RoadNetworkSizeTotalMi_2025": 10933,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "ER",
+    "country": "Eritrea",
+    "RoadNetworkSizeTotalKm_2025": 16000,
+    "RoadNetworkSizeTotalMi_2025": 9942,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "MW",
+    "country": "Malawi",
+    "RoadNetworkSizeTotalKm_2025": 15452,
+    "RoadNetworkSizeTotalMi_2025": 9601,
+    "RoadNetworkSizeDataYear": 2015
+  },
+  {
+    "flagCode": "BF",
+    "country": "Burkina Faso",
+    "RoadNetworkSizeTotalKm_2025": 15272,
+    "RoadNetworkSizeTotalMi_2025": 9490,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MK",
+    "country": "North Macedonia",
+    "RoadNetworkSizeTotalKm_2025": 14902,
+    "RoadNetworkSizeTotalMi_2025": 9260,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "PT",
+    "country": "Portugal",
+    "RoadNetworkSizeTotalKm_2025": 14339,
+    "RoadNetworkSizeTotalMi_2025": 8910,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "GA",
+    "country": "Gabon",
+    "RoadNetworkSizeTotalKm_2025": 14300,
+    "RoadNetworkSizeTotalMi_2025": 8886,
+    "RoadNetworkSizeDataYear": 2001
+  },
+  {
+    "flagCode": "TM",
+    "country": "Turkmenistan",
+    "RoadNetworkSizeTotalKm_2025": 13773,
+    "RoadNetworkSizeTotalMi_2025": 8558,
+    "RoadNetworkSizeDataYear": 2020
+  },
+  {
+    "flagCode": "MD",
+    "country": "Moldova",
+    "RoadNetworkSizeTotalKm_2025": 13609,
+    "RoadNetworkSizeTotalMi_2025": 8456,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "CY",
+    "country": "Cyprus",
+    "RoadNetworkSizeTotalKm_2025": 13402,
+    "RoadNetworkSizeTotalMi_2025": 8328,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "IS",
+    "country": "Iceland",
+    "RoadNetworkSizeTotalKm_2025": 12950,
+    "RoadNetworkSizeTotalMi_2025": 8047,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MR",
+    "country": "Mauritania",
+    "RoadNetworkSizeTotalKm_2025": 12253,
+    "RoadNetworkSizeTotalMi_2025": 7614,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "SL",
+    "country": "Sierra Leone",
+    "RoadNetworkSizeTotalKm_2025": 11700,
+    "RoadNetworkSizeTotalMi_2025": 7270,
+    "RoadNetworkSizeDataYear": 2015
+  },
+  {
+    "flagCode": "BI",
+    "country": "Burundi",
+    "RoadNetworkSizeTotalKm_2025": 11513,
+    "RoadNetworkSizeTotalMi_2025": 7154,
+    "RoadNetworkSizeDataYear": 2020
+  },
+  {
+    "flagCode": "LR",
+    "country": "Liberia",
+    "RoadNetworkSizeTotalKm_2025": 10600,
+    "RoadNetworkSizeTotalMi_2025": 6587,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "ME",
+    "country": "Montenegro",
+    "RoadNetworkSizeTotalKm_2025": 9912,
+    "RoadNetworkSizeTotalMi_2025": 6159,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SG",
+    "country": "Singapore",
+    "RoadNetworkSizeTotalKm_2025": 9644,
+    "RoadNetworkSizeTotalMi_2025": 5993,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TT",
+    "country": "Trinidad and Tobago",
+    "RoadNetworkSizeTotalKm_2025": 9592,
+    "RoadNetworkSizeTotalMi_2025": null,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BA",
+    "country": "Bosnia and Herzegovina",
+    "RoadNetworkSizeTotalKm_2025": 9452,
+    "RoadNetworkSizeTotalMi_2025": 5873,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "PG",
+    "country": "Papua New Guinea",
+    "RoadNetworkSizeTotalKm_2025": 9349,
+    "RoadNetworkSizeTotalMi_2025": 5809,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "SV",
+    "country": "El Salvador",
+    "RoadNetworkSizeTotalKm_2025": 9012,
+    "RoadNetworkSizeTotalMi_2025": 5600,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "UY",
+    "country": "Uruguay",
+    "RoadNetworkSizeTotalKm_2025": 8833,
+    "RoadNetworkSizeTotalMi_2025": 5489,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TL",
+    "country": "Timor-Leste",
+    "RoadNetworkSizeTotalKm_2025": 8811,
+    "RoadNetworkSizeTotalMi_2025": 5475,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "JO",
+    "country": "Jordan",
+    "RoadNetworkSizeTotalKm_2025": 8631,
+    "RoadNetworkSizeTotalMi_2025": 5363,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "KW",
+    "country": "Kuwait",
+    "RoadNetworkSizeTotalKm_2025": 8451,
+    "RoadNetworkSizeTotalMi_2025": 5251,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "AM",
+    "country": "Armenia",
+    "RoadNetworkSizeTotalKm_2025": 7427,
+    "RoadNetworkSizeTotalMi_2025": 4615,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "LB",
+    "country": "Lebanon",
+    "RoadNetworkSizeTotalKm_2025": 7000,
+    "RoadNetworkSizeTotalMi_2025": 4350,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "RW",
+    "country": "Rwanda",
+    "RoadNetworkSizeTotalKm_2025": 6674,
+    "RoadNetworkSizeTotalMi_2025": 4147,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BJ",
+    "country": "Benin",
+    "RoadNetworkSizeTotalKm_2025": 5945,
+    "RoadNetworkSizeTotalMi_2025": 3694,
+    "RoadNetworkSizeDataYear": 2021
+  },
+  {
+    "flagCode": "LS",
+    "country": "Lesotho",
+    "RoadNetworkSizeTotalKm_2025": 5940,
+    "RoadNetworkSizeTotalMi_2025": 3691,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "DO",
+    "country": "Dominican Republic",
+    "RoadNetworkSizeTotalKm_2025": 5766,
+    "RoadNetworkSizeTotalMi_2025": 3583,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "NC",
+    "country": "New Caledonia",
+    "RoadNetworkSizeTotalKm_2025": 5622,
+    "RoadNetworkSizeTotalMi_2025": 3493,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "BH",
+    "country": "Bahrain",
+    "RoadNetworkSizeTotalKm_2025": 5352,
+    "RoadNetworkSizeTotalMi_2025": 3326,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BZ",
+    "country": "Belize",
+    "RoadNetworkSizeTotalKm_2025": 5042,
+    "RoadNetworkSizeTotalMi_2025": 3133,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SR",
+    "country": "Suriname",
+    "RoadNetworkSizeTotalKm_2025": 4932,
+    "RoadNetworkSizeTotalMi_2025": 3065,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "GM",
+    "country": "Gambia",
+    "RoadNetworkSizeTotalKm_2025": 4499,
+    "RoadNetworkSizeTotalMi_2025": 2795,
+    "RoadNetworkSizeDataYear": 2021
+  },
+  {
+    "flagCode": "GW",
+    "country": "Guinea-Bissau",
+    "RoadNetworkSizeTotalKm_2025": 4400,
+    "RoadNetworkSizeTotalMi_2025": 2734,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "HT",
+    "country": "Haiti",
+    "RoadNetworkSizeTotalKm_2025": 4266,
+    "RoadNetworkSizeTotalMi_2025": 2651,
+    "RoadNetworkSizeDataYear": 2009
+  },
+  {
+    "flagCode": "GY",
+    "country": "Guyana",
+    "RoadNetworkSizeTotalKm_2025": 3995,
+    "RoadNetworkSizeTotalMi_2025": 2482,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "BN",
+    "country": "Brunei",
+    "RoadNetworkSizeTotalKm_2025": 3820,
+    "RoadNetworkSizeTotalMi_2025": 2373,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "AL",
+    "country": "Albania",
+    "RoadNetworkSizeTotalKm_2025": 3606,
+    "RoadNetworkSizeTotalMi_2025": 2241,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "PS",
+    "country": "Palestine",
+    "RoadNetworkSizeTotalKm_2025": 3469,
+    "RoadNetworkSizeTotalMi_2025": 2156,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "FJ",
+    "country": "Fiji",
+    "RoadNetworkSizeTotalKm_2025": 3440,
+    "RoadNetworkSizeTotalMi_2025": 2138,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "MU",
+    "country": "Mauritius",
+    "RoadNetworkSizeTotalKm_2025": 3129,
+    "RoadNetworkSizeTotalMi_2025": 1944,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "LU",
+    "country": "Luxembourg",
+    "RoadNetworkSizeTotalKm_2025": 2914,
+    "RoadNetworkSizeTotalMi_2025": 1811,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "DJ",
+    "country": "Djibouti",
+    "RoadNetworkSizeTotalKm_2025": 2893,
+    "RoadNetworkSizeTotalMi_2025": 1798,
+    "RoadNetworkSizeDataYear": 2013
+  },
+  {
+    "flagCode": "GQ",
+    "country": "Equatorial Guinea",
+    "RoadNetworkSizeTotalKm_2025": 2880,
+    "RoadNetworkSizeTotalMi_2025": 1790,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "CV",
+    "country": "Cape Verde",
+    "RoadNetworkSizeTotalKm_2025": 2855,
+    "RoadNetworkSizeTotalMi_2025": 1774,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MT",
+    "country": "Malta",
+    "RoadNetworkSizeTotalKm_2025": 2841,
+    "RoadNetworkSizeTotalMi_2025": 1765,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "BS",
+    "country": "Bahamas",
+    "RoadNetworkSizeTotalKm_2025": 2700,
+    "RoadNetworkSizeTotalMi_2025": 1678,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "PF",
+    "country": "French Polynesia",
+    "RoadNetworkSizeTotalKm_2025": 2590,
+    "RoadNetworkSizeTotalMi_2025": 1609,
+    "RoadNetworkSizeDataYear": 1999
+  },
+  {
+    "flagCode": "HK",
+    "country": "Hong Kong",
+    "RoadNetworkSizeTotalKm_2025": 2239,
+    "RoadNetworkSizeTotalMi_2025": 1391,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "VU",
+    "country": "Vanuatu",
+    "RoadNetworkSizeTotalKm_2025": 2039,
+    "RoadNetworkSizeTotalMi_2025": 1267,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "MH",
+    "country": "Marshall Islands",
+    "RoadNetworkSizeTotalKm_2025": 2028,
+    "RoadNetworkSizeTotalMi_2025": 1260,
+    "RoadNetworkSizeDataYear": 2007
+  },
+  {
+    "flagCode": "BB",
+    "country": "Barbados",
+    "RoadNetworkSizeTotalKm_2025": 1700,
+    "RoadNetworkSizeTotalMi_2025": 1056,
+    "RoadNetworkSizeDataYear": 2015
+  },
+  {
+    "flagCode": "TG",
+    "country": "Togo",
+    "RoadNetworkSizeTotalKm_2025": 1539,
+    "RoadNetworkSizeTotalMi_2025": 956,
+    "RoadNetworkSizeDataYear": 2021
+  },
+  {
+    "flagCode": "DM",
+    "country": "Dominica",
+    "RoadNetworkSizeTotalKm_2025": 1512,
+    "RoadNetworkSizeTotalMi_2025": 940,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "SZ",
+    "country": "Eswatini",
+    "RoadNetworkSizeTotalKm_2025": 1500,
+    "RoadNetworkSizeTotalMi_2025": 932,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "SB",
+    "country": "Solomon Islands",
+    "RoadNetworkSizeTotalKm_2025": 1390,
+    "RoadNetworkSizeTotalMi_2025": 864,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "ST",
+    "country": "Sao Tome and Principe",
+    "RoadNetworkSizeTotalKm_2025": 1300,
+    "RoadNetworkSizeTotalMi_2025": 808,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "VI",
+    "country": "United States Virgin Islands",
+    "RoadNetworkSizeTotalKm_2025": 1260,
+    "RoadNetworkSizeTotalMi_2025": 783,
+    "RoadNetworkSizeDataYear": 2008
+  },
+  {
+    "flagCode": "LC",
+    "country": "Saint Lucia",
+    "RoadNetworkSizeTotalKm_2025": 1210,
+    "RoadNetworkSizeTotalMi_2025": 752,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "AG",
+    "country": "Antigua and Barbuda",
+    "RoadNetworkSizeTotalKm_2025": 1170,
+    "RoadNetworkSizeTotalMi_2025": 727,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "WS",
+    "country": "Samoa",
+    "RoadNetworkSizeTotalKm_2025": 1150,
+    "RoadNetworkSizeTotalMi_2025": 715,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "GD",
+    "country": "Grenada",
+    "RoadNetworkSizeTotalKm_2025": 1127,
+    "RoadNetworkSizeTotalMi_2025": 700,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "IM",
+    "country": "Isle of Man",
+    "RoadNetworkSizeTotalKm_2025": 1107,
+    "RoadNetworkSizeTotalMi_2025": 688,
+    "RoadNetworkSizeDataYear": 2008
+  },
+  {
+    "flagCode": "KY",
+    "country": "Cayman Islands",
+    "RoadNetworkSizeTotalKm_2025": 1087,
+    "RoadNetworkSizeTotalMi_2025": 675,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "GU",
+    "country": "Guam",
+    "RoadNetworkSizeTotalKm_2025": 1045,
+    "RoadNetworkSizeTotalMi_2025": 649,
+    "RoadNetworkSizeDataYear": 2008
+  },
+  {
+    "flagCode": "AW",
+    "country": "Aruba",
+    "RoadNetworkSizeTotalKm_2025": 1000,
+    "RoadNetworkSizeTotalMi_2025": 621,
+    "RoadNetworkSizeDataYear": 2010
+  },
+  {
+    "flagCode": "FO",
+    "country": "Faroe Islands",
+    "RoadNetworkSizeTotalKm_2025": 960,
+    "RoadNetworkSizeTotalMi_2025": 597,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "KM",
+    "country": "Comoros",
+    "RoadNetworkSizeTotalKm_2025": 880,
+    "RoadNetworkSizeTotalMi_2025": 547,
+    "RoadNetworkSizeDataYear": 2002
+  },
+  {
+    "flagCode": "LI",
+    "country": "Liechtenstein",
+    "RoadNetworkSizeTotalKm_2025": 845,
+    "RoadNetworkSizeTotalMi_2025": 525,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "TO",
+    "country": "Tonga",
+    "RoadNetworkSizeTotalKm_2025": 680,
+    "RoadNetworkSizeTotalMi_2025": 423,
+    "RoadNetworkSizeDataYear": 2011
+  },
+  {
+    "flagCode": "KI",
+    "country": "Kiribati",
+    "RoadNetworkSizeTotalKm_2025": 670,
+    "RoadNetworkSizeTotalMi_2025": 416,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "JE",
+    "country": "Jersey",
+    "RoadNetworkSizeTotalKm_2025": 576,
+    "RoadNetworkSizeTotalMi_2025": 358,
+    "RoadNetworkSizeDataYear": 2010
+  },
+  {
+    "flagCode": "BM",
+    "country": "Bermuda",
+    "RoadNetworkSizeTotalKm_2025": 551,
+    "RoadNetworkSizeTotalMi_2025": 342,
+    "RoadNetworkSizeDataYear": 2020
+  },
+  {
+    "flagCode": "CW",
+    "country": "Curacao",
+    "RoadNetworkSizeTotalKm_2025": 550,
+    "RoadNetworkSizeTotalMi_2025": 342,
+    "RoadNetworkSizeDataYear": null
+  },
+  {
+    "flagCode": "SC",
+    "country": "Seychelles",
+    "RoadNetworkSizeTotalKm_2025": 545,
+    "RoadNetworkSizeTotalMi_2025": 338,
+    "RoadNetworkSizeDataYear": 2021
+  },
+  {
+    "flagCode": "MP",
+    "country": "Northern Mariana Islands",
+    "RoadNetworkSizeTotalKm_2025": 536,
+    "RoadNetworkSizeTotalMi_2025": 333,
+    "RoadNetworkSizeDataYear": 2008
+  },
+  {
+    "flagCode": "MO",
+    "country": "Macau",
+    "RoadNetworkSizeTotalKm_2025": 471,
+    "RoadNetworkSizeTotalMi_2025": 293,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "FK",
+    "country": "Falkland Islands",
+    "RoadNetworkSizeTotalKm_2025": 440,
+    "RoadNetworkSizeTotalMi_2025": 273,
+    "RoadNetworkSizeDataYear": 2008
+  },
+  {
+    "flagCode": "FM",
+    "country": "Micronesia",
+    "RoadNetworkSizeTotalKm_2025": 388,
+    "RoadNetworkSizeTotalMi_2025": 241,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "KN",
+    "country": "Saint Kitts and Nevis",
+    "RoadNetworkSizeTotalKm_2025": 383,
+    "RoadNetworkSizeTotalMi_2025": 238,
+    "RoadNetworkSizeDataYear": 2002
+  },
+  {
+    "flagCode": "SM",
+    "country": "San Marino",
+    "RoadNetworkSizeTotalKm_2025": 350,
+    "RoadNetworkSizeTotalMi_2025": 218,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "AD",
+    "country": "Andorra",
+    "RoadNetworkSizeTotalKm_2025": 320,
+    "RoadNetworkSizeTotalMi_2025": 199,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": "CK",
+    "country": "Cook Islands",
+    "RoadNetworkSizeTotalKm_2025": 295,
+    "RoadNetworkSizeTotalMi_2025": 183,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "GG",
+    "country": "Guernsey",
+    "RoadNetworkSizeTotalKm_2025": 260,
+    "RoadNetworkSizeTotalMi_2025": 162,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "AS",
+    "country": "American Samoa",
+    "RoadNetworkSizeTotalKm_2025": 241,
+    "RoadNetworkSizeTotalMi_2025": 150,
+    "RoadNetworkSizeDataYear": 2016
+  },
+  {
+    "flagCode": "NU",
+    "country": "Niue",
+    "RoadNetworkSizeTotalKm_2025": 234,
+    "RoadNetworkSizeTotalMi_2025": 145,
+    "RoadNetworkSizeDataYear": 2017
+  },
+  {
+    "flagCode": "AI",
+    "country": "Anguilla",
+    "RoadNetworkSizeTotalKm_2025": 175,
+    "RoadNetworkSizeTotalMi_2025": 109,
+    "RoadNetworkSizeDataYear": 2004
+  },
+  {
+    "flagCode": "TC",
+    "country": "Turks and Caicos Islands",
+    "RoadNetworkSizeTotalKm_2025": 121,
+    "RoadNetworkSizeTotalMi_2025": 75,
+    "RoadNetworkSizeDataYear": 2003
+  },
+  {
+    "flagCode": "PW",
+    "country": "Palau",
+    "RoadNetworkSizeTotalKm_2025": 121,
+    "RoadNetworkSizeTotalMi_2025": 75,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "PM",
+    "country": "Saint Pierre and Miquelon",
+    "RoadNetworkSizeTotalKm_2025": 117,
+    "RoadNetworkSizeTotalMi_2025": 73,
+    "RoadNetworkSizeDataYear": 2009
+  },
+  {
+    "flagCode": "VG",
+    "country": "British Virgin Islands",
+    "RoadNetworkSizeTotalKm_2025": 113,
+    "RoadNetworkSizeTotalMi_2025": 70,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "MV",
+    "country": "Maldives",
+    "RoadNetworkSizeTotalKm_2025": 90,
+    "RoadNetworkSizeTotalMi_2025": 56,
+    "RoadNetworkSizeDataYear": 2018
+  },
+  {
+    "flagCode": "MC",
+    "country": "Monaco",
+    "RoadNetworkSizeTotalKm_2025": 57,
+    "RoadNetworkSizeTotalMi_2025": null,
+    "RoadNetworkSizeDataYear": 2023
+  },
+  {
+    "flagCode": "SX",
+    "country": "Sint Maarten",
+    "RoadNetworkSizeTotalKm_2025": 53,
+    "RoadNetworkSizeTotalMi_2025": 33,
+    "RoadNetworkSizeDataYear": null
+  },
+  {
+    "flagCode": "BL",
+    "country": "Saint Barthelemy",
+    "RoadNetworkSizeTotalKm_2025": 40,
+    "RoadNetworkSizeTotalMi_2025": 25,
+    "RoadNetworkSizeDataYear": null
+  },
+  {
+    "flagCode": "NR",
+    "country": "Nauru",
+    "RoadNetworkSizeTotalKm_2025": 30,
+    "RoadNetworkSizeTotalMi_2025": 19,
+    "RoadNetworkSizeDataYear": 2002
+  },
+  {
+    "flagCode": "GI",
+    "country": "Gibraltar",
+    "RoadNetworkSizeTotalKm_2025": 29,
+    "RoadNetworkSizeTotalMi_2025": 18,
+    "RoadNetworkSizeDataYear": 2007
+  },
+  {
+    "flagCode": "TV",
+    "country": "Tuvalu",
+    "RoadNetworkSizeTotalKm_2025": 16,
+    "RoadNetworkSizeTotalMi_2025": 10,
+    "RoadNetworkSizeDataYear": 2022
+  },
+  {
+    "flagCode": "TK",
+    "country": "Tokelau",
+    "RoadNetworkSizeTotalKm_2025": 10,
+    "RoadNetworkSizeTotalMi_2025": 6,
+    "RoadNetworkSizeDataYear": 2019
+  },
+  {
+    "flagCode": null,
+    "country": "Total",
+    "RoadNetworkSizeTotalKm_2025": 42201737,
+    "RoadNetworkSizeTotalMi_2025": 26205883,
+    "RoadNetworkSizeDataYear": null
+  }
+]

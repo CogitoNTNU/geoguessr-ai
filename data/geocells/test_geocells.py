@@ -6,6 +6,7 @@ import heapq
 def generate_points(n):
     points = set()
     for i in range(n):
+        # points.add(Point(id=i, lng=random.uniform(5, 140), lat=random.uniform(50, 75)))
         points.add(
             Point(id=i, lng=random.uniform(-180, 180), lat=random.uniform(-90, 90))
         )
@@ -32,7 +33,8 @@ def partition(min_cell_size, points):
     return cells
 
 
-points = generate_points(100)
-cells = partition(10, points)
+if __name__ == "__main__":
+    points = generate_points(100)
+    cells = partition(10, points)
 
-print(cells[0][1])
+    print(cells[0][1])
