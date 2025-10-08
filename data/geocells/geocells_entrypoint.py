@@ -18,7 +18,8 @@ parser.add_argument(
                      3: cell_visualizer \n
                      4: load_admin_data \n
                      5: cell \n
-                     6: test_geocells""",
+                     6: test_geocells\n
+                     7: Kjør geocells""",
     type=int,
 )
 args = parser.parse_args()
@@ -63,6 +64,11 @@ def main():
         cells = test_geocells.partition(10, points)
 
         print(cells[0][1])
+    elif args.mode == 7:
+        geocells = geocell_visualizer.GenerateGeocells()
+
+        visualizer = geocell_visualizer.CellVisualizer(geocells)
+        visualizer.show()
     else:
         print("Not a valid mode!")
 
