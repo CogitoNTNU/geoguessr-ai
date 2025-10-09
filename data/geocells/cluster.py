@@ -1,16 +1,15 @@
 from sklearn.cluster import OPTICS
 import numpy as np
 import matplotlib.pyplot as plt
-import random
 
 
 def cluster(cell):
     X = []
-    # for point in cell.points:
-    #     X.append(np.array([point["lng"], point["lat"]]))
+    for point in cell.points:
+        X.append(np.array([point["lng"], point["lat"]]))
 
-    for i in range(1000):
-        X.append(np.array([random.random(), random.random()]))
+    # for i in range(100):
+    #     X.append(np.array([random.random(), random.random()]))
     X = np.array(X)
     print(X)
 
@@ -25,18 +24,11 @@ def cluster(cell):
     plt.ylabel("Feature 2")
     plt.show()
 
-    print(X)
-    print(labels)
     new_cells = {}
 
     for i in range(len(labels)):
         if labels[i] not in new_cells:
             new_cells[int(labels[i])] = []
-        new_cells[int(labels[i])].append(X[i])
+        new_cells[int(labels[i])].append(cell.points[i])
 
     return new_cells
-
-
-new_cells = cluster(1)
-for i in new_cells:
-    print(f"{i}:{len(new_cells[i])}")
