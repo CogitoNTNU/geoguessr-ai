@@ -1,6 +1,6 @@
 # How To Collect The Pictures From Google Streetview
 
-### This is a step by step guid to collect the pictures that are needed to train our model for the geoGuessr group, everyone's contribution is much appreciated!
+### This is a step by step guide to collect the pictures that are needed to train our GeoGuessr AI model.
 
 ## Step 1 — Create a .env file
 
@@ -27,10 +27,10 @@
 
 ![Give it a name and crate it](doc_pictures/3.png)
 
-## Step 5 — Go to google streetview api location
+## Step 5 — Locate Street View Static API
 
 1. After creating, you should come to the cloud overview/dashboard page
-1. Type in the searchbox "street view static api"
+1. In the search field at the top, type "Street View Static API"
 1. Click on the first choice, like in the picture
 
 ![Google cloud](doc_pictures/5.png)
@@ -43,7 +43,7 @@
 
 ## Step 7 — Terms and agreements
 
-1. Make sure of the google account
+1. Make sure you are using the intended Google account you wish to use
 1. Hit the agree and continue button
 
 ![Google cloud](doc_pictures/7.png)
@@ -70,8 +70,8 @@
 ## Step 11 — Copy and get the API key
 
 1. Copy the API key
-1. Past the API key into the ".env" file
-1. It should look like this in the file: GOOGLE_MAPS_KEY="Your key, switch it here in the string"
+1. Paste the API key into the ".env" file you created earlier
+1. It should look like this in the file: GOOGLE_MAPS_KEY="Your key, switch it here in the string" (do NOT push this file to Github)
 
 ![Google cloud](doc_pictures/11.png)
 
@@ -109,15 +109,15 @@
 
 ### Important:
 
-Git pull the latest changes, and make sure your the only one running the script, or that is gonna run it!
-Make sure to give everyone a heads up when you run the script!
+Git pull the latest changes, and make sure you are the only one running the script, only ONE person can run the script at a time!
+Make sure to give everyone a heads up in our Slack-channel when you run the script!
 This is to make sure we get all the pictures and no overlap in the collection.
 
 1. Activate venv or create with `uv venv`
 1. Make sure you have the lasted dependencies updated and installed
-1. Mae sure the terminal is in the outer most folder
+1. Make sure the terminal is in the outer most folder
 1. Run `uv run data/street_view_images_collection/main.py`
    1. Select if you have the extra credits with "y" or "n" or other key if you don't have
-   1. Let it run undisturbed!
+   1. Let it run undisturbed! (if you are using a laptop, make sure it does not go into sleep mode, plug it in and turn off sleeping after inactivity)
    1. The script will give some status updates when it runs, you can use this to see how it's doing
 1. Thanks for the cooperation!
