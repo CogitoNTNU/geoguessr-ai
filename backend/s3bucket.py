@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import hashlib
 import tempfile
@@ -19,6 +20,10 @@ VERSION = "v1"
 MANIFEST_PREFIX = f"{VERSION}/manifest"
 SNAPSHOT_PREFIX = f"{VERSION}/snapshot"
 HEADINGS_DEFAULT = (0, 90, 180, 270)
+STREETVIEW_RE = re.compile(
+    r"^streetview_([-+]?\d+(?:\.\d+)?)_([-+]?\d+(?:\.\d+)?)_heading_(\d{1,3})\.jpg$",
+    re.IGNORECASE,
+)
 REGION = "eu-north-1"
 _Q = 10_000_000  # 1e-7° grid (~1.1 cm)
 s3 = boto3.client(
@@ -163,62 +168,59 @@ def write_new_snapshot(df_latest: pd.DataFrame) -> str:
     return key
 
 
-def parse_location_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
+def parse_streetview_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
+    """
+    Scans `root_dir` for files like:
+      streetview_<lat>_<lon>_heading_<0|90|180|270>.jpg
+
+    Returns:
+      key "<lat>_<lon>" -> {
+        "lat": float, "lon": float,
+        "images": { heading(int): local_path(str) }
+      }
+    """
     index: Dict[str, Dict[str, Any]] = {}
-
-    for name in os.listdir(root_dir):
-        if not name.endswith("_metadata.json"):
-            continue
-        base = name[: -len("_metadata.json")]
-        meta_path = os.path.join(root_dir, name)
-        with open(meta_path, "r", encoding="utf-8") as f:
-            meta = json.load(f)
-
-        lat = float(meta["location"]["lat"])
-        lon = float(meta["location"]["lng"])
-
-        index[base] = {
-            "pano_id": base,
-            "lat": lat,
-            "lon": lon,
-            "images": {},
-        }
 
     for name in os.listdir(root_dir):
         if not name.lower().endswith(".jpg"):
             continue
-        try:
-            prefix, rest = name.rsplit("_", 1)
-            heading_str = rest.split(".")[0]
-            heading = int(heading_str)
-        except Exception:
+        m = STREETVIEW_RE.match(name)
+        if not m:
             continue
 
-        if prefix not in index:
-            continue
+        lat = float(m.group(1))
+        lon = float(m.group(2))
+        heading = int(m.group(3)) % 360
 
-        index[prefix]["images"][heading] = os.path.join(root_dir, name)
+        key = f"{lat:.7f}_{lon:.7f}"  # stable key per coordinate
+        rec = index.setdefault(key, {"lat": lat, "lon": lon, "images": {}})
+        rec["images"][heading] = os.path.join(root_dir, name)
 
     return index
 
 
-def records_from_folder_index(
-    idx: Dict[str, Dict[str, Any]], headings: Iterable[int] = HEADINGS_DEFAULT
+def records_from_streetview_index(
+    idx: Dict[str, Dict[str, Any]],
+    headings: Iterable[int] = HEADINGS_DEFAULT,
 ) -> list[dict]:
+    """
+    Builds upload records your existing upload_batch(...) understands.
+    Only includes headings that actually exist on disk.
+    """
     records: list[dict] = []
-    for loc in idx.values():
+    for rec in idx.values():
+        lat, lon = rec["lat"], rec["lon"]
+        loc_id = make_location_id(lat, lon)  # quantized hash from your script
         for h in headings:
-            img_path = loc["images"].get(h)
+            img_path = rec["images"].get(int(h) % 360)
             if not img_path:
                 continue
             records.append(
                 {
-                    "location_id": make_location_id(
-                        float(loc["lat"]), float(loc["lon"])
-                    ),
-                    "lat": loc["lat"],
-                    "lon": loc["lon"],
-                    "heading": int(h),
+                    "location_id": loc_id,
+                    "lat": lat,
+                    "lon": lon,
+                    "heading": int(h) % 360,
                     "image_path": img_path,
                 }
             )
@@ -256,8 +258,8 @@ def upload_dataset_from_folder(
 ):
     batch_date = batch_date or datetime.date.today().isoformat()
 
-    idx = parse_location_folder(folder)
-    records = records_from_folder_index(idx, headings=headings)
+    idx = parse_streetview_folder(folder)
+    records = records_from_streetview_index(idx, headings=headings)
     if not records:
         return {"message": "No records found to ingest.", "rows_in_batch": 0}
 
