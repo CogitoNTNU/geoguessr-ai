@@ -108,12 +108,13 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
 
 if __name__ == "__main__":
     print("Starting data collection...")
-    amount_of_pictures = 9900
+    pictures_per_point = 4
+    amount_of_pictures = 9900 / pictures_per_point
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
     if extra_credits_result.lower() == "y":
-        amount_of_pictures = 51_000
+        amount_of_pictures = 51_000 / pictures_per_point
 
     total_points = getAllCoordinates()
     collected_points = getCollectedCoordinates()
