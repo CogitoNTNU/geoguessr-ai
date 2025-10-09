@@ -103,7 +103,43 @@
 
 ![Google cloud](doc_pictures/15.png)
 
-## Now finished with the Google API key, moving on to how to run the script:
+# How To Access AWS S3 Buckets in Python
+
+## Step 1 — Install AWS CLI
+
+### Linux:
+
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+```
+
+### macOS:
+
+```bash
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+```
+
+## Step 2 — Configure AWS Credentials
+
+Run in terminal:
+
+```bash
+aws configure
+```
+
+Fill in the prompted values according to credentials you will be sent on Slack:
+
+```bash
+AWS Access Key ID [None]: <YourAccessKey>
+AWS Secret Access Key [None]: <YourSecretKey>
+Default region name [None]: eu-north-1
+Default output format [None]: json
+```
+
+### Now finished with the Google API key and AWS, moving on to how to run the script:
 
 ## Step 1 - Run the script
 
