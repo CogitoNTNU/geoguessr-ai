@@ -29,7 +29,8 @@ class GenerateGeocells:
 
         self.country_cells = {}
         # self.max_points = len(self.points)//10
-        self.max_points = 5
+        self.min_points = 5
+        self.max_points = 50
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
@@ -37,7 +38,7 @@ class GenerateGeocells:
 
         self.generate_geocells()
 
-        cluster()
+        self.cluster()
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -148,14 +149,14 @@ class GenerateGeocells:
                     break
 
     def generate_geocells(self):
-        cells_to_combine = [i for i in self.cells if len(i) < self.max_points]
+        cells_to_combine = [i for i in self.cells if len(i) < self.min_points]
         for i in trange(len(cells_to_combine), desc="Slå sammen celler"):
             cell = cells_to_combine[i]
             total_points = len(cell)
 
             queue = [i for i in cell.neighbours]
             visited = set()
-            while (total_points < self.max_points) and queue:
+            while (total_points < self.min_points) and queue:
                 cell_to_add = queue.pop(0)
                 for j in cell_to_add.neighbours:
                     if j in visited:
@@ -169,6 +170,13 @@ class GenerateGeocells:
 
             if visited:
                 cell.combine(visited)
+
+    def cluster(self):
+        for cell in self.cells:
+            if len(cell) > self.max_points:
+                new_cells = cluster.cluster(cell)
+
+        return new_cells
 
     def __str__(self):
         return f"{self.cells}"

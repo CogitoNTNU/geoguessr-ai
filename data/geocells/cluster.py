@@ -4,9 +4,12 @@ import matplotlib.pyplot as plt
 import random
 
 
-def cluster():
+def cluster(cell):
     X = []
-    for i in range(100):
+    # for point in cell.points:
+    #     X.append(np.array([point["lng"], point["lat"]]))
+
+    for i in range(1000):
         X.append(np.array([random.random(), random.random()]))
     X = np.array(X)
     print(X)
@@ -22,5 +25,18 @@ def cluster():
     plt.ylabel("Feature 2")
     plt.show()
 
+    print(X)
+    print(labels)
+    new_cells = {}
 
-cluster()
+    for i in range(len(labels)):
+        if labels[i] not in new_cells:
+            new_cells[int(labels[i])] = []
+        new_cells[int(labels[i])].append(X[i])
+
+    return new_cells
+
+
+new_cells = cluster(1)
+for i in new_cells:
+    print(f"{i}:{len(new_cells[i])}")
