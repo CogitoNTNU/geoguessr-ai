@@ -4,6 +4,7 @@ import requests
 from urllib.parse import urlencode
 import random
 from dotenv import load_dotenv
+import numpy as np
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
 GOOGLE_KEY = os.getenv("GOOGLE_MAPS_KEY")  # required
@@ -41,22 +42,84 @@ def collect_google_streetview(lat: float, lon: float):
             f.write(r.content)
         print(f"Saved image to {filename}")
 
-        # Save image to s3 bucket
-        # TODO
+
+def getAllCoordinates() -> np.ndarray[(float, float)]:
+    path = "data/out/sv_points_latlong.txt"
+    points = np.loadtxt(path, delimiter=",")
+    return points
+
+
+def getCollectedCoordinates() -> np.ndarray[(float, float)]:
+    path = "data/out/sv_points_latlong_collected.txt"
+    points = np.loadtxt(path, delimiter=",")
+    return points
+
+
+def update_collected_points(points_to_collect: np.ndarray[(float, float)]):
+    path = "data/out/sv_points_latlong_collected.txt"
+    with open(path, "a") as f:
+        for point in points_to_collect:
+            f.write(f"{point[0]},{point[1]}\n")
+
+
+def cleanup_temp_files():
+    folder = "out"
+    for filename in os.listdir(folder):
+        if filename.startswith("streetview_") and filename.endswith(".jpg"):
+            file_path = os.path.join(folder, filename)
+            try:
+                os.remove(file_path)
+            except Exception as e:
+                print(f"Error deleting file {file_path}: {e}")
+    print("Temporary files cleaned up.")
+
+
+def send_points_to_s3bucket():
+    pass  # TODO: Magnus will implement this
+
+
+def get_points(points_to_collect: np.ndarray[(float, float)]):
+    collected_points = np.ndarray([])
+    for i in range(len(points_to_collect)):
+        lat = points_to_collect[i][0]
+        lon = points_to_collect[i][1]
+
+        if i % 100 == 0:
+            print(
+                f"Collecting point {i + 1}/{len(points_to_collect)}: lat {lat}, lon {lon}"
+            )
+            send_points_to_s3bucket()
+            cleanup_temp_files()
+            update_collected_points(collected_points)
+            collected_points = np.ndarray([])
+
+        try:
+            collect_google_streetview(lat, lon)
+            np.append(collected_points, np.array([[lat, lon]]), axis=0)
+        except Exception as e:
+            print(f"Error collecting point at lat: {lat}, lon: {lon}: error:{e}")
+            continue
+
+    send_points_to_s3bucket()
+    cleanup_temp_files()
+    update_collected_points(collected_points)
+    print(f"Data collection complete. Collected {len(points_to_collect)} new points.")
 
 
 if __name__ == "__main__":
     print("Starting data collection...")
-    amount_of_pictures = 1
-    # amount_of_pictures = 9900
+    amount_of_pictures = 9900
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
     if extra_credits_result.lower() == "y":
         amount_of_pictures = 51_000
 
-    # TODO: Get the list of coordinates that is to be collected, and check if they have been collected already
+    total_points = getAllCoordinates()
+    collected_points = getCollectedCoordinates()
+    combined = np.vstack((total_points, collected_points))
+    unique = np.unique(combined, axis=0)
 
-    # TODO: Make a new file that has the coordinates that has been collected
-
-    collect_google_streetview(60.15805, 19.905592)
+    points_to_collect = unique[amount_of_pictures:]
+    get_points(points_to_collect)
+    print("Program complete!")
