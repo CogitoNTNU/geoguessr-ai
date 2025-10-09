@@ -310,5 +310,12 @@ def download_latest_images(
     return results
 
 
-result = upload_dataset_from_folder("./dataset", max_workers=24)
-print(result)
+def load_points():
+    df = load_latest_snapshot_df()
+    df = df.drop_duplicates(subset=["lat", "lon"], keep="first").reset_index(drop=True)
+    cols = ["location_id", "lat", "lon"]
+    point_df = df[cols].copy()
+    return point_df
+
+
+# upload_dataset_from_folder("./dataset", max_workers=24)
