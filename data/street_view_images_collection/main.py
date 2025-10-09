@@ -5,6 +5,7 @@ from urllib.parse import urlencode
 import random
 from dotenv import load_dotenv
 import numpy as np
+from backend.s3bucket import upload_dataset_from_folder
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
 GOOGLE_KEY = os.getenv("GOOGLE_MAPS_KEY")  # required
@@ -74,10 +75,6 @@ def cleanup_temp_files():
     print("Temporary files cleaned up.")
 
 
-def send_points_to_s3bucket():
-    pass  # TODO: Magnus will implement this
-
-
 def get_points(points_to_collect: np.ndarray[(float, float)]):
     collected_points = np.ndarray([])
     for i in range(len(points_to_collect)):
@@ -88,7 +85,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
             print(
                 f"Collecting point {i + 1}/{len(points_to_collect)}: lat {lat}, lon {lon}"
             )
-            send_points_to_s3bucket()
+            upload_dataset_from_folder(folder="out")
             cleanup_temp_files()
             update_collected_points(collected_points)
             collected_points = np.ndarray([])
@@ -100,7 +97,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
             print(f"Error collecting point at lat: {lat}, lon: {lon}: error:{e}")
             continue
 
-    send_points_to_s3bucket()
+    upload_dataset_from_folder(folder="out")
     cleanup_temp_files()
     update_collected_points(collected_points)
     print(f"Data collection complete. Collected {len(points_to_collect)} new points.")
