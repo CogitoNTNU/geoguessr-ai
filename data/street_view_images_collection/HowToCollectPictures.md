@@ -156,4 +156,5 @@ This is to make sure we get all the pictures and no overlap in the collection.
    1. Select if you have the extra credits with "y" or "n" or other key if you don't have
    1. Let it run undisturbed! (if you are using a laptop, make sure it does not go into sleep mode, plug it in and turn off sleeping after inactivity)
    1. The script will give some status updates when it runs, you can use this to see how it's doing
+1. Make sure to `git add` and `git commit` and `git push` the "sv_points_latlong_collected.txt" after running the script. This will make sure we don't have overlap in the points we collect.
 1. Thanks for the cooperation!
