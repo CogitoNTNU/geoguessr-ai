@@ -41,7 +41,6 @@ def collect_google_streetview(lat: float, lon: float):
         filename = f"out/streetview_{lat}_{lon}_heading_{heading}.jpg"
         with open(filename, "wb") as f:
             f.write(r.content)
-        print(f"Saved image to {filename}")
 
 
 def getAllCoordinates() -> np.ndarray[(float, float)]:
@@ -72,7 +71,7 @@ def cleanup_temp_files():
                 os.remove(file_path)
             except Exception as e:
                 print(f"Error deleting file {file_path}: {e}")
-    print("Temporary files cleaned up.")
+    print("🔥🗑️Temporary files cleaned up.")
 
 
 def get_points(points_to_collect: np.ndarray[(float, float)]):
@@ -83,8 +82,6 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
     for i, (lat, lon) in enumerate(points_to_collect):
         if i % 100 == 0:
             print(f"Collecting point {i + 1}/{total_points}: lat {lat}, lon {lon}")
-            if i == 0:
-                continue
             if collected_points:
                 upload_dataset_from_folder(folder="out")
                 cleanup_temp_files()
@@ -98,6 +95,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
         except Exception as e:
             print(f"❌ Error collecting point {i + 1} (lat: {lat}, lon: {lon}): {e}")
             continue
+
     if collected_points:
         upload_dataset_from_folder(folder="out")
         cleanup_temp_files()
@@ -111,7 +109,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = int(4 / pictures_per_point)
+    amount_of_pictures = int(8 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
@@ -123,6 +121,7 @@ if __name__ == "__main__":
     combined = np.vstack((total_points, collected_points))
     unique = np.unique(combined, axis=0)
 
-    points_to_collect = unique[amount_of_pictures]
+    points_to_collect = unique[:amount_of_pictures]
+
     get_points(points_to_collect)
     print("Program complete!")
