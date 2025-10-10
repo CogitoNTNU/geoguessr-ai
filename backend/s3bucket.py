@@ -131,6 +131,18 @@ def load_latest_snapshot_df() -> pd.DataFrame:
     return df
 
 
+def pick_image(rec, h):
+    images = rec["images"]
+    ang = float(h) % 360  # handle strings/floats robustly
+
+    def circ_dist(a, b):
+        # smallest angular distance (0..180)
+        return abs((a - b + 180) % 360 - 180)
+
+    nearest_key = min(images.keys(), key=lambda k: circ_dist(k, ang))
+    return images[nearest_key]
+
+
 def merge_snapshot(prev: pd.DataFrame | None, batch_df: pd.DataFrame) -> pd.DataFrame:
     if prev is None or prev.empty:
         return batch_df.copy()
@@ -212,7 +224,7 @@ def records_from_streetview_index(
         lat, lon = rec["lat"], rec["lon"]
         loc_id = make_location_id(lat, lon)  # quantized hash from your script
         for h in headings:
-            img_path = rec["images"].get(int(h) % 360)
+            img_path = pick_image(rec, h)
             if not img_path:
                 continue
             records.append(
@@ -321,3 +333,6 @@ def load_points():
 
 
 # upload_dataset_from_folder("./dataset", max_workers=24)
+
+points = load_points()
+print(points)
