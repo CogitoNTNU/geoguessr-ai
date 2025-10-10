@@ -1,5 +1,5 @@
 import os
-from google_api.street_view import sign_url
+from data.street_view_images_collection.google_api.street_view import sign_url
 import requests
 from urllib.parse import urlencode
 import random
@@ -76,48 +76,53 @@ def cleanup_temp_files():
 
 
 def get_points(points_to_collect: np.ndarray[(float, float)]):
-    collected_points = np.ndarray([])
-    for i in range(len(points_to_collect)):
-        lat = points_to_collect[i][0]
-        lon = points_to_collect[i][1]
+    collected_points = []
+    success_count = 0
+    total_points = len(points_to_collect)
 
+    for i, (lat, lon) in enumerate(points_to_collect):
         if i % 100 == 0:
-            print(
-                f"Collecting point {i + 1}/{len(points_to_collect)}: lat {lat}, lon {lon}"
-            )
-            upload_dataset_from_folder(folder="out")
-            cleanup_temp_files()
-            update_collected_points(collected_points)
-            collected_points = np.ndarray([])
+            print(f"Collecting point {i + 1}/{total_points}: lat {lat}, lon {lon}")
+            if i == 0:
+                continue
+            if collected_points:
+                upload_dataset_from_folder(folder="out")
+                cleanup_temp_files()
+                update_collected_points(np.array(collected_points))
+                collected_points = []
 
         try:
             collect_google_streetview(lat, lon)
-            np.append(collected_points, np.array([[lat, lon]]), axis=0)
+            collected_points.append([lat, lon])
+            success_count += 1
         except Exception as e:
-            print(f"Error collecting point at lat: {lat}, lon: {lon}: error:{e}")
+            print(f"❌ Error collecting point {i + 1} (lat: {lat}, lon: {lon}): {e}")
             continue
+    if collected_points:
+        upload_dataset_from_folder(folder="out")
+        cleanup_temp_files()
+        update_collected_points(np.array(collected_points))
 
-    upload_dataset_from_folder(folder="out")
-    cleanup_temp_files()
-    update_collected_points(collected_points)
-    print(f"Data collection complete. Collected {len(points_to_collect)} new points.")
+    print("\n✅ Data collection complete.")
+    print(f"Total points: {total_points}")
+    print(f"Successfully collected: {success_count}")
 
 
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = 9900 / pictures_per_point
+    amount_of_pictures = int(4 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
     if extra_credits_result.lower() == "y":
-        amount_of_pictures = 51_000 / pictures_per_point
+        amount_of_pictures = int(51_000 / pictures_per_point)
 
     total_points = getAllCoordinates()
     collected_points = getCollectedCoordinates()
     combined = np.vstack((total_points, collected_points))
     unique = np.unique(combined, axis=0)
 
-    points_to_collect = unique[amount_of_pictures:]
+    points_to_collect = unique[amount_of_pictures]
     get_points(points_to_collect)
     print("Program complete!")
