@@ -103,7 +103,43 @@
 
 ![Google cloud](doc_pictures/15.png)
 
-## Now finished with the Google API key, moving on to how to run the script:
+# How To Access AWS S3 Buckets in Python
+
+## Step 1 — Install AWS CLI
+
+### Linux:
+
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+```
+
+### macOS:
+
+```bash
+curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+sudo installer -pkg AWSCLIV2.pkg -target /
+```
+
+## Step 2 — Configure AWS Credentials
+
+Run in terminal:
+
+```bash
+aws configure
+```
+
+Fill in the prompted values according to credentials you will be sent on Slack:
+
+```bash
+AWS Access Key ID [None]: <YourAccessKey>
+AWS Secret Access Key [None]: <YourSecretKey>
+Default region name [None]: eu-north-1
+Default output format [None]: json
+```
+
+### Now finished with the Google API key and AWS, moving on to how to run the script:
 
 ## Step 1 - Run the script
 
@@ -116,8 +152,9 @@ This is to make sure we get all the pictures and no overlap in the collection.
 1. Activate venv or create with `uv venv`
 1. Make sure you have the lasted dependencies updated and installed
 1. Make sure the terminal is in the outer most folder
-1. Run `uv run data/street_view_images_collection/main.py`
+1. Run `uv run -m data.street_view_images_collection.main`
    1. Select if you have the extra credits with "y" or "n" or other key if you don't have
    1. Let it run undisturbed! (if you are using a laptop, make sure it does not go into sleep mode, plug it in and turn off sleeping after inactivity)
    1. The script will give some status updates when it runs, you can use this to see how it's doing
+1. Make sure to `git add` and `git commit` and `git push` the "sv_points_latlong_collected.txt" after running the script. This will make sure we don't have overlap in the points we collect.
 1. Thanks for the cooperation!
