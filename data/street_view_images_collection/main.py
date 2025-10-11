@@ -80,7 +80,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
     total_points = len(points_to_collect)
 
     for i, (lat, lon) in enumerate(points_to_collect):
-        if i % 100 == 0:
+        if i % 25 == 0:
             print(f"Collecting point {i + 1}/{total_points}: lat {lat}, lon {lon}")
             if collected_points:
                 upload_dataset_from_folder(folder="out")
