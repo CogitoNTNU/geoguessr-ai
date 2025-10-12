@@ -131,7 +131,7 @@ if __name__ == "__main__":
     unique_points = np.unique(total_points, axis=0)
     points_to_collect = setdiff2d(unique_points, collected_points)
 
-    points_to_collect = points_to_collect[:20]
+    points_to_collect = points_to_collect[:amount_of_pictures]
 
     get_points(points_to_collect)
     print("Program complete!")
