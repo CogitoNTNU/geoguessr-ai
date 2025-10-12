@@ -74,6 +74,16 @@ def cleanup_temp_files():
     print("🔥🗑️Temporary files cleaned up.")
 
 
+def setdiff2d(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Row-wise set difference: rows in a that are not in b."""
+    if b.size == 0:
+        return a.copy()
+    a_view = np.ascontiguousarray(a).view([("", a.dtype)] * a.shape[1])
+    b_view = np.ascontiguousarray(b).view([("", b.dtype)] * b.shape[1])
+    diff = np.setdiff1d(a_view, b_view, assume_unique=False)
+    return diff.view(a.dtype).reshape(-1, a.shape[1])
+
+
 def get_points(points_to_collect: np.ndarray[(float, float)]):
     collected_points = []
     success_count = 0
@@ -118,10 +128,10 @@ if __name__ == "__main__":
 
     total_points = getAllCoordinates()
     collected_points = getCollectedCoordinates()
-    combined = np.vstack((total_points, collected_points))
-    unique = np.unique(combined, axis=0)
+    unique_points = np.unique(total_points, axis=0)
+    points_to_collect = setdiff2d(unique_points, collected_points)
 
-    points_to_collect = unique[:amount_of_pictures]
+    points_to_collect = points_to_collect[:20]
 
     get_points(points_to_collect)
     print("Program complete!")
