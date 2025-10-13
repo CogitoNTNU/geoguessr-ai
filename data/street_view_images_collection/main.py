@@ -1,5 +1,4 @@
 import os
-from data.street_view_images_collection.google_api.street_view import sign_url
 import requests
 from urllib.parse import urlencode
 import random
@@ -28,10 +27,13 @@ def fetch_streetview_image(lat: float, lon: float, heading: int):
     }
 
     url = f"{IMAGE_BASE}?{urlencode(params)}"
-    url = sign_url(url, SIGNING_SECRET) if SIGNING_SECRET else url
+    if SIGNING_SECRET:
+        url += f"&signature={SIGNING_SECRET}"
+    print(f"Fetching image from URL: {url}")
 
     r = requests.get(url, timeout=30)
-    # TODO: Add handling for 403: rate limit exceeded
+    if r.status_code == 403:
+        raise ConnectionError(f"Rate limit exceeded at {lat},{lon}")
     if r.status_code != 200:
         # print(f"{r.text} with the status code {r.status_code}")
         raise RuntimeError(
@@ -57,6 +59,9 @@ def collect_google_streetview(lat: float, lon: float) -> bool:
             try:
                 filename = future.result()
                 results.append(filename)
+            except ConnectionError as ce:
+                print(f"❌ {ce}")
+                raise ConnectionError(ce)
             except Exception:
                 return False
 
@@ -135,6 +140,12 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
 
             print(f"❌ Error collecting point (lat: {lat}, lon: {lon})")
             return (lat, lon, False)
+        except ConnectionError:
+            print(
+                "❌ Rate limit exceeded. Wait until the next day, or add your secret URL signing key to the .env file."
+            )
+            print("Exiting program!")
+            os._exit(1)  # Exit the entire program on rate limit error
         except Exception as e:
             print(f"❌ Error collecting point (lat: {lat}, lon: {lon}): {e}")
             return (lat, lon, False)
