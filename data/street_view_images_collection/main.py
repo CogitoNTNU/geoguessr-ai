@@ -31,7 +31,9 @@ def fetch_streetview_image(lat: float, lon: float, heading: int):
     url = sign_url(url, SIGNING_SECRET) if SIGNING_SECRET else url
 
     r = requests.get(url, timeout=30)
+    # TODO: Add handling for 403: rate limit exceeded
     if r.status_code != 200:
+        # print(f"{r.text} with the status code {r.status_code}")
         raise RuntimeError(
             f"Image fetch failed ({r.status_code}) for heading {heading}, lat {lat}, lon {lon}"
         )
@@ -128,7 +130,11 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
         """Thread-safe wrapper for collect_google_streetview."""
         try:
             res = collect_google_streetview(lat, lon)
-            return (lat, lon, True if res else False)
+            if res:
+                return (lat, lon, True)
+
+            print(f"❌ Error collecting point (lat: {lat}, lon: {lon})")
+            return (lat, lon, False)
         except Exception as e:
             print(f"❌ Error collecting point (lat: {lat}, lon: {lon}): {e}")
             return (lat, lon, False)
@@ -174,7 +180,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = int(10000 / pictures_per_point)
+    amount_of_pictures = int(9900 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
