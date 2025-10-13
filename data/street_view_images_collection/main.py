@@ -196,7 +196,7 @@ if __name__ == "__main__":
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
     if extra_credits_result.lower() == "y":
-        amount_of_pictures = int(51_000 / pictures_per_point)
+        amount_of_pictures = int(25_000 / pictures_per_point)
 
     start_time = time.time()
 
