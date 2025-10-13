@@ -117,40 +117,53 @@ def setdiff2d(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return diff.view(a.dtype).reshape(-1, a.shape[1])
 
 
-def get_points(points_to_collect: np.ndarray[(float, float)]):
+def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int = 8):
     collected_points = []
     success_count = 0
     total_points = len(points_to_collect)
     failed_points = []
     failed_count = 0
 
-    for i, (lat, lon) in enumerate(points_to_collect):
-        if i % 25 == 0:
-            print(f"Collecting point {i + 1}/{total_points}: lat {lat}, lon {lon}")
-            if collected_points:
-                upload_dataset_from_folder(folder="out")
-                cleanup_temp_files()
-                update_collected_points(np.array(collected_points))
-                collected_points = []
-            if failed_points:
-                update_failed_points(np.array(failed_points))
-                failed_points = []
+    def process_point(lat, lon):
+        """Thread-safe wrapper for collect_google_streetview."""
+        try:
+            res = collect_google_streetview(lat, lon)
+            return (lat, lon, True if res else False)
+        except Exception as e:
+            print(f"❌ Error collecting point (lat: {lat}, lon: {lon}): {e}")
+            return (lat, lon, False)
 
-        res = collect_google_streetview(lat, lon)
-        if res:
-            collected_points.append([lat, lon])
-            success_count += 1
-        else:
-            print(f"❌ Error collecting point {i + 1} (lat: {lat}, lon: {lon})")
-            failed_points.append((lat, lon))
-            failed_count += 1
+    # Process in batches of 25 to preserve your upload/cleanup cadence
+    for batch_start in range(0, total_points, 25):
+        batch_points = points_to_collect[batch_start : batch_start + 25]
+        print(
+            f"\nCollecting batch {batch_start + 1}-{batch_start + len(batch_points)} / {total_points}"
+        )
 
-    if collected_points:
-        upload_dataset_from_folder(folder="out")
-        cleanup_temp_files()
-        update_collected_points(np.array(collected_points))
-    if failed_points:
-        update_failed_points(np.array(failed_points))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(process_point, lat, lon) for lat, lon in batch_points
+            ]
+
+            for future in as_completed(futures):
+                lat, lon, success = future.result()
+                if success:
+                    collected_points.append([lat, lon])
+                    success_count += 1
+                else:
+                    failed_points.append([lat, lon])
+                    failed_count += 1
+
+        # After every batch, upload and clean up
+        if collected_points:
+            upload_dataset_from_folder(folder="out")
+            cleanup_temp_files()
+            update_collected_points(np.array(collected_points))
+            collected_points = []
+
+        if failed_points:
+            update_failed_points(np.array(failed_points))
+            failed_points = []
 
     print("\n✅ Data collection complete.")
     print(f"Total points: {total_points}")
@@ -161,7 +174,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)]):
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = int(100 / pictures_per_point)
+    amount_of_pictures = int(10000 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
