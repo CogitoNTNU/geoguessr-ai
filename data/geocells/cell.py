@@ -34,10 +34,7 @@ class Cell:
 
     def add_point(self, point):
         self.points.append(point)
-        try:
-            self.curr_coords = self.coords()
-        except Exception:
-            print(f"{point} HLLLL")
+        np.append(self.curr_coords, (point["latitude"], point["longitude"]))
 
     def get_neighbours(self, geocells):
         for cell in geocells:
@@ -52,9 +49,9 @@ class Cell:
         return union
 
     def coords(self):
-        if len(self.points) > 0:
-            print(self.points[0], self.points[0]["latitude"])
-        return np.ndarray([(p["latitude"], p["longitude"]) for p in self.points])
+        if len(self) > 0:
+            print(self.points[0]["latitude"])
+        return [(p["latitude"], p["longitude"]) for p in self.points]
 
     def is_empty(self):
         return len(self) == 0
@@ -196,8 +193,18 @@ class Cell:
         if len(self.points) < max_cell_size:
             return []
 
+        self.curr_coords = self.coords()
+        if self.curr_coords == 0:
+            return []
         print(self.curr_coords)
-        df = pd.DataFrame(data=[self.curr_coords], columns=["lng", "lat"])
+        lats = []
+        longs = []
+        for i in self.curr_coords:
+            lats.append(i[0])
+            longs.append(i[1])
+        data = [[point[0], point[1]] for point in self.curr_coords]
+        print(f"{data=}")
+        df = pd.DataFrame(data=data, columns=["lng", "lat"])
         df = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lng, df.lat), crs=CRS)
 
         clusterer = OPTICS(min_samples=cluster_args[0], xi=cluster_args[1])

@@ -41,7 +41,7 @@ class GenerateGeocells:
 
         self.generate_geocells()
 
-        self.cluster()
+        self.clustering()
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -203,10 +203,10 @@ class GenerateGeocells:
                 )
             cells_to_split = new_cells
 
-    def cluster(self):
+    def clustering(self):
         for cell in self.cells:
             if len(cell) > self.max_points:
-                new_cells = cluster.cluster(cell)
+                new_cells = cluster(cell)
 
         return new_cells
 
