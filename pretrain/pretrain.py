@@ -6,9 +6,15 @@ from random import shuffle
 from PIL import Image
 from typing import Tuple, Any
 from datasets import DatasetDict
-from transformers import CLIPProcessor
+from transformers import Trainer, TrainingArguments, CLIPModel, CLIPProcessor
 from torchvision.transforms import RandomCrop, CenterCrop
-from config import CLIP_MODEL, IMAGE_PATH, IMAGE_PATH_2, PRETRAIN_METADATA_PATH
+from config import (
+    CLIP_MODEL,
+    IMAGE_PATH,
+    IMAGE_PATH_2,
+    PRETRAIN_METADATA_PATH,
+    PRETAIN_ARGS,
+)
 
 # Initialize CLIP image processor
 clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL)
@@ -360,3 +366,58 @@ class PretrainDataset(torch.utils.data.Dataset):
 
         acc = sum(accs) / trials
         return acc
+
+
+# Initialize CLIP image processor
+clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL)
+
+
+def collate_fn(examples):
+    images = [example[0] for example in examples]
+    text = [example[1] for example in examples]
+    inputs = clip_processor(
+        images=images, text=text, return_tensors="pt", padding=True, truncation=True
+    )
+    inputs["return_loss"] = True
+    return inputs
+
+
+def pretrain(
+    model: str,
+    dataset: PretrainDataset,
+    train_args: TrainingArguments = PRETAIN_ARGS,
+    resume: bool = False,
+) -> CLIPModel:
+    """Pretrains a CLIP model on the given dataset.
+
+    Args:
+        model (str): Name of Huggingface model or trainable object.
+        dataset (PretrainDataset): Dataset to be used for contrasrive pretraining.
+        train_args (TrainingArguments, optional): Pretraining arguments. Defaults to PRETAIN_ARGS.
+        resume (bool, optional): Whether to resume model training from checkpoint.
+
+    Returns:
+        CLIPModel: Pretrained CLIP model.
+    """
+    model = CLIPModel.from_pretrained(model)
+
+    trainer = Trainer(
+        model=model,
+        args=train_args,
+        train_dataset=dataset["train"],
+        eval_dataset=dataset["val"],
+        data_collator=collate_fn,
+    )
+
+    # Before training
+    before_acc = dataset["val"].accuracy(model, batch_size=16)
+    print("Before traing: Accuracy on batch size of 16 is", before_acc)
+
+    # Train
+    if resume:
+        print("Resuming training from checkpoint ...")
+        trainer.train(resume_from_checkpoint=train_args.resume_from_checkpoint)
+
+    # After training
+    after_acc = dataset["val"].accuracy(model, batch_size=16)
+    print("After training: Accuracy on batch size of 16 is", after_acc)
