@@ -29,7 +29,6 @@ def fetch_streetview_image(lat: float, lon: float, heading: int):
     url = f"{IMAGE_BASE}?{urlencode(params)}"
     if SIGNING_SECRET:
         url += f"&signature={SIGNING_SECRET}"
-    print(f"Fetching image from URL: {url}")
 
     r = requests.get(url, timeout=30)
     if r.status_code == 403:
