@@ -149,12 +149,13 @@ Git pull the latest changes, and make sure you are the only one running the scri
 Make sure to give everyone a heads up in our Slack-channel when you run the script!
 This is to make sure we get all the pictures and no overlap in the collection.
 
-1. Activate venv or create with `uv venv`
-1. Make sure you have the lasted dependencies updated and installed
+1. Make sure you are on main branch and have the latest changes!
+1. (Optional): Activate venv or create with `uv venv`
+1. Make sure you have the lasted dependencies updated and installed: `uv sync`
 1. Make sure the terminal is in the outer most folder
 1. Run `uv run -m data.street_view_images_collection.main`
    1. Select if you have the extra credits with "y" or "n" or other key if you don't have
    1. Let it run undisturbed! (if you are using a laptop, make sure it does not go into sleep mode, plug it in and turn off sleeping after inactivity)
    1. The script will give some status updates when it runs, you can use this to see how it's doing
-1. Make sure to `git add` and `git commit` and `git push` the "sv_points_latlong_collected.txt" after running the script. This will make sure we don't have overlap in the points we collect.
+1. Make sure to `git add` and `git commit` and `git push` the "sv_points_latlong_collected.txt" and also "failed_points.txt" after running the script. This will make sure we don't have overlap in the points we collect.
 1. Thanks for the cooperation!
