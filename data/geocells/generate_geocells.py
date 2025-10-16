@@ -184,7 +184,7 @@ class GenerateGeocells:
         cells_to_split = [x for x in self.cells if len(x) > self.max_points]
         new_cells = []
         cluster_args = [
-            (300, 0.05),
+            (50, 0.005),
             (400, 0.005),
             (1000, 0.0001),
         ]  # Taken from paper, but should find better params
