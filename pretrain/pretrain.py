@@ -11,7 +11,6 @@ from torchvision.transforms import RandomCrop, CenterCrop
 from config import (
     CLIP_MODEL,
     IMAGE_PATH,
-    IMAGE_PATH_2,
     PRETRAIN_METADATA_PATH,
     PRETAIN_ARGS,
 )
@@ -135,7 +134,7 @@ class PretrainDataset(torch.utils.data.Dataset):
             Tuple: (Image, heading offset)
         """
         s = self.df.iloc[index]
-        if s.source.startswith("o"):
+        if s:
             # Select the correct of the four images for the given datapoint
             image_col = [x for x in self.df.columns if "image" in x][image_col_idx]
             image_filename = s[image_col]
@@ -145,33 +144,6 @@ class PretrainDataset(torch.utils.data.Dataset):
 
             # Calculate the heading offset
             angle_offset = image_col_idx * 90
-
-        elif s.source.startswith("l"):
-            # Randomly select one of the 5 images for the given datapoint
-            img_start = image_col_idx * 512
-            img_end = (image_col_idx + 1) * 512
-
-            # Load the image
-            image_filename = s["image"]
-            image = Image.open(IMAGE_PATH_2 + "/" + image_filename)
-            image = image.convert("RGB")
-            image = np.asarray(image, dtype=np.float32) / 255
-
-            # Select and crop image
-            image = image[:, img_start:img_end, :3] * 255
-            image = image.astype(np.uint8)
-            image = Image.fromarray(image)
-            image = l_cropper(image)
-
-            # Calculate the heading offset
-            angle_offset = image_col_idx * 72
-
-        elif s.source.startswith("v"):
-            # Load the image
-            image_filename = s["image"]
-            image = Image.open(image_filename)
-            image = v_cropper(image)
-            angle_offset = 0
 
         else:
             raise Exception(f"Invalid image source: {s.source}")
