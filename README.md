@@ -28,6 +28,8 @@
 
 ## Description
 
+🌍CV-based AI model that is able to predict location (coordinates) of picture in world🌏
+
 <!-- TODO: Provide a brief overview of what this project does and its key features. Please add pictures or videos of the application -->
 
 ## 🛠️ Prerequisites
@@ -77,6 +79,10 @@ To run the project, run the following command from the root directory of the pro
 
 <!-- TODO: Instructions on how to run the project and use its features. -->
 
+### 🏞️ Help us collect pictures to train on🌉
+
+Go to the [How To Collect Pictures](data/street_view_images_collection/HowToCollectPictures.md) for a step by step guide for how to help us collect more pictures. Your help is much appreciated!
+
 ### 📖 Generate Documentation Site
 
 To build and preview the documentation site locally:
@@ -101,16 +107,62 @@ uv run pytest --doctest-modules --cov=src --cov-report=html
 This project would not have been possible without the hard work and dedication of all of the contributors. Thank you for the time and effort you have put into making this project a reality.
 
 <table align="center">
-    <tr>
-        <!--
-        <td align="center">
-            <a href="https://github.com/NAME_OF_MEMBER">
-              <img src="https://github.com/NAME_OF_MEMBER.png?size=100" width="100px;" alt="NAME OF MEMBER"/><br />
-              <sub><b>NAME OF MEMBER</b></sub>
-            </a>
-        </td>
-        -->
-    </tr>
+  <tr>
+    <td align="center">
+        <a href="https://github.com/danielnhansen">
+            <img src="https://github.com/danielnhansen.png?size=100" width="100px;" alt="Daniel Neukirch Hansen"/><br />
+            <sub><b>Daniel Neukirch Hansen</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/jmnorheim">
+            <img src="https://github.com/jmnorheim.png?size=100" width="100px;" alt="Jens Martin Norheim Berget"/><br />
+            <sub><b>Jens Martin Norheim Berget</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/mvbryne">
+            <img src="https://github.com/mvbryne.png?size=100" width="100px;"/><br />
+            <sub><b>Magnus Bryne</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/sondrpe">
+            <img src="https://github.com/sondrpe.png?size=100" width="100px;"/><br />
+            <sub><b>Sondre Pettersen</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/perhber">
+            <img src="https://github.com/perhber.png?size=100" width="100px;"/><br />
+            <sub><b>Per Henrik Bergene Holm</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Parleenb">
+            <img src="https://github.com/Parleenb.png?size=100" width="100px;"/><br />
+            <sub><b>Parleen Brar</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/RomseBoms">
+            <img src="https://github.com/RomseBoms.png?size=100" width="100px;"/><br />
+            <sub><b>Romeo Henriksen</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Hako2807">
+            <img src="https://github.com/Hako2807.png?size=100" width="100px;"/><br />
+            <sub><b>Håkon Støren</b></sub>
+        </a>
+    </td>
+    <td align="center">
+        <a href="https://github.com/Vetlets05">
+            <img src="https://github.com/Vetlets05.png?size=100" width="100px;"/><br />
+            <sub><b>Vetle Støren</b></sub>
+        </a>
+    </td>
+  </tr>
 </table>
 
 ![Group picture](docs/img/team.png)
