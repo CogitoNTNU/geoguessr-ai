@@ -6,7 +6,7 @@ from transformers import TrainingArguments
 CLIP_MODEL = "openai/clip-vit-large-patch14-336"
 CLIP_EMBED_DIM = 1024
 
-TINYVIT_MODEL = "tiny_vit_21m_224.dist_in22k_ft_in1k"
+TINYVIT_MODEL = "tiny_vit_21m_512.dist_in22k_ft_in1k"
 
 ### StreetView
 METADATA_PATH = "data/data_duels.csv"
