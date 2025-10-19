@@ -4,6 +4,7 @@ import os
 from cell import Cell
 from tqdm import trange
 from cluster import cluster
+import pickle
 
 COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
@@ -25,8 +26,10 @@ class GenerateGeocells:
         self.countries = self.init_country_cells(FILEPATHS[2])
         self.admin_1 = self.init_admin_1_cells(FILEPATHS[0])
 
-        self.points = self.init_points(POINT_PATHS[0])
-
+        # self.points = self.init_points(POINT_PATHS[0])
+        self.points = self.init_points_from_lat_lng_file(
+            "data/out/sv_points_all_latlong.pkl"
+        )
         self.country_cells = {}
         # self.max_points = len(self.points)//10
         self.min_points = 5
@@ -38,7 +41,7 @@ class GenerateGeocells:
 
         self.generate_geocells()
 
-        self.cluster()
+        self.clustering()
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -57,6 +60,13 @@ class GenerateGeocells:
                 [points, gpd.GeoDataFrame.from_file(f"{filename}/{file}")]
             )
 
+        return points
+
+    def init_points_from_lat_lng_file(self, filename):
+        with open(filename, "rb") as file:
+            data = pickle.load(file)
+        points = data
+        print(points)
         return points
 
     def init_country_cells(self, filename):
@@ -126,10 +136,10 @@ class GenerateGeocells:
     def add_points_to_cells(self):
         for i in trange(len(self.points), desc="Legg til punkter", colour="BLUE"):
             point = self.points.iloc[i]
-            point_coords = [point["lng"], point["lat"]]
-            # TODO legg til database med punkt
-            if point["geocell"] is not None:
-                continue
+            point_coords = [point["longitude"], point["latitude"]]
+
+            # if point["geocell"] is not None:
+            #   continue
             for country in self.country_cells:
                 if self.country_cells[country][country][0].contains(point_coords):
                     # print(self.country_cells[country])
@@ -143,7 +153,7 @@ class GenerateGeocells:
                             for cell in self.country_cells[country][admin_1][1:]:
                                 if cell.contains(point_coords):
                                     cell.add_point(point)
-                                    point["geocell"] = cell.id
+                                    # point["geocell"] = cell.id
                                     break
                             break
                     break
@@ -171,10 +181,32 @@ class GenerateGeocells:
             if visited:
                 cell.combine(visited)
 
-    def cluster(self):
+        cells_to_split = [x for x in self.cells if len(x) > self.max_points]
+        new_cells = []
+        cluster_args = [
+            (50, 0.005),
+            (400, 0.005),
+            (1000, 0.0001),
+        ]  # Taken from paper, but should find better params
+        chosen_cluster_args = cluster_args[0]
+        num_iter = 0
+        while len(cells_to_split) > 0:
+            num_iter += 1
+            for i in trange(
+                0,
+                len(cells_to_split),
+                desc=f"Splitting geocells, iteration: {num_iter}",
+            ):
+                cell = cells_to_split[i]
+                cell.split_cell(
+                    new_cells, chosen_cluster_args, self.min_points, self.max_points
+                )
+            cells_to_split = new_cells
+
+    def clustering(self):
         for cell in self.cells:
             if len(cell) > self.max_points:
-                new_cells = cluster.cluster(cell)
+                new_cells = cluster(cell)
 
         return new_cells
 
