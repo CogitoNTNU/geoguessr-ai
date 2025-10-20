@@ -15,9 +15,9 @@ attrs==25.4.0 \
 boto3==1.40.48 \
     --hash=sha256:8a5fb8b5509cd5ddaf3d1d1f0385c974038b47492ca25f3414042676d188f635 \
     --hash=sha256:b993bbef91f3796f0ae69b2a310a6cef41a06348ed80961f0ebc804680d8e9a4
-botocore==1.40.48 \
-    --hash=sha256:18bed348ce707aa896065b424f36a0b8d542fa6810e9165618e105b1abf34e7e \
-    --hash=sha256:34795305bb5aa670befcbdc936fd144a0af5db5323d78e7245dbd6aa246bf3db
+botocore==1.40.55 \
+    --hash=sha256:79b6472e2de92b3519d44fc1eec8c5feced7f99a0d10fdea6dc93133426057c1 \
+    --hash=sha256:cdc38f7a4ddb30a2cd1cdd4fabde2a5a16e41b5a642292e1c30de5c4e46f5d44
 certifi==2025.10.5 \
     --hash=sha256:0f212c2744a9bb6de0c56639a6f68afe01ecd92d91f14ae897c4fe7bbeeef0de \
     --hash=sha256:47c09d31ccf2acf0be3f701ea53595ee7e0b8fa08801c6624be771df09ae7b43
