@@ -83,16 +83,6 @@ class PretrainDataset(torch.utils.data.Dataset):
         self.df = self.df.reset_index(drop=True)
         self.auxiliary = auxiliary
 
-        # Dataset cutoffs
-        self.cutoff_1 = len(self.df[self.df["source"].str.startswith("o")].index) * 4
-        self.cutoff_2 = (
-            len(self.df[self.df["source"].str.startswith("v")].index) + self.cutoff_1
-        )
-        self.cutoff_3 = (
-            len(self.df[self.df["source"].str.startswith("l")].index) * 5
-            + self.cutoff_2
-        )
-
         no_str = "no" if not auxiliary else ""
         print(f"Initialized {split} dataset with {no_str} auxiliary data.")
 

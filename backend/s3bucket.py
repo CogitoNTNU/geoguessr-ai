@@ -297,14 +297,17 @@ def download(dest_dir: str, overwrite: bool, row):
     path = row["image_path"]
     if not path.startswith("s3://"):
         return (path, "skipped (not s3)")
+    local = path.replace("s3://cogito-geoguessr/v1/images", "")
     bucket, key = path[5:].split("/", 1)
-    local_path = os.path.join(dest_dir, os.path.basename(key))
+    local_path = dest_dir + local
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
     if not overwrite and os.path.exists(local_path):
         return (local_path, "skipped (exists)")
     try:
         s3.download_file(bucket, key, local_path)
         return (local_path, "downloaded")
     except Exception as e:
+        print(e)
         return (local_path, f"failed: {e}")
 
 
@@ -336,3 +339,5 @@ def load_points():
 
 points = load_points()
 print(f"Total points saved in S3: {len(points)}")
+
+print(download_latest_images("out", True))
