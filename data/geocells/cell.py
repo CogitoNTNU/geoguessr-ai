@@ -12,6 +12,8 @@ from scipy.spatial import Voronoi
 from voronoi_polygon_2d import voronoi_finite_polygons_2d
 from sklearn.cluster import OPTICS
 
+import uuid
+
 CRS = "EPSG:4326"
 GEOCELL_COLUMNS = ["name", "admin_1", "country", "size", "num_polygons", "geometry"]
 
@@ -31,6 +33,8 @@ class Cell:
         self.country = country
         self.admin_1 = admin_1
         self.neighbours = set()
+
+        # self.centroid = [np.mean(self.curr_coords[:,0]), np.mean(self.curr_coords[:,1])]
 
     def add_point(self, point):
         self.points.append(point)
@@ -82,9 +86,6 @@ class Cell:
 
         self.current_shape = self.shape()
 
-    def split(self):
-        pass
-
     def subtract(self, other: Cell):
         try:
             difference_shape = self.current_shape.difference(other.current_shape)
@@ -108,7 +109,7 @@ class Cell:
 
         new_cell = Cell(new_id, points, polygons, self.country, self.admin_1)
         if contain_points and isinstance(new_cell.current_shape, MultiPolygon):
-            new_cell.current_shape = Polygon(new_cell.current_shape.exterior)
+            new_cell.current_shape = Polygon(new_cell.current_shape.envelope)
         return new_cell
 
     def contains(self, point):
@@ -160,9 +161,17 @@ class Cell:
         if coords is None:
             if getattr(self, "curr_coords", None) is None:
                 raise ValueError("No coords provided and self.curr_coords is missing")
+
             voronoi_coords = np.unique(self.curr_coords, axis=0)
+            temp = voronoi_coords[:, 0].copy()
+            voronoi_coords[:, 0] = voronoi_coords[:, 1]
+            voronoi_coords[:, 1] = temp
         else:
             voronoi_coords = np.unique(np.asarray(coords), axis=0)
+            temp = voronoi_coords[:, 0].copy()
+            voronoi_coords[:, 0] = voronoi_coords[:, 1]
+            voronoi_coords[:, 1] = temp
+        print(voronoi_coords)
 
         # need at least 2 or 3 points for a Voronoi; let Voronoi raise if invalid
         voronoi = Voronoi(voronoi_coords)
@@ -176,7 +185,9 @@ class Cell:
 
         # intersect with current cell shape (defensive: propagate readable error)
         try:
-            polygons = [p.intersection(self.current_shape) for p in polygons]
+            pass
+            # polygons = [p.intersection(self.current_shape) for p in polygons]
+
         except TopologicalError:
             print(f"Error in voronoi_polygons in cell {getattr(self, 'id', 'unknown')}")
             raise
@@ -193,7 +204,9 @@ class Cell:
             # normalize: if self.points contains tuples, convert to Point()
             pts = list(self.points)
             if len(pts) > 0 and not isinstance(pts[0], Point):
-                points = [Point(float(x), float(y)) for x, y in pts]
+                points = [
+                    Point(float(i["latitude"]), float(i["longitude"])) for i in pts
+                ]
             else:
                 points = pts
 
@@ -273,6 +286,7 @@ class Cell:
             pass
 
         # now safe to index polygons
+        print(f"{polygons=}")
         return [polygons[i] for i in idxs]
 
     def separate_single_cluster(self, df: pd.DataFrame, cluster=0):
@@ -311,8 +325,11 @@ class Cell:
             new_cells = []
             for cluster, polygon in zip(cc["cluster"].unique(), polygons):
                 cluster_coords = df[df["cluster"] == cluster][["lat", "lng"]]
+                print("Her kommer cluster_coords: ")
+                print(cluster_coords)
                 cluster_points = [
-                    Point(row.lat, row.lng) for _, row in cluster_coords.iterrows()
+                    {"id": id, "latitude": row["lat"], "longitude": row["lng"]}
+                    for id, row in cluster_coords.iterrows()
                 ]
                 new_cell = self.separate_points(
                     cluster_points, [polygon], contain_points=True
@@ -469,14 +486,20 @@ class Cell:
     def __len__(self):
         return len(self.points)
 
+    def __lt__(self, other):
+        return len(self) < len(other)
+
     def __repr__(self):
-        return f"Geocell {self.id}    | Number of points {len(self)}"
+        return f"\nGeocell {self.id}    | Number of points {len(self)}"
 
     def __str__(self):
         return self.__repr__()
 
     def __hash__(self):
-        return hash(self.id)
+        if hasattr(self, "id"):
+            return hash(self.id)
+        else:
+            return hash(uuid.uuid4())
 
 
 if __name__ == "__main__":
