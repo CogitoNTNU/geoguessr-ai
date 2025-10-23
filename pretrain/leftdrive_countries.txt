@@ -1,0 +1,31 @@
+Australia, 1
+Bangladesh, 1
+Bermuda, 1
+Bhutan, 1
+Botswana, 1
+Christmas Island, 1
+Cocos (Keeling) Islands, 1
+Eswatini (Swaziland), 1
+Hong Kong, 1
+India, 1
+Indonesia, 1
+Ireland, 1
+Isle of Man, 1
+Japan, 1
+Jersey, 1
+Kenya, 1
+Lesotho, 1
+Macau, 1
+Malaysia, 1
+Malta, 1
+Namibia, 1
+Nepal, 1
+New Zealand, 1
+Pitcairn Islands, 1
+Singapore, 1
+South Africa, 1
+Sri Lanka, 1
+Thailand, 1
+Uganda, 1
+United Kingdom, 1
+United States Virgin Islands, 1
