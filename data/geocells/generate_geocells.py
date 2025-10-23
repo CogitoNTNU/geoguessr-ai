@@ -5,11 +5,16 @@ from cell import Cell
 from tqdm import trange
 import pickle
 import heapq
+import sqlite3
+from shapely import wkb as shapely_wkb
+import struct
 
 
 COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
 ADMIN_1_COLS = ["data", "COUNTRY", "NAME_1", "geometry"]
+
+COUNTRY = ["Norway"]
 
 FILEPATHS = [
     "data/GADM_data/GADM_admin_1",
@@ -24,9 +29,10 @@ POINT_PATHS = [
 
 class GenerateGeocells:
     def __init__(self):
-        self.admin_2 = self.get_dataframe(FILEPATHS[1])
-        self.countries = self.init_country_cells(FILEPATHS[2])
-        self.admin_1 = self.init_admin_1_cells(FILEPATHS[0])
+        self.init_sql_database()
+        # self.admin_2 = self.get_dataframe(FILEPATHS[1])
+        # self.countries = self.init_country_cells(FILEPATHS[2])
+        # self.admin_1 = self.init_admin_1_cells(FILEPATHS[0])
 
         # self.points = self.init_points(POINT_PATHS[0])
         self.points = self.init_points_from_lat_lng_file(
@@ -41,21 +47,33 @@ class GenerateGeocells:
         self.add_points_to_cells()
         self.cells.sort(key=lambda x: -len(x.points))
 
-        # self.generate_geocells()
+        self.generate_geocells()
 
         # self.save_geocells(FILEPATHS[3])
         print("Saved geocells to file")
-        self.cells = []
-        self.country_cells = {}
+        # self.cells = []
+        # self.country_cells = {}
 
-        self.load_geocells(FILEPATHS[3])
+        # self.load_geocells(FILEPATHS[3])
 
-        print(self.country_cells)
-        for country in self.country_cells:
-            for admin_1 in self.country_cells[country]:
-                for cell in self.country_cells[country][admin_1]:
-                    if len(cell) > 0:
-                        self.cells.append(cell)
+        # print(self.country_cells)
+        # for country in self.country_cells:
+        #     for admin_1 in self.country_cells[country]:
+        #         for cell in self.country_cells[country][admin_1]:
+        #             if len(cell) > 0:
+        #                 self.cells.append(cell)
+
+    def init_sql_database(self):
+        sql = sqlite3.connect(
+            "data/GADM_data/gadm_world_all_levels.filtered_noadm345.gpkg"
+        )
+        self.admin_2 = pd.read_sql_query("SELECT * FROM ADM_2", sql)
+        self.admin_1 = pd.read_sql_query("SELECT * FROM ADM_1", sql)
+        self.countries = pd.read_sql_query("SELECT * FROM ADM_0", sql)
+
+        print(self.countries["geom"][1])
+
+        sql.close()
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -107,40 +125,142 @@ class GenerateGeocells:
 
         return admin_1_df
 
+    def parse_gpkg_blob(self, blob: bytes):
+        """
+        Parse a GeoPackage geometry BLOB (starts with b'GP') and return a dict containing:
+        - is_gpkg: bool
+        - wkb: bytes (the extracted WKB)
+        - srs_id: int
+        - envelope_bytes: int
+        - version, flags, header_little_endian, envelope_indicator
+        - geometry: Shapely geometry (if shapely can parse), otherwise not present
+        - geometry_error: error message if shapely failed
+        """
+        if blob is None:
+            raise ValueError("None blob")
+        if not isinstance(blob, (bytes, bytearray)):
+            # not bytes: assume it's already a geometry object or WKT/etc
+            return {
+                "is_gpkg": False,
+                "wkb": blob,
+                "srs_id": None,
+                "envelope_bytes": 0,
+                "version": None,
+                "flags": None,
+            }
+
+        if len(blob) < 8:
+            raise ValueError("Blob too short to be a GeoPackage geometry")
+
+        if blob[0:2] != b"GP":
+            # Not a GeoPackage header: assume it's raw WKB already
+            return {
+                "is_gpkg": False,
+                "wkb": bytes(blob),
+                "srs_id": None,
+                "envelope_bytes": 0,
+                "version": None,
+                "flags": None,
+            }
+
+        # Parse header
+        version = blob[2]
+        flags = blob[3]
+        # bit 0 = byte order for header (0 big endian, 1 little endian)
+        header_little_endian = bool(flags & 0x01)
+        # envelope indicator = bits 1-3
+        envelope_indicator = (flags >> 1) & 0x07
+        # envelope bytes mapping per GeoPackage spec:
+        envelope_len_map = {0: 0, 1: 32, 2: 48, 3: 48, 4: 64}
+        if envelope_indicator not in envelope_len_map:
+            raise ValueError(f"invalid envelope indicator: {envelope_indicator}")
+        envelope_bytes = envelope_len_map[envelope_indicator]
+
+        # srs_id (int32) uses header byte order
+        byteorder = "<" if header_little_endian else ">"
+        srs_id = struct.unpack(f"{byteorder}i", blob[4:8])[0]
+
+        wkb_start = 8 + envelope_bytes
+        if len(blob) <= wkb_start:
+            raise ValueError("No WKB bytes present after header+envelope")
+
+        wkb = bytes(blob[wkb_start:])
+
+        out = {
+            "is_gpkg": True,
+            "wkb": wkb,
+            "srs_id": srs_id,
+            "envelope_bytes": envelope_bytes,
+            "version": version,
+            "flags": flags,
+            "header_little_endian": header_little_endian,
+            "envelope_indicator": envelope_indicator,
+        }
+
+        # Try to load shapely geometry (WKB starts with its own endian byte)
+        try:
+            geom = shapely_wkb.loads(wkb)
+            out["geometry"] = geom
+        except Exception as e:
+            out["geometry_error"] = str(e)
+
+        return out
+
     def init_cells(self):
         print("Initializing cells")
         cells = []
+
+        self.countries["geom"] = self.countries["geom"].apply(
+            lambda g: self.parse_gpkg_blob(g)["geometry"]
+        )
+
+        self.admin_1["geom"] = self.admin_1["geom"].apply(
+            lambda g: self.parse_gpkg_blob(g)["geometry"]
+        )
+
+        self.admin_2["geom"] = self.admin_2["geom"].apply(
+            lambda g: self.parse_gpkg_blob(g)["geometry"]
+        )
+
+        print(self.countries)
+
         for i in trange(len(self.countries), desc="Celler av land: "):
             name = self.countries.iloc[i]["COUNTRY"]
             admin_1 = name
             country = name
 
-            polygons = [j for j in self.countries.iloc[i]["geometry"].geoms]
-            cell = Cell(name, [], polygons, country, admin_1)
+            if country in COUNTRY:
+                polygons = [j for j in (self.countries.iloc[i]["geom"]).geoms]
+                cell = Cell(name, [], polygons, country, admin_1)
 
-            self.country_cells[country] = {country: [cell]}
+                self.country_cells[country] = {country: [cell]}
 
         for i in trange(len(self.admin_1), desc="Celler av admin 1"):
             name = self.admin_1.iloc[i]["NAME_1"]
             admin_1 = name
             country = self.admin_1.iloc[i]["COUNTRY"]
 
-            polygons = [j for j in self.admin_1.iloc[i]["geometry"].geoms]
-            cell = Cell(name, [], polygons, country, admin_1)
+            if country in self.country_cells:
+                polygons = [j for j in self.admin_1.iloc[i]["geom"].geoms]
+                cell = Cell(name, [], polygons, country, admin_1)
 
-            self.country_cells[country][admin_1] = [cell]
+                self.country_cells[country][admin_1] = [cell]
 
         for i in trange(len(self.admin_2), desc="Celler av admin 2"):
             name = self.admin_2.iloc[i]["NAME_2"]
             admin_1 = self.admin_2.iloc[i]["NAME_1"]
             country = self.admin_2.iloc[i]["COUNTRY"]
 
-            polygons = [j for j in self.admin_2.iloc[i]["geometry"].geoms]
-            cell = Cell(name, [], polygons, country, admin_1)
+            if country in self.country_cells:
+                polygons = [j for j in self.admin_2.iloc[i]["geom"].geoms]
+                cell = Cell(name, [], polygons, country, admin_1)
 
-            self.country_cells[country][admin_1].append(cell)
-            self.country_cells[country][country].append(cell)
-            cells.append(cell)
+                if admin_1 not in self.country_cells[country]:
+                    self.country_cells[country][admin_1] = []
+
+                self.country_cells[country][admin_1].append(cell)
+                self.country_cells[country][country].append(cell)
+                cells.append(cell)
 
         for i in trange(len(cells), desc="Legg til naboer", colour="GREEN"):
             cell = cells[i]
