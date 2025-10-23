@@ -335,6 +335,11 @@ def load_points():
     return point_df
 
 
+def add_metadata():
+    df = load_latest_snapshot_df()
+    df = df.drop_duplicates(subset=["lat", "lon"], keep="first").reset_index(drop=True)
+
+
 # upload_dataset_from_folder("./dataset", max_workers=24)
 
 points = load_points()
