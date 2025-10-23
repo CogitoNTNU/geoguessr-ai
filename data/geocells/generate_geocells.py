@@ -3,8 +3,9 @@ import pandas as pd
 import os
 from cell import Cell
 from tqdm import trange
-from cluster import cluster
 import pickle
+import heapq
+
 
 COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
@@ -14,6 +15,7 @@ FILEPATHS = [
     "data/GADM_data/GADM_admin_1",
     "data/GADM_data/GADM_admin_2",
     "data/GADM_data/GADM_country",
+    "data/geocells/finished_geocells",
 ]
 POINT_PATHS = [
     "data/point_data",
@@ -39,9 +41,21 @@ class GenerateGeocells:
         self.add_points_to_cells()
         self.cells.sort(key=lambda x: -len(x.points))
 
-        self.generate_geocells()
+        # self.generate_geocells()
 
-        self.clustering()
+        # self.save_geocells(FILEPATHS[3])
+        print("Saved geocells to file")
+        self.cells = []
+        self.country_cells = {}
+
+        self.load_geocells(FILEPATHS[3])
+
+        print(self.country_cells)
+        for country in self.country_cells:
+            for admin_1 in self.country_cells[country]:
+                for cell in self.country_cells[country][admin_1]:
+                    if len(cell) > 0:
+                        self.cells.append(cell)
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -158,7 +172,7 @@ class GenerateGeocells:
                             break
                     break
 
-    def generate_geocells(self):
+    def combine_geocells(self):
         cells_to_combine = [i for i in self.cells if len(i) < self.min_points]
         for i in trange(len(cells_to_combine), desc="Slå sammen celler"):
             cell = cells_to_combine[i]
@@ -181,6 +195,7 @@ class GenerateGeocells:
             if visited:
                 cell.combine(visited)
 
+    def split_geocells(self):
         cells_to_split = [x for x in self.cells if len(x) > self.max_points]
         new_cells = []
         cluster_args = [
@@ -189,26 +204,40 @@ class GenerateGeocells:
             (1000, 0.0001),
         ]  # Taken from paper, but should find better params
         chosen_cluster_args = cluster_args[0]
-        num_iter = 0
-        while len(cells_to_split) > 0:
-            num_iter += 1
-            for i in trange(
-                0,
-                len(cells_to_split),
-                desc=f"Splitting geocells, iteration: {num_iter}",
-            ):
-                cell = cells_to_split[i]
-                cell.split_cell(
-                    new_cells, chosen_cluster_args, self.min_points, self.max_points
-                )
-            cells_to_split = new_cells
 
-    def clustering(self):
-        for cell in self.cells:
-            if len(cell) > self.max_points:
-                new_cells = cluster(cell)
+        while cells_to_split:
+            cell = heapq.heappop(cells_to_split)
 
-        return new_cells
+            more_cells = cell.split_cell(
+                new_cells, chosen_cluster_args, self.min_points, self.max_points
+            )
+            for more_cell in more_cells:
+                heapq.heappush(cells_to_split, more_cell)
+
+        print(f"{new_cells[0].current_shape=}")
+        self.cells += new_cells
+
+    def generate_geocells(self):
+        self.combine_geocells()
+        # visualizer = geocell_visualizer.CellVisualizer(self)
+        # visualizer.show()
+        # self.split_geocells()
+
+    def save_geocells(self, dir):
+        for country in self.country_cells.keys():
+            filepath = f"{dir}/geocells_{country}.pickle"
+            with open(filepath, "wb") as f:
+                pickle.dump(self.country_cells[country], f)
+
+    def load_geocells(self, dir):
+        for file in list(os.walk(dir))[0][2]:
+            carved_country_name = file.split("_")[-1].split(".")[0]
+            print(carved_country_name)
+            with open(dir + "/" + file, "rb") as f:
+                data = pickle.load(f)
+                self.country_cells[carved_country_name] = data
+                print("______________________________ ", type(data))
+                print(data)
 
     def __str__(self):
         return f"{self.cells}"
