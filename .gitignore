@@ -257,6 +257,7 @@ Thumbs.db
 *.html
 #AWS
 aws
+awscliv2.zip
 
 # env files
 *.env
