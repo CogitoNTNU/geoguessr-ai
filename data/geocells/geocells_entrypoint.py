@@ -5,6 +5,9 @@ import generate_geocells
 import cell_visualizer
 import load_admin_data
 import test_geocells
+import cluster
+
+import random
 
 import argparse
 
@@ -19,7 +22,8 @@ parser.add_argument(
                      4: load_admin_data \n
                      5: cell \n
                      6: test_geocells\n
-                     7: Kjør geocells""",
+                     7: Kjør geocells\n
+                     8: Test clustering""",
     type=int,
 )
 args = parser.parse_args()
@@ -69,6 +73,13 @@ def main():
 
         visualizer = geocell_visualizer.CellVisualizer(geocells)
         visualizer.show()
+    elif args.mode == 8:
+        points = [{"lng": random.random(), "lat": random.random()} for i in range(100)]
+
+        a = cell.Cell("hallo", points, [], "Hallo", "Hallo")
+
+        print(cluster.cluster(a))
+
     else:
         print("Not a valid mode!")
 

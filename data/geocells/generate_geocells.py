@@ -3,7 +3,9 @@ import pandas as pd
 import os
 from cell import Cell
 from tqdm import trange
-from cluster import cluster
+import pickle
+import heapq
+
 
 COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
@@ -13,6 +15,7 @@ FILEPATHS = [
     "data/GADM_data/GADM_admin_1",
     "data/GADM_data/GADM_admin_2",
     "data/GADM_data/GADM_country",
+    "data/geocells/finished_geocells",
 ]
 POINT_PATHS = [
     "data/point_data",
@@ -25,19 +28,34 @@ class GenerateGeocells:
         self.countries = self.init_country_cells(FILEPATHS[2])
         self.admin_1 = self.init_admin_1_cells(FILEPATHS[0])
 
-        self.points = self.init_points(POINT_PATHS[0])
-
+        # self.points = self.init_points(POINT_PATHS[0])
+        self.points = self.init_points_from_lat_lng_file(
+            "data/out/sv_points_all_latlong.pkl"
+        )
         self.country_cells = {}
         # self.max_points = len(self.points)//10
-        self.max_points = 5
+        self.min_points = 5
+        self.max_points = 50
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
         self.cells.sort(key=lambda x: -len(x.points))
 
-        self.generate_geocells()
+        # self.generate_geocells()
 
-        cluster()
+        # self.save_geocells(FILEPATHS[3])
+        print("Saved geocells to file")
+        self.cells = []
+        self.country_cells = {}
+
+        self.load_geocells(FILEPATHS[3])
+
+        print(self.country_cells)
+        for country in self.country_cells:
+            for admin_1 in self.country_cells[country]:
+                for cell in self.country_cells[country][admin_1]:
+                    if len(cell) > 0:
+                        self.cells.append(cell)
 
     def get_dataframe(self, filename):
         df = gpd.GeoDataFrame()
@@ -56,6 +74,13 @@ class GenerateGeocells:
                 [points, gpd.GeoDataFrame.from_file(f"{filename}/{file}")]
             )
 
+        return points
+
+    def init_points_from_lat_lng_file(self, filename):
+        with open(filename, "rb") as file:
+            data = pickle.load(file)
+        points = data
+        print(points)
         return points
 
     def init_country_cells(self, filename):
@@ -125,10 +150,10 @@ class GenerateGeocells:
     def add_points_to_cells(self):
         for i in trange(len(self.points), desc="Legg til punkter", colour="BLUE"):
             point = self.points.iloc[i]
-            point_coords = [point["lng"], point["lat"]]
-            # TODO legg til database med punkt
-            if point["geocell"] is not None:
-                continue
+            point_coords = [point["longitude"], point["latitude"]]
+
+            # if point["geocell"] is not None:
+            #   continue
             for country in self.country_cells:
                 if self.country_cells[country][country][0].contains(point_coords):
                     # print(self.country_cells[country])
@@ -142,20 +167,20 @@ class GenerateGeocells:
                             for cell in self.country_cells[country][admin_1][1:]:
                                 if cell.contains(point_coords):
                                     cell.add_point(point)
-                                    point["geocell"] = cell.id
+                                    # point["geocell"] = cell.id
                                     break
                             break
                     break
 
-    def generate_geocells(self):
-        cells_to_combine = [i for i in self.cells if len(i) < self.max_points]
+    def combine_geocells(self):
+        cells_to_combine = [i for i in self.cells if len(i) < self.min_points]
         for i in trange(len(cells_to_combine), desc="Slå sammen celler"):
             cell = cells_to_combine[i]
             total_points = len(cell)
 
             queue = [i for i in cell.neighbours]
             visited = set()
-            while (total_points < self.max_points) and queue:
+            while (total_points < self.min_points) and queue:
                 cell_to_add = queue.pop(0)
                 for j in cell_to_add.neighbours:
                     if j in visited:
@@ -169,6 +194,50 @@ class GenerateGeocells:
 
             if visited:
                 cell.combine(visited)
+
+    def split_geocells(self):
+        cells_to_split = [x for x in self.cells if len(x) > self.max_points]
+        new_cells = []
+        cluster_args = [
+            (50, 0.005),
+            (400, 0.005),
+            (1000, 0.0001),
+        ]  # Taken from paper, but should find better params
+        chosen_cluster_args = cluster_args[0]
+
+        while cells_to_split:
+            cell = heapq.heappop(cells_to_split)
+
+            more_cells = cell.split_cell(
+                new_cells, chosen_cluster_args, self.min_points, self.max_points
+            )
+            for more_cell in more_cells:
+                heapq.heappush(cells_to_split, more_cell)
+
+        print(f"{new_cells[0].current_shape=}")
+        self.cells += new_cells
+
+    def generate_geocells(self):
+        self.combine_geocells()
+        # visualizer = geocell_visualizer.CellVisualizer(self)
+        # visualizer.show()
+        # self.split_geocells()
+
+    def save_geocells(self, dir):
+        for country in self.country_cells.keys():
+            filepath = f"{dir}/geocells_{country}.pickle"
+            with open(filepath, "wb") as f:
+                pickle.dump(self.country_cells[country], f)
+
+    def load_geocells(self, dir):
+        for file in list(os.walk(dir))[0][2]:
+            carved_country_name = file.split("_")[-1].split(".")[0]
+            print(carved_country_name)
+            with open(dir + "/" + file, "rb") as f:
+                data = pickle.load(f)
+                self.country_cells[carved_country_name] = data
+                print("______________________________ ", type(data))
+                print(data)
 
     def __str__(self):
         return f"{self.cells}"
