@@ -29,6 +29,8 @@ dependencies = [
     "transformers>=4.57.1",
     "torchvision>=0.23.0",
     "accelerate>=1.10.1",
+    "mmpretrain>=1.2.0",
+    "timm>=1.0.7",
 ]
 
 
