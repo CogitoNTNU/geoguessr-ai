@@ -7,6 +7,9 @@ import load_admin_data
 import test_geocells
 import cluster
 
+from tqdm import trange
+import sqlite3
+import pandas as pd
 import random
 
 import argparse
@@ -23,7 +26,8 @@ parser.add_argument(
                      5: cell \n
                      6: test_geocells\n
                      7: Kjør geocells\n
-                     8: Test clustering""",
+                     8: Test clustering\n
+                     9: Lagre geocells fra alle land""",
     type=int,
 )
 args = parser.parse_args()
@@ -69,7 +73,7 @@ def main():
 
         print(cells[0][1])
     elif args.mode == 7:
-        geocells = geocell_visualizer.GenerateGeocells()
+        geocells = geocell_visualizer.GenerateGeocells([""])
 
         visualizer = geocell_visualizer.CellVisualizer(geocells)
         visualizer.show()
@@ -79,6 +83,16 @@ def main():
         a = cell.Cell("hallo", points, [], "Hallo", "Hallo")
 
         print(cluster.cluster(a))
+    elif args.mode == 9:
+        sql = sqlite3.connect(
+            "data/GADM_data/gadm_world_all_levels.filtered_noadm345.gpkg"
+        )
+        countries = pd.read_sql_query("SELECT * FROM ADM_0", sql)["COUNTRY"]
+
+        sql.close()
+
+        for i in trange(len(countries)):
+            geocells = generate_geocells.GenerateGeocells([countries[i]])
 
     else:
         print("Not a valid mode!")
