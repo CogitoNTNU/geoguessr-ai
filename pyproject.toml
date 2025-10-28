@@ -24,6 +24,12 @@ dependencies = [
     "uvicorn[standard]>=0.37.0",
     "requests>=2.32.5",
     "pandas>=2.3.3",
+    "datasets>=4.2.0",
+    "torch>=2.8.0",
+    "transformers>=4.57.1",
+    "torchvision>=0.23.0",
+    "accelerate>=1.10.1",
+    "rasterio>=1.4.3",
 ]
 
 
@@ -32,6 +38,11 @@ dev = [
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
+]
+
+training = [
+    "transformers>=4.57.1",
+    "torchvision>=0.23.0",
 ]
 
 docs = [
