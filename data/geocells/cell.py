@@ -91,7 +91,6 @@ class Cell:
         self.current_shape = self.shape()
         self.curr_coords = self.coords()
         if len(self) > 0:
-            print(self.centroid)
             self.centroid = [
                 np.mean([x[0] for x in self.curr_coords]),
                 np.mean([x[1] for x in self.curr_coords]),

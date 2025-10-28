@@ -13,8 +13,6 @@ COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
 ADMIN_1_COLS = ["data", "COUNTRY", "NAME_1", "geometry"]
 
-COUNTRY = ["Denmark"]
-
 FILEPATHS = [
     "data/GADM_data/GADM_admin_1",
     "data/GADM_data/GADM_admin_2",
@@ -27,11 +25,13 @@ POINT_PATHS = [
 
 
 class GenerateGeocells:
-    def __init__(self):
+    def __init__(self, countries):
         self.init_sql_database()
         self.points = self.init_points_from_lat_lng_file(
             "data/out/sv_points_all_latlong.pkl"
         )
+
+        self.COUNTRY = countries
 
         self.country_cells = {}
         self.min_points = 10
@@ -41,7 +41,7 @@ class GenerateGeocells:
         self.add_points_to_cells()
         self.cells.sort(key=lambda x: -len(x.points))
 
-        self.generate_geocells()
+        # self.generate_geocells()
 
         self.save_geocells(FILEPATHS[3])
         print("Saved geocells to file")
@@ -171,14 +171,12 @@ class GenerateGeocells:
             lambda g: self.parse_gpkg_blob(g)["geometry"]
         )
 
-        print(self.countries)
-
         for i in trange(len(self.countries), desc="Celler av land: "):
             name = self.countries.iloc[i]["COUNTRY"]
             admin_1 = name
             country = name
 
-            if country in COUNTRY:
+            if country in self.COUNTRY:
                 polygons = [j for j in (self.countries.iloc[i]["geom"]).geoms]
                 cell = Cell(name, [], polygons, country, admin_1)
 
