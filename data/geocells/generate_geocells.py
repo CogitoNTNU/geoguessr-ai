@@ -42,7 +42,6 @@ class GenerateGeocells:
         self.cells.sort(key=lambda x: -len(x.points))
 
         self.generate_geocells()
-        self.generate_geocells()
 
         self.save_geocells(FILEPATHS[3])
         print("Saved geocells to file")
@@ -291,7 +290,7 @@ class GenerateGeocells:
         self.combine_geocells()
         # visualizer = geocell_visualizer.CellVisualizer(self)
         # visualizer.show()
-        self.split_geocells()
+        # self.split_geocells()
 
     def save_geocells(self, dir):
         for country in self.country_cells.keys():
