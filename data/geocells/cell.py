@@ -33,8 +33,12 @@ class Cell:
         self.country = country
         self.admin_1 = admin_1
         self.neighbours = set()
-
-        # self.centroid = [np.mean(self.curr_coords[:,0]), np.mean(self.curr_coords[:,1])]
+        self.centroid = None
+        if len(self) > 0:
+            self.centroid = [
+                np.mean([x[0] for x in self.curr_coords]),
+                np.mean([x[1] for x in self.curr_coords]),
+            ]
 
     def add_point(self, point):
         self.points.append(point)
@@ -85,6 +89,13 @@ class Cell:
             other.current_shape = other.shape()
 
         self.current_shape = self.shape()
+        self.curr_coords = self.coords()
+        if len(self) > 0:
+            print(self.centroid)
+            self.centroid = [
+                np.mean([x[0] for x in self.curr_coords]),
+                np.mean([x[1] for x in self.curr_coords]),
+            ]
 
     def subtract(self, other: Cell):
         try:
@@ -342,6 +353,10 @@ class Cell:
             return []
 
         self.curr_coords = self.coords()
+        self.centroid = [
+            np.mean([x[0] for x in self.curr_coords]),
+            np.mean([x[1] for x in self.curr_coords]),
+        ]
         if self.curr_coords == 0:
             return []
         lats = []
@@ -389,7 +404,8 @@ class Cell:
         print(f"{remove_cells=}")
         for cell in remove_cells:
             if cell in add_to:
-                add_to.remove(cell)
+                # add_to.remove(cell)
+                pass
 
         clean_cells = new_cells
         if len(remove_cells) == 0:
