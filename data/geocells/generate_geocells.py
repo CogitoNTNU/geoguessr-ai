@@ -296,6 +296,10 @@ class GenerateGeocells:
         for country in self.country_cells.keys():
             filepath = f"{dir}/geocells_{country}.pickle"
             with open(filepath, "wb") as f:
+                cell_stripped = self.country_cells[country]
+                cell_stripped.current_shape = None
+                cell_stripped.geometry = None
+                cell_stripped.neighbours = None
                 pickle.dump(self.country_cells[country], f)
 
     def load_geocells(self, dir):
