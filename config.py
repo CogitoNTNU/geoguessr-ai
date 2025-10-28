@@ -15,10 +15,6 @@ IMAGE_PATH = "data/streetview_outputs_cropped"
 INPUT_PATH = "data/streetview_outputs"
 IMAGE_PATH_2 = "data/streetview_part_2_data"
 
-### YFCC
-METADATA_PATH_YFCC = "data/data_yfcc_augmented_non_contaminated.csv"
-PRETRAIN_METADATA_PATH_YFCC = "data/data_yfcc_augmented_non_contaminated.csv"
-IMAGE_PATH_YFCC = "data/images_mp_16/jpgs"
 
 ### Landmarks
 METADATA_PATH_LANDMARKS = "data/data_landmarks_aug.csv"

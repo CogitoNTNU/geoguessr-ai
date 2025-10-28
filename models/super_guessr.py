@@ -2,29 +2,13 @@ import torch
 import pandas as pd
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
-from collections import namedtuple
 from preprocessing import haversine_matrix, smooth_labels
 from models.layers import PositionalEncoder
 from models.utils import ModelOutput
 from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM, GEOCELL_PATH
 
-#  Named Tuples
-MultiTaskPredictions = namedtuple(
-    "MultiTaskPredictions",
-    "loss_reg preds_mt loss_climate \
-                                   preds_climate loss_month preds_month",
-)
 
 # Constants
-NUM_MULTI_TASK_VARIABLES = 6
-REGRESSION_LOSS_SCALING = 8
-
-NUM_CLIMATES = 28
-CLIMATE_LOSS_SCALING = 2
-
-NUM_MONTHS = 12
-MONTHS_LOSS_SCALING = 1
-
 NUM_ATTENTION_HEADS = 16
 
 GEOGUESSR_HEADING_SINGLE = [0.0, 1.0]
@@ -38,9 +22,7 @@ class SuperGuessr(nn.Module):
         panorama: bool = False,
         hierarchical: bool = False,
         should_smooth_labels: bool = False,
-        multi_task: bool = False,
         heading: bool = False,
-        yfcc: bool = False,
         serving: bool = False,
         freeze_base: bool = False,
         num_candidates: int = 5,
@@ -61,9 +43,6 @@ class SuperGuessr(nn.Module):
                 of the geocell to the correct location instead of penalizing equally across all
                 incorrect cells. Label smoothing also makes the prediction task easier.
                 Defaults to False.
-            multi_task (bool, optional): Whether the model should create prediction heads to
-                predict other geographic variables including population density, temperature, and
-                precipitation. Defaults to False.
             heading (bool, optional): Whether to incorporate compass heading during training.
                 Defaults to False.
             yfcc (bool, optional): Whether the model is being trained on YFCC data. Defaults to False.
@@ -87,9 +66,7 @@ class SuperGuessr(nn.Module):
         self.hidden_size = embed_dim
         self.serving = serving
         self.should_smooth_labels = should_smooth_labels
-        self.multi_task = multi_task
         self.heading = heading
-        self.yfcc = yfcc
         self.freeze_base = freeze_base
         self.hierarchical = hierarchical
         self.num_candidates = num_candidates
@@ -122,25 +99,6 @@ class SuperGuessr(nn.Module):
         # Cell layer
         self.cell_layer = nn.Linear(self.input_dim, self.num_cells)
         self.softmax = nn.Softmax(dim=-1)
-
-        # Multi-task
-        if self.multi_task:
-            print("Model is multi-task.")
-
-            # Regression tasks
-            self.multi_task_head = nn.Linear(
-                self.hidden_size, NUM_MULTI_TASK_VARIABLES
-            )  # self.input_dim
-            self.loss_fnc_mt = nn.MSELoss(reduction="mean")
-
-            # Climate zone
-            self.climate_layer = nn.Linear(self.input_dim, NUM_CLIMATES)
-            self.loss_fnc_climate = nn.CrossEntropyLoss()
-
-            # Month prediction
-            if not self.yfcc:
-                self.month_layer = nn.Linear(self.input_dim, NUM_MONTHS)
-                self.loss_fnc_month = nn.CrossEntropyLoss()
 
         # Freeze / load parameters
         self._freeze_params()
@@ -186,7 +144,7 @@ class SuperGuessr(nn.Module):
             elif (
                 "tiny-vit" in self.base_model.config._name_or_path and not self.serving
             ):
-                head = CLIP_PRETRAINED_HEAD
+                head = CLIP_PRETRAINED_HEAD  # TODO
                 self.load_state(head)
                 print(f"Initialized model parameters from model: {head}")
                 for param in self.base_model.vision_model.encoder.layers[
@@ -215,9 +173,6 @@ class SuperGuessr(nn.Module):
         heading: Tensor = None,
         labels: Tensor = None,
         labels_clf: Tensor = None,
-        labels_multi_task: Tensor = None,
-        labels_climate: Tensor = None,
-        labels_month: Tensor = None,
     ):
         """Moves supplied tensors to device.
 
@@ -228,9 +183,6 @@ class SuperGuessr(nn.Module):
             heading (Tensor, optional): sin and cos of compass heading.
             labels (Tensor, optional): coordinates or classification labels.
             labels_clf (Tensor, optional): index of ground truth geocell.
-            labels_multi_task (Tensor, optional): 6 labels per sample in the form
-                (elevation, population, temperature avg, temperature diff,
-                precipitation avg, precipitation_diff).
         """
         device = "cuda" if next(self.parameters()).is_cuda else "cpu"
         if not self.training and device == "cuda":
@@ -249,24 +201,12 @@ class SuperGuessr(nn.Module):
             if labels_clf is not None:
                 labels_clf = labels_clf.to(device)
 
-            if labels_multi_task is not None:
-                labels_multi_task = labels_multi_task.to(device)
-
-            if labels_climate is not None:
-                labels_climate = labels_climate.to(device)
-
-            if labels_month is not None:
-                labels_month = labels_month.to(device)
-
         return (
             pixel_values,
             embedding,
             heading,
             labels,
             labels_clf,
-            labels_multi_task,
-            labels_climate,
-            labels_month,
         )
 
     def load_state(self, path: str):
@@ -373,56 +313,6 @@ class SuperGuessr(nn.Module):
         else:
             return tensor
 
-    def _multi_task_predictions(
-        self,
-        embedding: Tensor = None,
-        labels_multi_task: Tensor = None,
-        labels_climate: Tensor = None,
-        labels_month: Tensor = None,
-    ) -> MultiTaskPredictions:
-        """Computes multi-task losses and predictions.
-
-        Args:
-            embedding (Tensor, optional): Last hidden layer embedding. Defaults to None.
-            labels_multi_task (Tensor, optional): Multi-task labels. Defaults to None.
-            labels_climate (Tensor, optional): Climate labels. Defaults to None.
-            labels_month (Tensor, optional): Month labels. Defaults to None.
-
-        Returns:
-            MultiTaskPredictions: All multi task losses and predictions.
-        """
-        loss_reg, preds_mt = 0, None
-        loss_climate, preds_climate = 0, None
-        loss_month, preds_month = 0, None
-
-        if self.multi_task:
-            preds_mt = self.multi_task_head(embedding)
-            preds_climate = self.climate_layer(embedding)
-
-            if not self.yfcc:
-                preds_month = self.month_layer(embedding)
-
-            if not self.serving:
-                loss_reg = (
-                    self.loss_fnc_mt(preds_mt, labels_multi_task)
-                    * REGRESSION_LOSS_SCALING
-                )
-                labels_climate = labels_climate.to(dtype=torch.float32)
-                loss_climate = (
-                    self.loss_fnc_climate(preds_climate, labels_climate)
-                    * CLIMATE_LOSS_SCALING
-                )
-                if not self.yfcc:
-                    loss_month = (
-                        self.loss_fnc_month(preds_month, labels_month)
-                        * MONTHS_LOSS_SCALING
-                    )
-
-        mtps = MultiTaskPredictions(
-            loss_reg, preds_mt, loss_climate, preds_climate, loss_month, preds_month
-        )
-        return mtps
-
     def forward(
         self,
         pixel_values: Tensor = None,
@@ -430,9 +320,6 @@ class SuperGuessr(nn.Module):
         heading: Tensor = None,
         labels: Tensor = None,
         labels_clf: Tensor = None,
-        labels_multi_task: Tensor = None,
-        labels_climate: Tensor = None,
-        labels_month: Tensor = None,
         index: Tensor = None,
     ) -> ModelOutput:
         """Computes forward pass through network.
@@ -444,12 +331,6 @@ class SuperGuessr(nn.Module):
             heading (Tensor, optional): sin and cos of compass heading.
             labels (Tensor, optional): coordinates or classification labels.
             labels_clf (Tensor, optional): index of ground truth geocell.
-            labels_multi_task (Tensor, optional): 6 labels per sample in the form
-                (elevation, population, temperature avg, temperature diff,
-                precipitation avg, precipitation_diff).
-            labels_climate (Tensor, optional): one of 28 labels for Koppen-Geiger
-                climate zone.
-            labels_month (Tensor, optional): month the image was taken (0 index)
 
         Returns:
             ModelOutput: named tuple of model outputs. If serving, will be tuple.
@@ -468,18 +349,12 @@ class SuperGuessr(nn.Module):
             heading,
             labels,
             labels_clf,
-            labels_multi_task,
-            labels_climate,
-            labels_month,
         ) = self._move_to_cuda(
             pixel_values,
             embedding,
             heading,
             labels,
             labels_clf,
-            labels_multi_task,
-            labels_climate,
-            labels_month,
         )
 
         # If panorama, (N, 4 * pixels) -> (N * 4, pixels)
@@ -546,11 +421,6 @@ class SuperGuessr(nn.Module):
         logits = self.cell_layer(output)
         geocell_probs = self.softmax(logits)
 
-        # Multi-task layers
-        mt = self._multi_task_predictions(
-            output, labels_multi_task, labels_climate, labels_month
-        )
-
         # Compute coordinate prediction
         geocell_preds = torch.argmax(geocell_probs, dim=-1)
         pred_LLH = torch.index_select(self.lla_geocells.data, 0, geocell_preds)
@@ -561,10 +431,7 @@ class SuperGuessr(nn.Module):
 
         # Serving
         if not self.training and self.serving:
-            if self.multi_task:
-                return pred_LLH, geocell_topk, mt.preds_mt, embedding
-            else:
-                return pred_LLH, geocell_topk, embedding
+            return pred_LLH, geocell_topk, embedding
 
         # Soft labels based on distance
         if self.should_smooth_labels:
@@ -574,21 +441,13 @@ class SuperGuessr(nn.Module):
         # Loss
         loss_clf = self.loss_fnc(logits, label_probs)
         loss = loss_clf
-        if self.multi_task:
-            loss = loss_clf + mt.loss_reg + mt.loss_climate + mt.loss_month
 
         # Results
         output = ModelOutput(
             loss,
             loss_clf,
-            mt.loss_reg,
-            mt.loss_climate,
-            mt.loss_month,
             pred_LLH,
             geocell_preds,
-            mt.preds_mt,
-            mt.preds_climate,
-            mt.preds_month,
             geocell_topk,
             embedding,
         )
@@ -599,8 +458,6 @@ class SuperGuessr(nn.Module):
         rep += f"\tbase_model\t= {self.base_model is not None}\n"
         rep += f"\tpanorama\t= {self.panorama}\n"
         rep += f"\thierarchical\t= {self.hierarchical}\n"
-        rep += f"\tmulti-task\t= {self.multi_task}\n"
-        rep += f"\tyfcc\t\t= {self.yfcc}\n"
         rep += f"\tembedding_size\t= {self.hidden_size}\n"
         rep += f"\tinput_dim\t= {self.input_dim}\n"
         rep += f"\tnum_geocells\t= {self.num_cells}\n"
