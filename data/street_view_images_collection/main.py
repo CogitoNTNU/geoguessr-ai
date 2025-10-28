@@ -16,6 +16,25 @@ IMAGE_BASE = "https://maps.googleapis.com/maps/api/streetview"
 
 def fetch_streetview_image(lat: float, lon: float, heading: int):
     """Fetch one Street View image for a specific heading."""
+    # First, fetch metadata to extract date and pano_id for filename
+    metadata_url = "https://maps.googleapis.com/maps/api/streetview/metadata"
+    metadata_params = {
+        "location": f"{lat},{lon}",
+        "key": GOOGLE_KEY,
+    }
+    date_str = None
+    pano_id = None
+    try:
+        meta_resp = requests.get(metadata_url, params=metadata_params, timeout=10)
+        if meta_resp.status_code == 200:
+            meta = meta_resp.json()
+            if meta.get("status") == "OK":
+                date_str = meta.get("date")
+                pano_id = meta.get("pano_id")
+    except Exception:
+        # If metadata fetch fails, continue without it
+        pass
+
     params = {
         "location": f"{lat},{lon}",
         "size": "640x640",
@@ -40,7 +59,13 @@ def fetch_streetview_image(lat: float, lon: float, heading: int):
         )
 
     os.makedirs("out", exist_ok=True)
-    filename = f"out/streetview_{lat}_{lon}_heading_{heading}.jpg"
+    # Build filename: out/lat-long-heading-date-panoId.jpg
+    # Fallback to 'unknown' if metadata was unavailable
+    filename = (
+        f"out/{lat}:{lon}:{heading}:"
+        f"{(date_str or 'unknown')}:"
+        f"{(pano_id or 'unknown')}.jpg"
+    )
     with open(filename, "wb") as f:
         f.write(r.content)
     return filename

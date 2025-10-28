@@ -86,6 +86,7 @@ def upload_one_image(rec: dict) -> dict:
         "lon": rec["lon"],
         "heading": rec["heading"],
         "capture_date": rec.get("capture_date"),
+        "pano_id": rec.get("pano_id"),
         "image_path": f"s3://{BUCKET}/{key}",
     }
 
@@ -186,8 +187,8 @@ def parse_streetview_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
       streetview_<lat>_<lon>_heading_<0|90|180|270>.jpg
 
     Returns:
-      key "<lat>_<lon>" -> {
-        "lat": float, "lon": float,
+      key "<lat>:<lon>:heading:capture_data:pano_id" -> {
+        "lat": float, "lon": float, "heading": int, "capture_date": string, "pano_id": string
         "images": { heading(int): local_path(str) }
       }
     """
@@ -196,16 +197,28 @@ def parse_streetview_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
     for name in os.listdir(root_dir):
         if not name.lower().endswith(".jpg"):
             continue
-        m = STREETVIEW_RE.match(name)
+        m = name.split(":")
         if not m:
             continue
 
-        lat = float(m.group(1))
-        lon = float(m.group(2))
-        heading = int(m.group(3)) % 360
+        lat = float(m[0])
+        lon = float(m[1])
+        print(lat, lon)
+        heading = int(m[2])
+        capture_date = str(m[3])
+        pano_id = str(m[4])
 
-        key = f"{lat:.7f}_{lon:.7f}"  # stable key per coordinate
-        rec = index.setdefault(key, {"lat": lat, "lon": lon, "images": {}})
+        key = f"{lat:.7f}_{lon:.7f}"
+        rec = index.setdefault(
+            key,
+            {
+                "lat": lat,
+                "lon": lon,
+                "images": {},
+                "capture_date": capture_date,
+                "pano_id": pano_id,
+            },
+        )
         rec["images"][heading] = os.path.join(root_dir, name)
 
     return index
@@ -223,6 +236,10 @@ def records_from_streetview_index(
     for rec in idx.values():
         lat, lon = rec["lat"], rec["lon"]
         loc_id = make_location_id(lat, lon)  # quantized hash from your script
+
+        capture_date = rec["capture_date"]
+        pano_id = rec["pano_id"]
+
         for h in headings:
             img_path = pick_image(rec, h)
             if not img_path:
@@ -234,6 +251,8 @@ def records_from_streetview_index(
                     "lon": lon,
                     "heading": int(h) % 360,
                     "image_path": img_path,
+                    "capture_date": capture_date,
+                    "pano_id": pano_id,
                 }
             )
     return records
@@ -336,3 +355,4 @@ def load_points():
 
 points = load_points()
 print(f"Total points saved in S3: {len(points)}")
+# points.to_csv("./test.csv")
