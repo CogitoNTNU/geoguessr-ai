@@ -203,7 +203,6 @@ def parse_streetview_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
 
         lat = float(m[0])
         lon = float(m[1])
-        print(lat, lon)
         heading = int(m[2])
         capture_date = str(m[3])
         pano_id = str(m[4])
