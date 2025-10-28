@@ -1,4 +1,3 @@
-import geopandas as gpd
 import pandas as pd
 import os
 from cell import Cell
@@ -14,7 +13,7 @@ COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
 COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
 ADMIN_1_COLS = ["data", "COUNTRY", "NAME_1", "geometry"]
 
-COUNTRY = ["Norway"]
+COUNTRY = ["Denmark"]
 
 FILEPATHS = [
     "data/GADM_data/GADM_admin_1",
@@ -30,18 +29,13 @@ POINT_PATHS = [
 class GenerateGeocells:
     def __init__(self):
         self.init_sql_database()
-        # self.admin_2 = self.get_dataframe(FILEPATHS[1])
-        # self.countries = self.init_country_cells(FILEPATHS[2])
-        # self.admin_1 = self.init_admin_1_cells(FILEPATHS[0])
-
-        # self.points = self.init_points(POINT_PATHS[0])
         self.points = self.init_points_from_lat_lng_file(
             "data/out/sv_points_all_latlong.pkl"
         )
+
         self.country_cells = {}
-        # self.max_points = len(self.points)//10
-        self.min_points = 5
-        self.max_points = 50
+        self.min_points = 10
+        self.max_points = 500
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
@@ -71,28 +65,7 @@ class GenerateGeocells:
         self.admin_1 = pd.read_sql_query("SELECT * FROM ADM_1", sql)
         self.countries = pd.read_sql_query("SELECT * FROM ADM_0", sql)
 
-        print(self.countries["geom"][1])
-
         sql.close()
-
-    def get_dataframe(self, filename):
-        df = gpd.GeoDataFrame()
-        for file in list(os.walk(filename))[0][2]:
-            df = pd.concat([df, gpd.GeoDataFrame.from_file(f"{filename}/{file}")])
-
-        keep_cols = [i for i in df.columns if i in COLS]
-        df = df[keep_cols].copy()
-
-        return df
-
-    def init_points(self, filename):
-        points = gpd.GeoDataFrame()
-        for file in list(os.walk(filename))[0][2]:
-            points = pd.concat(
-                [points, gpd.GeoDataFrame.from_file(f"{filename}/{file}")]
-            )
-
-        return points
 
     def init_points_from_lat_lng_file(self, filename):
         with open(filename, "rb") as file:
@@ -100,30 +73,6 @@ class GenerateGeocells:
         points = data
         print(points)
         return points
-
-    def init_country_cells(self, filename):
-        country_df = gpd.GeoDataFrame()
-        for file in list(os.walk(filename))[0][2]:
-            country_df = pd.concat(
-                [country_df, gpd.GeoDataFrame.from_file(f"{filename}/{file}")]
-            )
-
-        keep_cols = [i for i in country_df if i in COUNTRY_COLS]
-        country_df = country_df[keep_cols].copy()
-
-        return country_df
-
-    def init_admin_1_cells(self, filename):
-        admin_1_df = gpd.GeoDataFrame()
-        for file in list(os.walk(filename))[0][2]:
-            admin_1_df = pd.concat(
-                [admin_1_df, gpd.GeoDataFrame.from_file(f"{filename}/{file}")]
-            )
-
-        keep_cols = [i for i in admin_1_df if i in ADMIN_1_COLS]
-        admin_1_df = admin_1_df[keep_cols].copy()
-
-        return admin_1_df
 
     def parse_gpkg_blob(self, blob: bytes):
         """
