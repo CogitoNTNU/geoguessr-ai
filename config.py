@@ -35,7 +35,6 @@ MAX_CELL_SIZE = 2000  # (PIGEOTTO), 60 (PIGEON)
 
 # Geocells path
 GEOCELL_PATH = "data/geocells_2203.csv"  # PIGEON
-GEOCELL_PATH_YFCC = "data/geocells_yfcc.csv"  # PIGEOTTO
 
 # Scaler Path
 SCALER_PATH = "saved_models/scaler/regression.scaler"
