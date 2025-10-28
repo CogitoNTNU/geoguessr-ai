@@ -70,9 +70,16 @@ def collect_google_streetview(lat: float, lon: float) -> bool:
 
 
 def getAllCoordinates() -> np.ndarray[(float, float)]:
-    path = "data/out/sv_points_latlong.txt"
-    points = np.loadtxt(path, delimiter=",")
-    return points
+
+    cities = np.loadtxt("data/out/sv_points_cities_latlong.txt", delimiter=",")  # (lat, lon)
+    dist   = np.loadtxt("src/point_sampling_algorithm/geoguessr_distributed_points_50k.txt", delimiter=",")  # (lon, lat)
+
+    dist = dist[:, [1, 0]]  # → (lat, lon)
+    pts = np.vstack([cities, dist])
+
+    r = np.round(pts, 6)
+    _, idx = np.unique(r, axis=0, return_index=True)
+    return pts[np.sort(idx)]
 
 
 def getCollectedCoordinates() -> np.ndarray[(float, float)]:
