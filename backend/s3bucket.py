@@ -339,5 +339,20 @@ def add_metadata():
     df = load_latest_snapshot_df()
     df = df.drop_duplicates(subset=["lat", "lon"], keep="first").reset_index(drop=True)
 
+def get_snapshot_metadata(): 
+    df = load_latest_snapshot_df()
+
+    remove = ("heading", "batch_date")
+    cols_to_drop = []
+    for col in df.columns:
+         for remove in remove:
+             if remove in col:
+                 cols_to_drop.append(col)
+                 break
+
+    meta_data = df.drop(columns=cols_to_drop).reset_index(drop=True)
+
+    return meta_data
+
 
 # upload_dataset_from_folder("./dataset", max_workers=24)
