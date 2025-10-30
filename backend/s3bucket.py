@@ -121,6 +121,9 @@ def load_previous_snapshot() -> pd.DataFrame | None:
 
 
 def load_latest_snapshot_df() -> pd.DataFrame:
+    """
+    Each row is an image, contains lat, lon, filepath to s3.
+    """
     ptr = get_json(BUCKET, f"{SNAPSHOT_PREFIX}/_latest.json")
     if not ptr:
         raise FileNotFoundError("No snapshot pointer found.")
@@ -311,10 +314,10 @@ def download(dest_dir: str, overwrite: bool, row):
         return (local_path, f"failed: {e}")
 
 
+
 def download_latest_images(
-    dest_dir: str, overwrite: bool = False, max_workers: int = 16
+    dest_dir: str, overwrite: bool = False, max_workers: int = 16, df = load_latest_snapshot_df()
 ):
-    df = load_latest_snapshot_df()
     os.makedirs(dest_dir, exist_ok=True)
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
@@ -356,3 +359,8 @@ def get_snapshot_metadata():
 
 
 # upload_dataset_from_folder("./dataset", max_workers=24)
+
+# points = load_points()
+# print(f"Total points saved in S3: {len(points)}")
+
+# print(download_latest_images("out", True))

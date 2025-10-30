@@ -31,7 +31,12 @@ dependencies = [
     "accelerate>=1.10.1",
     "rasterio>=1.4.3",
     "timm>=1.0.21",
+<<<<<<< Updated upstream
     "torchsummary>=1.5.1",
+=======
+    "ipykernel>=7.1.0",
+    "s3fs>=2025.9.0",
+>>>>>>> Stashed changes
 ]
 
 
