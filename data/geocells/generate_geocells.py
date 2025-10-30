@@ -41,9 +41,9 @@ class GenerateGeocells:
         self.add_points_to_cells()
         self.cells.sort(key=lambda x: -len(x.points))
 
-        # self.generate_geocells()
+        self.generate_geocells()
 
-        self.save_geocells(FILEPATHS[3])
+        # self.save_geocells(FILEPATHS[3])
         print("Saved geocells to file")
         # self.cells = []
         # self.country_cells = {}
@@ -262,6 +262,11 @@ class GenerateGeocells:
             if visited:
                 cell.combine(visited)
 
+    def cluster(self):
+        for cell in self.cells:
+            if len(cell) > 0:
+                cell.cluster()
+
     def split_geocells(self):
         cells_to_split = [x for x in self.cells if len(x) > self.max_points]
         new_cells = []
@@ -286,6 +291,7 @@ class GenerateGeocells:
 
     def generate_geocells(self):
         self.combine_geocells()
+        self.cluster()
         # visualizer = geocell_visualizer.CellVisualizer(self)
         # visualizer.show()
         # self.split_geocells()
@@ -295,9 +301,11 @@ class GenerateGeocells:
             filepath = f"{dir}/geocells_{country}.pickle"
             with open(filepath, "wb") as f:
                 cell_stripped = self.country_cells[country]
-                cell_stripped.current_shape = None
-                cell_stripped.geometry = None
-                cell_stripped.neighbours = None
+                for admin1 in cell_stripped:
+                    for key in cell_stripped[admin1]:
+                        key.current_shape = None
+                        key.geometry = None
+                        key.neighbours = None
                 pickle.dump(cell_stripped, f)
 
     def load_geocells(self, dir):

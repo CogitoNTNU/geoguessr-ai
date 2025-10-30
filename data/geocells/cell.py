@@ -33,12 +33,17 @@ class Cell:
         self.country = country
         self.admin_1 = admin_1
         self.neighbours = set()
-        self.centroid = None
+        self.geom_centroid = [
+            self.current_shape.centroid.x,
+            self.current_shape.centroid.y,
+        ]
+        self.point_centroid = np.array([0.0, 0.0])
         if len(self) > 0:
-            self.centroid = [
-                np.mean([x[0] for x in self.curr_coords]),
+            self.point_centroid = [
                 np.mean([x[1] for x in self.curr_coords]),
+                np.mean([x[0] for x in self.curr_coords]),
             ]
+        self.clusters = {"-1": {"points": self.points, "centroid": self.point_centroid}}
 
     def add_point(self, point):
         self.points.append(point)
@@ -74,7 +79,8 @@ class Cell:
             self.neighbours = self.neighbours.union(other.neighbours)
             other.points = []
             other.polygons = []
-
+            other.point_centroid = np.array([0.0, 0.0])
+            other.geom_centroid = np.array([0.0, 0.0])
             for n in other.neighbours:
                 if other in n.neighbours:
                     n.neighbours.remove(other)
@@ -91,9 +97,13 @@ class Cell:
         self.current_shape = self.shape()
         self.curr_coords = self.coords()
         if len(self) > 0:
-            self.centroid = [
-                np.mean([x[0] for x in self.curr_coords]),
+            self.point_centroid = [
                 np.mean([x[1] for x in self.curr_coords]),
+                np.mean([x[0] for x in self.curr_coords]),
+            ]
+            self.geom_centroid = [
+                self.current_shape.centroid.x,
+                self.current_shape.centroid.y,
             ]
 
     def subtract(self, other: Cell):
@@ -352,9 +362,9 @@ class Cell:
             return []
 
         self.curr_coords = self.coords()
-        self.centroid = [
-            np.mean([x[0] for x in self.curr_coords]),
+        self.point_centroid = [
             np.mean([x[1] for x in self.curr_coords]),
+            np.mean([x[0] for x in self.curr_coords]),
         ]
         if self.curr_coords == 0:
             return []
@@ -483,7 +493,34 @@ class Cell:
                     cells[index].polygons = [largest_poly]
 
     def cluster(self):
-        pass
+        min_sample = 5
+        if len(self) < min_sample:
+            return
+
+        clustering = OPTICS(min_samples=min_sample, xi=0.05, min_cluster_size=0.05)
+        clustering.fit(self.points)
+
+        labels = clustering.labels_
+
+        self.clusters = {}
+
+        for i in range(len(labels)):
+            if labels[i] not in self.clusters:
+                self.clusters[int(labels[i])] = {
+                    "points": [],
+                    "centroid": np.array([0.0, 0.0]),
+                }
+            self.clusters[int(labels[i])]["points"].append(self.points[i])
+
+        for cluster in self.clusters:
+            lat_mean = np.mean(
+                [x["latitude"] for x in self.clusters[cluster]["points"]]
+            )
+            lng_mean = np.mean(
+                [x["longitude"] for x in self.clusters[cluster]["points"]]
+            )
+            centroid = [lat_mean, lng_mean]
+            self.clusters[cluster]["centroid"] = centroid
 
     def to_pandas(self):
         data = [[self.id, p["latitude"], p["longitude"]] for p in self.points]

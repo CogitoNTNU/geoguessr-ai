@@ -73,7 +73,7 @@ def main():
 
         print(cells[0][1])
     elif args.mode == 7:
-        geocells = geocell_visualizer.GenerateGeocells([""])
+        geocells = geocell_visualizer.GenerateGeocells(["Norway"])
 
         visualizer = geocell_visualizer.CellVisualizer(geocells)
         visualizer.show()
@@ -91,8 +91,11 @@ def main():
 
         sql.close()
 
+        countries = list(countries)
+        countries = countries[27:]
+
         for i in trange(len(countries)):
-            geocells = generate_geocells.GenerateGeocells([countries[i]])
+            generate_geocells.GenerateGeocells([countries[i]])
 
     else:
         print("Not a valid mode!")

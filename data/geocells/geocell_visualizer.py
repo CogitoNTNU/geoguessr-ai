@@ -41,12 +41,28 @@ class CellVisualizer:
                 # print(cell)
                 pass
             for p in cell.points:
+                cluster = -2
+                for i in cell.clusters:
+                    for po in cell.clusters[i]["points"]:
+                        if po.iloc[0] == p.iloc[0] and po.iloc[1] == p.iloc[1]:
+                            cluster = i
                 points.append(
                     {
                         "position": [p["longitude"], p["latitude"]],
                         "id": getattr(p, "id", None),
+                        "properties": {"cluster": cluster},
                     }
                 )
+            # points.append({
+            #     "position": [cell.geom_centroid[0], cell.geom_centroid[1]],
+            #     "id": "geom",
+            # })
+            points.append(
+                {
+                    "position": [cell.point_centroid[0], cell.point_centroid[1]],
+                    "id": "point",
+                }
+            )
         # print(points)
         return points
 
@@ -108,7 +124,7 @@ class CellVisualizer:
             get_position="position",
             get_fill_color=[255, 80, 80, 200],
             stroked=False,
-            pickable=False,  # keep global tooltip focused on geocells
+            pickable=True,  # keep global tooltip focused on geocells
             radiusMinPixels=2,
             radiusMaxPixels=6,
             get_radius=20000,
@@ -118,7 +134,8 @@ class CellVisualizer:
         tooltip = {
             "html": "<b>Points:</b> {properties.point_count}<br/>"
             "<b>Kommune:</b> {properties.kommune}<br/>"
-            "<b>Naboer:</b> {properties.naboer}",
+            "<b>Naboer:</b> {properties.naboer}<br/>"
+            "<b>Cluster:{properties.cluster}<br/>",
             "style": {"backgroundColor": "steelblue", "color": "white"},
         }
 
