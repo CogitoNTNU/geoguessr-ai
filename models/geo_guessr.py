@@ -10,9 +10,26 @@ from config import *
 from backend.s3bucket import *
 
 def get_snapshot_metadata(): 
+    """
+    Parquet structure: (?)
+    location_id
+    lat
+    lon
+    heading
+    image_path 
+    batch_date 
+    """
     df = load_latest_snapshot_df()
 
-    meta_data = 0 #stuff
+    remove = ("image", "img", "path", "picture", "pixel") #hva må fjernes, eventuelt hva som burde beholdes
+    cols_to_drop = []
+    for col in df.columns:
+         for remove in remove:
+             if remove in col:
+                 cols_to_drop.append(col)
+                 break
+
+    meta_data = df.drop(columns=cols_to_drop).reset_index(drop=True)
 
     return meta_data
 
@@ -42,6 +59,8 @@ class geo_guessr(nn.Module):
     ### Finetuneing ###
     def finetuneing(self):
         
+
+
         pass
 
     ### Evaluate ### 

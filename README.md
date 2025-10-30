@@ -14,7 +14,7 @@
 <details> 
 <summary><b>📋 Table of contents </b></summary>
 
-- [geoguessr-ai](#geoguessr-ai)
+- [Geoguessr AI](#geoguessr-ai)
   - [Description](#description)
   - [🛠️ Prerequisites](#%EF%B8%8F-prerequisites)
   - [Getting started](#getting-started)
@@ -32,20 +32,12 @@
 
 ## 🛠️ Prerequisites
 
-<!-- TODO: In this section you put what is needed for the program to run.
-For example: OS version, programs, libraries, etc.  
-
--->
-
 - **Git**: Ensure that git is installed on your machine. [Download Git](https://git-scm.com/downloads)
 - **Python 3.12**: Required for the project. [Download Python](https://www.python.org/downloads/)
 - **UV**: Used for managing Python environments. [Install UV](https://docs.astral.sh/uv/getting-started/installation/)
 - **Docker** (optional): For DevContainer development. [Download Docker](https://www.docker.com/products/docker-desktop)
 
 ## Getting started
-
-<!-- TODO: In this Section you describe how to install this project in its intended environment.(i.e. how to get it to run)  
--->
 
 1. **Clone the repository**:
 
@@ -60,16 +52,17 @@ For example: OS version, programs, libraries, etc.
    uv sync
    ```
 
-<!--
 1. **Configure environment variables**:
-    This project uses environment variables for configuration. Copy the example environment file to create your own:
-    ```sh
-    cp .env.example .env
-    ```
-    Then edit the `.env` file to include your specific configuration settings.
--->
+   This project uses environment variables for configuration. Copy the example environment file to create your own:
+
+   ```sh
+   cp .env.example .env
+   ```
+
+   Then edit the `.env` file to include your specific configuration settings.
 
 1. **Set up pre commit** (only for development):
+
    ```sh
    uv run pre-commit install
    ```
