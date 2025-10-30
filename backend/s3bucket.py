@@ -341,8 +341,3 @@ def add_metadata():
 
 
 # upload_dataset_from_folder("./dataset", max_workers=24)
-
-points = load_points()
-print(f"Total points saved in S3: {len(points)}")
-
-print(download_latest_images("out", True))
