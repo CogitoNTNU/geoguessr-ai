@@ -40,7 +40,6 @@ def evaluate_model(
     metrics: Callable,
     train_args: TrainingArguments,
     refiner: ProtoRefiner = None,
-    yfcc: bool = False,
     writer: SummaryWriter = None,
     step: int = 0,
 ) -> float:
@@ -53,7 +52,6 @@ def evaluate_model(
                             and labels
         train_args (TrainingArguments): training arguments
         refiner (ProtoRefiner, optional): guess refinement model. Defaults to None.
-        yfcc (bool, optional): whether yfcc input data was used.
         writer (SummaryWriter, optional): TensorBoard writer. Defaults to None.
         step (int, optional): number of evaluation step. Defaults to 0.
 
@@ -83,14 +81,9 @@ def evaluate_model(
             combined_loss,
             combined_loss_clf,
             combined_loss_reg,
-            combined_loss_climate,
-            combined_loss_month,
         ) = 0, 0, 0, 0, 0
         combined_preds = []
         combined_geocell_preds = []
-        combined_preds_mt = []
-        combined_preds_climate = []
-        combined_preds_month = []
         combined_top5_cells = []
         combined_top5_probs = []
 
@@ -101,21 +94,8 @@ def evaluate_model(
             combined_loss_clf += outputs.loss_clf * len(data)
 
             # Geo-regression
-            preds_mt = None
             if outputs.loss_reg is not None and outputs.loss_reg > 0:
                 combined_loss_reg += outputs.loss_reg * len(data)
-                combined_loss_climate += outputs.loss_climate * len(data)
-                combined_loss_month += outputs.loss_month * len(data)
-
-                combined_preds_mt.append(outputs.preds_mt.cpu().detach().numpy())
-                combined_preds_climate.append(
-                    outputs.preds_climate.cpu().detach().numpy()
-                )
-
-                if not yfcc:
-                    combined_preds_month.append(
-                        outputs.preds_month.cpu().detach().numpy()
-                    )
 
             # Refine Guess
             if refiner is not None:
@@ -150,42 +130,13 @@ def evaluate_model(
         preds_geocells = np.concatenate(combined_geocell_preds, axis=0)
         top5_geocells = np.concatenate(combined_top5_cells, axis=0)
 
-        # Multi-task
-        labels_mt = dataset["labels_multi_task"] if combined_loss_reg > 0 else None
-        labels_climate = (
-            dataset["labels_climate"] if combined_loss_climate > 0 else None
-        )
-        labels_month = dataset["labels_month"] if combined_loss_month > 0 else None
-        preds_mt = (
-            np.concatenate(combined_preds_mt, axis=0) if combined_loss_reg > 0 else None
-        )
-        preds_climate = (
-            np.concatenate(combined_preds_climate, axis=0)
-            if combined_loss_climate > 0
-            else None
-        )
-
-        preds_month = None
-        if not yfcc:
-            preds_month = (
-                np.concatenate(combined_preds_month, axis=0)
-                if combined_loss_month > 0
-                else None
-            )
-
         # Compute metrics
         results = (
             preds,
             preds_geocells,
-            preds_mt,
-            preds_climate,
-            preds_month,
             top5_geocells,
             labels_lla,
             labels_cell,
-            labels_mt,
-            labels_climate,
-            labels_month,
         )
         eval_dict = metrics(results)
 
@@ -196,12 +147,6 @@ def evaluate_model(
 
         if outputs.loss_reg is not None and outputs.loss_reg > 0:
             writer.add_scalar("Loss_reg/val", combined_loss_reg / len(dataset), step)
-            writer.add_scalar(
-                "Loss_climate/val", combined_loss_climate / len(dataset), step
-            )
-            writer.add_scalar(
-                "Loss_month/val", combined_loss_month / len(dataset), step
-            )
 
         # Write metrics to TensorBoard
         for metric, value in eval_dict.items():
@@ -218,7 +163,6 @@ def train_model(
     loaded_model: Any,
     dataset: DatasetDict,
     on_embeddings: bool,
-    yfcc: bool,
     train_args: TrainingArguments,
     metrics: Callable,
     patience: int = None,
@@ -230,7 +174,6 @@ def train_model(
         loaded_model (Any):              Model used for training.
         dataset (DatasetDict):           Dataset containing train, val, and test splits.
         on_embeddings (bool):            Whether training is performed on embeddings.
-        yfcc (bool):                     Whether YFCC input data was used.
         train_args (TrainingArguments):  Training arguments.
         metrics (Callable):              Function returning a dict of evaluation metrics for
                                          (predictions, labels) input.
@@ -312,7 +255,7 @@ def train_model(
 
             # Evaluation
             eval_loss = evaluate_model(
-                model, dataset["val"], metrics, train_args, None, yfcc, writer, epoch
+                model, dataset["val"], metrics, train_args, None, writer, epoch
             )
 
             # Save model if geolocation prediction is best

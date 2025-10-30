@@ -22,7 +22,6 @@ class SuperGuessr(nn.Module):
         panorama: bool = False,
         hierarchical: bool = False,
         should_smooth_labels: bool = False,
-        heading: bool = False,
         serving: bool = False,
         freeze_base: bool = False,
         num_candidates: int = 5,
@@ -43,9 +42,6 @@ class SuperGuessr(nn.Module):
                 of the geocell to the correct location instead of penalizing equally across all
                 incorrect cells. Label smoothing also makes the prediction task easier.
                 Defaults to False.
-            heading (bool, optional): Whether to incorporate compass heading during training.
-                Defaults to False.
-            yfcc (bool, optional): Whether the model is being trained on YFCC data. Defaults to False.
             serving (bool, optional): Whether model is instantiated for serving purposes only. If set to
                 True, outputs solely lng/lat predictions in eval mode.
             freeze_base (bool, optional): If the weights of the base model should be frozen.
@@ -66,7 +62,6 @@ class SuperGuessr(nn.Module):
         self.hidden_size = embed_dim
         self.serving = serving
         self.should_smooth_labels = should_smooth_labels
-        self.heading = heading
         self.freeze_base = freeze_base
         self.hierarchical = hierarchical
         self.num_candidates = num_candidates
@@ -79,14 +74,11 @@ class SuperGuessr(nn.Module):
 
         # Input dimension for cell layer
         self.input_dim = self.hidden_size
-        if self.heading and not (self.panorama and not self.hierarchical):
-            print("Model includes heading as feature.")
-            self.input_dim += 2
 
         # Self-attention layer
         if self.hierarchical:
             print("Number of attention heads:", NUM_ATTENTION_HEADS)
-            self.heading_pad = NUM_ATTENTION_HEADS - 2 if self.heading else 0
+            self.heading_pad = 0
             self.pos_encoder = PositionalEncoder(self.input_dim + self.heading_pad)
             self.self_attn = nn.MultiheadAttention(
                 self.input_dim + self.heading_pad,
@@ -170,7 +162,6 @@ class SuperGuessr(nn.Module):
         self,
         pixel_values: Tensor = None,
         embedding: Tensor = None,
-        heading: Tensor = None,
         labels: Tensor = None,
         labels_clf: Tensor = None,
     ):
@@ -180,7 +171,6 @@ class SuperGuessr(nn.Module):
             pixel_values (Tensor, optional): preprocessed images pixel values.
             embedding (Tensor, optional): image embeddings if no pass through
                 a base model is performed.
-            heading (Tensor, optional): sin and cos of compass heading.
             labels (Tensor, optional): coordinates or classification labels.
             labels_clf (Tensor, optional): index of ground truth geocell.
         """
@@ -192,9 +182,6 @@ class SuperGuessr(nn.Module):
             if embedding is not None:
                 embedding = embedding.to(device)
 
-            if heading is not None:
-                heading = heading.to(device)
-
             if labels is not None:
                 labels = labels.to(device)
 
@@ -204,7 +191,6 @@ class SuperGuessr(nn.Module):
         return (
             pixel_values,
             embedding,
-            heading,
             labels,
             labels_clf,
         )
@@ -231,7 +217,6 @@ class SuperGuessr(nn.Module):
         self,
         pixel_values: Tensor = None,
         embedding: Tensor = None,
-        heading: Tensor = None,
     ):
         """Checks assertions related to input.
 
@@ -239,13 +224,7 @@ class SuperGuessr(nn.Module):
             pixel_values (Tensor, optional): preprocessed images pixel values.
             embedding (Tensor, optional): image embeddings if no pass through
                 a base model is performed.
-            heading (Tensor, optional): sin and cos of compass heading.
         """
-        if self.training and self.heading:
-            assert heading is not None, (
-                "If model is in heading mode, headings must be supplied \
-                                         during training."
-            )
 
         if self.base_model is not None:
             assert pixel_values is not None, (
@@ -257,44 +236,6 @@ class SuperGuessr(nn.Module):
                 'Parameter "embedding" must be supplied if model \
                                            does not have a base model.'
             )
-
-    def _concat_heading(self, input: Tensor, heading: Tensor = None) -> Tensor:
-        """Concatenates the input tensor with the heading tensor.
-
-        Args:
-            input (Tensor): image embedding
-            heading (Tensor, optional): headings. If None, headings are assumed
-                to be pointing north which is the case while playing Geoguessr.
-                Defaults to None.
-
-        Returns:
-            Tensor: concatenated image emebdding with heading
-        """
-        if self.panorama and not self.hierarchical:
-            return input
-
-        num_samples = input.size(0)
-        shape = (num_samples, 1)
-        default_input = GEOGUESSR_HEADING_SINGLE
-
-        # Four images
-        if self.panorama:
-            input = input.reshape((num_samples, 4, -1))
-            default_input = GEOGUESSR_HEADING_MULTI
-            shape = (num_samples, 1, 1)
-            if heading is not None:
-                heading = heading.reshape((num_samples, 4, -1))
-
-        elif heading is not None:
-            heading = heading[:, 0]
-
-        # Create default input
-        if heading is None:
-            heading = torch.tensor(default_input, device="cuda")
-            heading = heading.repeat(*shape)
-
-        output = torch.cat((input, heading), dim=-1)
-        return output
 
     def _to_one_hot(self, tensor: Tensor) -> Tensor:
         """Convert a scalar tensor to a one-hot encoded tensor.
@@ -317,7 +258,6 @@ class SuperGuessr(nn.Module):
         self,
         pixel_values: Tensor = None,
         embedding: Tensor = None,
-        heading: Tensor = None,
         labels: Tensor = None,
         labels_clf: Tensor = None,
         index: Tensor = None,
@@ -328,7 +268,6 @@ class SuperGuessr(nn.Module):
             pixel_values (Tensor, optional): preprocessed images pixel values.
             embedding (Tensor, optional): image embeddings if no pass through
                 a base model is performed.
-            heading (Tensor, optional): sin and cos of compass heading.
             labels (Tensor, optional): coordinates or classification labels.
             labels_clf (Tensor, optional): index of ground truth geocell.
 
@@ -340,19 +279,17 @@ class SuperGuessr(nn.Module):
             Otherwise, if the model is working directly on embeddings,
             embedding must not be None.
         """
-        self._assert_requirements(pixel_values, embedding, heading)
+        self._assert_requirements(pixel_values, embedding)
 
         # Device
         (
             pixel_values,
             embedding,
-            heading,
             labels,
             labels_clf,
         ) = self._move_to_cuda(
             pixel_values,
             embedding,
-            heading,
             labels,
             labels_clf,
         )
@@ -381,21 +318,11 @@ class SuperGuessr(nn.Module):
 
         layer_input = embedding
 
-        # Concatenate heading to embeddings
-        if self.heading:
-            layer_input = self._concat_heading(layer_input, heading)
-
         # Handle four image input
         if self.panorama:
             # Hierarchical architecture
             if self.hierarchical:
                 # Positional encoding
-                if self.heading:
-                    zeros = torch.zeros(
-                        (layer_input.size(0), 4, self.heading_pad), device="cuda"
-                    )
-                    layer_input = torch.cat((layer_input, zeros), dim=-1)
-
                 layer_input = self.pos_encoder(layer_input)
 
                 # Multi-head self attention
@@ -462,7 +389,6 @@ class SuperGuessr(nn.Module):
         rep += f"\tinput_dim\t= {self.input_dim}\n"
         rep += f"\tnum_geocells\t= {self.num_cells}\n"
         rep += f"\tlabel_smoothing\t= {self.should_smooth_labels}\n"
-        rep += f"\tuses_headings\t= {self.heading}\n"
         rep += f"\tfreeze_base\t= {self.freeze_base}\n"
         rep += f"\tserving\t\t= {self.serving}\n"
         rep += ")"
