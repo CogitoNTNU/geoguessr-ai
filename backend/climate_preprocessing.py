@@ -1,7 +1,7 @@
-import pandas as pd
 import rasterio
 from rasterio.transform import rowcol
 from pyproj import Transformer
+from s3bucket import load_latest_snapshot_df, write_new_snapshot
 
 CLIMATE_DICT = {  # Köppen-Geiger Climate Zones
     1: ("Af", "Tropical, rainforest", "a tropical rainforest climate"),
@@ -101,55 +101,6 @@ CLIMATE_DICT = {  # Köppen-Geiger Climate Zones
 }
 
 
-# 1) Load your points (WGS84 lat/lon)
-def load_points_txt(path):
-    # Try pandas' sniffing (handles comma/semicolon/whitespace)
-    df = pd.read_csv(
-        path, sep=None, engine="python", comment="#", skip_blank_lines=True
-    )
-
-    # If only one column came in (e.g., "lat lon" without delimiter), try whitespace
-    if df.shape[1] == 1:
-        df = pd.read_csv(path, delim_whitespace=True, comment="#", header=None)
-
-    # Guess column names
-    if df.shape[1] >= 2:
-        df = df.iloc[:, :2].copy()
-        # Try to map headers if present
-        cols = [c.lower() for c in df.columns.astype(str)]
-        rename_map = {}
-        lat_aliases = {"lat", "latitude", "y"}
-        lon_aliases = {"lon", "lng", "longitude", "x"}
-        for i, c in enumerate(cols):
-            if c in lat_aliases:
-                rename_map[df.columns[i]] = "lat"
-            if c in lon_aliases:
-                rename_map[df.columns[i]] = "lon"
-        df.rename(columns=rename_map, inplace=True)
-
-        # If still unnamed, assign generic names
-        if "lat" not in df.columns or "lon" not in df.columns:
-            df.columns = ["col1", "col2"]
-            # Heuristic: detect which is lat by valid range
-            c1_in_lat_range = df["col1"].between(-90, 90).all()
-            c2_in_lat_range = df["col2"].between(-90, 90).all()
-            if c1_in_lat_range and not c2_in_lat_range:
-                df = df.rename(columns={"col1": "lat", "col2": "lon"})
-            elif c2_in_lat_range and not c1_in_lat_range:
-                df = df.rename(columns={"col1": "lon", "col2": "lat"})
-            else:
-                # Ambiguous but common convention is lat,lon
-                df = df.rename(columns={"col1": "lat", "col2": "lon"})
-    else:
-        raise ValueError("Could not parse two numeric columns from the .txt file.")
-
-    # Ensure numeric
-    df["lat"] = pd.to_numeric(df["lat"], errors="coerce")
-    df["lon"] = pd.to_numeric(df["lon"], errors="coerce")
-    df = df.dropna(subset=["lat", "lon"])
-    return df[["lat", "lon"]]
-
-
 def kg_to_bucket(kg_str, lat):
     if not isinstance(kg_str, str) or len(kg_str) == 0:
         return None
@@ -192,21 +143,15 @@ def sample_koppen(df, raster_path, legend_map=None):
                 val = None
             kg_vals.append(val)
 
-    df["kg_class"] = kg_vals
-    df["kg_bucket4"] = [kg_to_bucket(k, la) for k, la in zip(df["kg_class"], df["lat"])]
+    df["Climate"] = kg_vals
     return df
 
 
 if __name__ == "__main__":
-    in_path = "data/out/sv_points_latlong_collected.txt"
     raster_path = "preprocessing/koppen_geiger_climatezones_1991_2020_1km.tif"
     out_path = "points_with_koppen.csv"
 
-    df = load_points_txt(in_path)
-
-    # Example legend map if your raster stores integer codes:
-    # legend_map = {1:"Af", 2:"Am", 3:"Aw", 4:"BWh", ...}
+    df = load_latest_snapshot_df()
 
     df = sample_koppen(df, raster_path, CLIMATE_DICT)
-    df.to_csv(out_path, index=False)
-    print(f"Wrote {len(df)} rows with Köppen classes to {out_path}")
+    result = write_new_snapshot(df)
