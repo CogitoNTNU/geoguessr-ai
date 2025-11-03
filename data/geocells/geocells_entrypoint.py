@@ -73,7 +73,7 @@ def main():
 
         print(cells[0][1])
     elif args.mode == 7:
-        geocells = geocell_visualizer.GenerateGeocells(["Namibia"])
+        geocells = geocell_visualizer.GenerateGeocells(["Brazil"])
 
     elif args.mode == 8:
         points = [{"lng": random.random(), "lat": random.random()} for i in range(100)]

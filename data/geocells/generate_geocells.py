@@ -10,18 +10,12 @@ import struct
 import geocell_visualizer
 
 
-COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
-COUNTRY_COLS = ["data", "COUNTRY", "geometry"]
-ADMIN_1_COLS = ["data", "COUNTRY", "NAME_1", "geometry"]
-
 FILEPATHS = [
     "data/GADM_data/GADM_admin_1",
     "data/GADM_data/GADM_admin_2",
     "data/GADM_data/GADM_country",
-    "data/geocells/finished_geocells",
-]
-POINT_PATHS = [
-    "data/point_data",
+    "data/geocells/finished_geocells",  # dir for geocell saving
+    "data/GADM_data/gadm_world_all_levels.filtered_noadm345.gpkg",  # database with GADM data
 ]
 
 
@@ -49,22 +43,10 @@ class GenerateGeocells:
 
         self.save_geocells(FILEPATHS[3])
         print("Saved geocells to file")
-        # self.cells = []
-        # self.country_cells = {}
-
-        # self.load_geocells(FILEPATHS[3])
-
-        # print(self.country_cells)
-        # for country in self.country_cells:
-        #     for admin_1 in self.country_cells[country]:
-        #         for cell in self.country_cells[country][admin_1]:
-        #             if len(cell) > 0:
-        #                 self.cells.append(cell)
 
     def init_sql_database(self):
-        sql = sqlite3.connect(
-            "data/GADM_data/gadm_world_all_levels.filtered_noadm345.gpkg"
-        )
+        sql = sqlite3.connect(FILEPATHS[4])
+
         self.admin_2 = pd.read_sql_query("SELECT * FROM ADM_2", sql)
         self.admin_1 = pd.read_sql_query("SELECT * FROM ADM_1", sql)
         self.countries = pd.read_sql_query("SELECT * FROM ADM_0", sql)
@@ -225,14 +207,10 @@ class GenerateGeocells:
             point_coords = [
                 point["longitude"],
                 point["latitude"],
-            ]  # Veldig tabbe (feil vei på lat, lng), men det funker å ha det sånn
+            ]  # Veldig tabbe (feil vei på lat, lng), men dette funker
 
-            # if point["geocell"] is not None:
-            #   continue
             for country in self.country_cells:
                 if self.country_cells[country][country][0].contains(point_coords):
-                    # print(self.country_cells[country])
-
                     for admin_1 in self.country_cells[country]:
                         if admin_1 == country:
                             continue
@@ -242,7 +220,6 @@ class GenerateGeocells:
                             for cell in self.country_cells[country][admin_1][1:]:
                                 if cell.contains(point_coords):
                                     cell.add_point(point)
-                                    # point["geocell"] = cell.id
                                     break
                             break
                     break
@@ -300,8 +277,6 @@ class GenerateGeocells:
     def generate_geocells(self):
         self.combine_geocells()
         self.cluster()
-        # visualizer = geocell_visualizer.CellVisualizer(self)
-        # visualizer.show()
         # self.split_geocells()
 
     def save_geocells(self, dir):

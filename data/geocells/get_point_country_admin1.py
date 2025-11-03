@@ -59,8 +59,8 @@ if __name__ == "__main__":
 
     # print(mang.dict)
 
-    # print((points.iloc(0)[0]["longitude"]))
+    # print((points.iloc[0]["longitude"]))
     # for i in range(1, 100000):
-    #     c = mang.get_geocell_id(points.iloc(0)[i])
+    #     c = mang.get_geocell_id(points.iloc[i])
     #     if not c is None:
     #         print(c)

@@ -107,10 +107,10 @@ class Cell:
                 np.mean([x[1] for x in self.curr_coords]),
                 np.mean([x[0] for x in self.curr_coords]),
             ]
-            self.geom_centroid = [
-                self.current_shape.centroid.x,
-                self.current_shape.centroid.y,
-            ]
+        self.geom_centroid = [
+            self.current_shape.centroid.x,
+            self.current_shape.centroid.y,
+        ]
 
     def subtract(self, other: Cell):
         try:
@@ -503,7 +503,7 @@ class Cell:
         if len(self) < min_sample:
             return
 
-        clustering = OPTICS(min_samples=min_sample, xi=0.005, min_cluster_size=0.05)
+        clustering = OPTICS(min_samples=min_sample, xi=0.0005, min_cluster_size=0.05)
         clustering.fit(self.points)
 
         labels = clustering.labels_
