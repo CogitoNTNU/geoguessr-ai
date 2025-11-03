@@ -7,6 +7,7 @@ import heapq
 import sqlite3
 from shapely import wkb as shapely_wkb
 import struct
+import geocell_visualizer
 
 
 COLS = ["data", "COUNTRY", "NAME_1", "NAME_2", "geometry"]
@@ -43,7 +44,10 @@ class GenerateGeocells:
 
         self.generate_geocells()
 
-        # self.save_geocells(FILEPATHS[3])
+        visualizer = geocell_visualizer.CellVisualizer(self)
+        visualizer.show()
+
+        self.save_geocells(FILEPATHS[3])
         print("Saved geocells to file")
         # self.cells = []
         # self.country_cells = {}
@@ -217,7 +221,11 @@ class GenerateGeocells:
     def add_points_to_cells(self):
         for i in trange(len(self.points), desc="Legg til punkter", colour="BLUE"):
             point = self.points.iloc[i]
-            point_coords = [point["longitude"], point["latitude"]]
+
+            point_coords = [
+                point["longitude"],
+                point["latitude"],
+            ]  # Veldig tabbe (feil vei på lat, lng), men det funker å ha det sånn
 
             # if point["geocell"] is not None:
             #   continue
@@ -301,12 +309,15 @@ class GenerateGeocells:
             filepath = f"{dir}/geocells_{country}.pickle"
             with open(filepath, "wb") as f:
                 cell_stripped = self.country_cells[country]
+                out_cells = {}
                 for admin1 in cell_stripped:
-                    for key in cell_stripped[admin1]:
-                        key.current_shape = None
-                        key.geometry = None
-                        key.neighbours = None
-                pickle.dump(cell_stripped, f)
+                    for cell in cell_stripped[admin1]:
+                        if admin1 not in out_cells:
+                            out_cells[admin1] = []
+                        if len(cell) > 0:
+                            cell.clean_cell_before_saving()
+                            out_cells[admin1].append(cell)
+                pickle.dump(out_cells, f)
 
     def load_geocells(self, dir):
         for file in list(os.walk(dir))[0][2]:

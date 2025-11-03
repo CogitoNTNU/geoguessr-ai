@@ -43,7 +43,13 @@ class Cell:
                 np.mean([x[1] for x in self.curr_coords]),
                 np.mean([x[0] for x in self.curr_coords]),
             ]
-        self.clusters = {"-1": {"points": self.points, "centroid": self.point_centroid}}
+        self.clusters = {
+            "-1": {
+                "points": self.points,
+                "centroid": self.point_centroid,
+                "hashes": [hash((p["latitude"], p["longitude"])) for p in points],
+            }
+        }
 
     def add_point(self, point):
         self.points.append(point)
@@ -497,7 +503,7 @@ class Cell:
         if len(self) < min_sample:
             return
 
-        clustering = OPTICS(min_samples=min_sample, xi=0.05, min_cluster_size=0.05)
+        clustering = OPTICS(min_samples=min_sample, xi=0.005, min_cluster_size=0.05)
         clustering.fit(self.points)
 
         labels = clustering.labels_
@@ -509,8 +515,12 @@ class Cell:
                 self.clusters[int(labels[i])] = {
                     "points": [],
                     "centroid": np.array([0.0, 0.0]),
+                    "hashes": [],
                 }
             self.clusters[int(labels[i])]["points"].append(self.points[i])
+            self.clusters[int(labels[i])]["hashes"].append(
+                hash((self.points[i]["latitude"], self.points[i]["longitude"]))
+            )
 
         for cluster in self.clusters:
             lat_mean = np.mean(
@@ -528,6 +538,15 @@ class Cell:
         df = pd.DataFrame(data=data, columns=columns)
         df = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lng, df.lat), crs=CRS)
         return df
+
+    def clean_cell_before_saving(self):
+        self.current_shape = shapely.empty(1)
+        self.polygons = []
+        self.neighbours = []
+        self.point_centroid = [
+            np.mean([x[1] for x in self.curr_coords]),
+            np.mean([x[0] for x in self.curr_coords]),
+        ]
 
     def __eq__(self, other):
         return self.id == other.id

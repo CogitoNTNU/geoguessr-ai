@@ -57,12 +57,12 @@ class CellVisualizer:
             #     "position": [cell.geom_centroid[0], cell.geom_centroid[1]],
             #     "id": "geom",
             # })
-            points.append(
-                {
-                    "position": [cell.point_centroid[0], cell.point_centroid[1]],
-                    "id": "point",
-                }
-            )
+            # points.append(
+            #     {
+            #         "position": [cell.point_centroid[0], cell.point_centroid[1]],
+            #         "id": "point",
+            #     }
+            # )
         # print(points)
         return points
 
