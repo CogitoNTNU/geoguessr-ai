@@ -163,7 +163,6 @@ class Cell:
                 np.mean([x[1] for x in self.curr_coords]),
                 np.mean([x[0] for x in self.curr_coords]),
             ]
-        print(self, self.points)
         return cells_made
 
     def to_list(self):
