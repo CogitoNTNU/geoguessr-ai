@@ -12,7 +12,7 @@ from transformers import (
 )
 from models import SuperGuessr, load_state_dict
 from datasets import DatasetDict
-from dataset_creation.pretrain import PretrainDataset
+from pretrain.pretrain_dataset import PretrainDataset
 from evaluation.evaluate import compute_geoguessr_metrics
 from training import train_model
 from config import TRAIN_ARGS, PRETRAINED_CLIP, PRETAIN_ARGS, CLIP_MODEL
