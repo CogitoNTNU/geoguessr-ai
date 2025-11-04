@@ -3,7 +3,6 @@ import os
 from cell import Cell
 from tqdm import trange
 import pickle
-import heapq
 import sqlite3
 from shapely import wkb as shapely_wkb
 import struct
@@ -255,8 +254,9 @@ class GenerateGeocells:
     def split_geocells(self):
         cells_to_split = [x for x in self.cells if len(x) > self.max_points]
 
-        while cells_to_split:
-            cell = heapq.heappop(cells_to_split)
+        for cell_id in trange(len(cells_to_split), desc="Splitt celler"):
+            # cell = heapq.heappop(cells_to_split)
+            cell = cells_to_split[cell_id]
 
             cells_made = cell.split_cell()
 
