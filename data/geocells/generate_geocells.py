@@ -30,7 +30,7 @@ class GenerateGeocells:
 
         self.country_cells = {}
         self.min_points = 10
-        self.max_points = 500
+        self.max_points = 67
 
         self.cells = self.init_cells()
         self.add_points_to_cells()
@@ -254,30 +254,23 @@ class GenerateGeocells:
 
     def split_geocells(self):
         cells_to_split = [x for x in self.cells if len(x) > self.max_points]
-        new_cells = []
-        cluster_args = [
-            (50, 0.005),
-            (400, 0.005),
-            (1000, 0.0001),
-        ]  # Taken from paper, but should find better params
-        chosen_cluster_args = cluster_args[0]
 
         while cells_to_split:
             cell = heapq.heappop(cells_to_split)
 
-            more_cells = cell.split_cell(
-                new_cells, chosen_cluster_args, self.min_points, self.max_points
-            )
-            for more_cell in more_cells:
-                heapq.heappush(cells_to_split, more_cell)
+            cells_made = cell.split_cell()
 
-        print(f"{new_cells[0].current_shape=}")
-        self.cells += new_cells
+            for cell in cells_made:
+                self.cells.append(cell)
+                self.country_cells[cell.country][cell.admin_1].append(cell)
+
+            # for more_cell in more_cells:
+            #     heapq.heappush(cells_to_split, more_cell)
 
     def generate_geocells(self):
         self.combine_geocells()
         self.cluster()
-        # self.split_geocells()
+        self.split_geocells()
 
     def save_geocells(self, dir):
         for country in self.country_cells.keys():

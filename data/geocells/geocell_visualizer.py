@@ -50,7 +50,7 @@ class CellVisualizer:
                     {
                         "position": [p["longitude"], p["latitude"]],
                         "id": getattr(p, "id", None),
-                        "properties": {"cluster": cluster},
+                        "properties": {"cluster": cluster, "cell": cell.id},
                     }
                 )
             # points.append({
@@ -135,7 +135,8 @@ class CellVisualizer:
             "html": "<b>Points:</b> {properties.point_count}<br/>"
             "<b>Kommune:</b> {properties.kommune}<br/>"
             "<b>Naboer:</b> {properties.naboer}<br/>"
-            "<b>Cluster:{properties.cluster}<br/>",
+            "<b>Cluster:{properties.cluster}<br/>"
+            "<b>Cell:{properties.cell}<br/>",
             "style": {"backgroundColor": "steelblue", "color": "white"},
         }
 

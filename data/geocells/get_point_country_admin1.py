@@ -5,7 +5,7 @@ import os
 class GeocellMananger:
     def __init__(self, dir: str):
         self.geocells = self.load_geocells(dir)
-        self.dict = self.generate_dict()
+        self.point_info_dict = self.generate_dict()
 
     def load_geocells(self, dir):
         cells = {}
@@ -13,12 +13,10 @@ class GeocellMananger:
             if not file.endswith(".pickle"):
                 continue
             carved_country_name = file.split("_")[-1].split(".")[0]
-            print(dir + "/" + file)
 
             with open(dir + "/" + file, "rb") as f:
                 data = pickle.load(f)
                 cells[carved_country_name] = data
-                print(data)
         return cells
 
     def generate_dict(self):
@@ -26,6 +24,8 @@ class GeocellMananger:
         for country in self.geocells:
             for admin1 in self.geocells[country]:
                 for cell in self.geocells[country][admin1]:
+                    # for cluster in cell.clusters:
+                    #     print(len(cell.clusters[cluster]["points"]))
                     for point in cell.points:
                         h = hash((point["latitude"], point["longitude"]))
                         cell_cluster = -1
@@ -44,9 +44,19 @@ class GeocellMananger:
 
     def get_geocell_id(self, point):
         h = hash((point["latitude"], point["longitude"]))
-        if h not in self.dict:
+        if h not in self.point_info_dict:
             return None
-        return self.dict[h]["geocell"]
+        return (
+            self.point_info_dict[h]["geocell"],
+            self.point_info_dict[h]["country"],
+            self.point_info_dict[h]["admin1"],
+        )
+
+    def get_geocell_info(self, geocell_id, country, admin1):
+        for cell in self.geocells[country][admin1]:
+            if cell.id == geocell_id:
+                return cell
+        return None
 
 
 if __name__ == "__main__":
@@ -60,7 +70,7 @@ if __name__ == "__main__":
     # print(mang.dict)
 
     # print((points.iloc[0]["longitude"]))
-    # for i in range(1, 100000):
-    #     c = mang.get_geocell_id(points.iloc[i])
-    #     if not c is None:
-    #         print(c)
+    for i in range(1, 100000):
+        c = mang.get_geocell_id(points.iloc[i])
+        if c is not None:
+            print(mang.get_geocell_info(*c))
