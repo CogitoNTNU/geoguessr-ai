@@ -122,6 +122,9 @@ def load_previous_snapshot() -> pd.DataFrame | None:
 
 
 def load_latest_snapshot_df() -> pd.DataFrame:
+    """
+    Each row is an image, contains lat, lon, filepath to s3.
+    """
     ptr = get_json(BUCKET, f"{SNAPSHOT_PREFIX}/_latest.json")
     if not ptr:
         raise FileNotFoundError("No snapshot pointer found.")
@@ -315,21 +318,26 @@ def download(dest_dir: str, overwrite: bool, row):
     path = row["image_path"]
     if not path.startswith("s3://"):
         return (path, "skipped (not s3)")
+    local = path.replace("s3://cogito-geoguessr/v1/images", "")
     bucket, key = path[5:].split("/", 1)
-    local_path = os.path.join(dest_dir, os.path.basename(key))
+    local_path = dest_dir + local
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
     if not overwrite and os.path.exists(local_path):
         return (local_path, "skipped (exists)")
     try:
         s3.download_file(bucket, key, local_path)
         return (local_path, "downloaded")
     except Exception as e:
+        print(e)
         return (local_path, f"failed: {e}")
 
 
 def download_latest_images(
-    dest_dir: str, overwrite: bool = False, max_workers: int = 16
+    dest_dir: str,
+    overwrite: bool = False,
+    max_workers: int = 16,
+    df=load_latest_snapshot_df(),
 ):
-    df = load_latest_snapshot_df()
     os.makedirs(dest_dir, exist_ok=True)
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
@@ -348,6 +356,27 @@ def load_points():
     cols = ["location_id", "lat", "lon"]
     point_df = df[cols].copy()
     return point_df
+
+
+def add_metadata():
+    df = load_latest_snapshot_df()
+    df = df.drop_duplicates(subset=["lat", "lon"], keep="first").reset_index(drop=True)
+
+
+def get_snapshot_metadata():
+    df = load_latest_snapshot_df()
+
+    remove = ("heading", "batch_date")
+    cols_to_drop = []
+    for col in df.columns:
+        for remove in remove:
+            if remove in col:
+                cols_to_drop.append(col)
+                break
+
+    meta_data = df.drop(columns=cols_to_drop).reset_index(drop=True)
+
+    return meta_data
 
 
 # upload_dataset_from_folder("./dataset", max_workers=24)
