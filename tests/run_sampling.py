@@ -14,7 +14,7 @@ from src.point_sampling_algorithm.sampling_pipeline import sample_sv_points_from
 load_dotenv(".env.local")
 
 # Les landliste
-with open("data/sv_countries.txt") as f:
+with open("data/point_allocation/sv_countries.txt") as f:
     countries = [line.strip() for line in f if line.strip()]
 
 API_KEY = os.environ["GOOGLE_MAPS_API_KEY"]  # sett miljøvariabel

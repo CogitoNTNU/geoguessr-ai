@@ -335,4 +335,4 @@ def load_points():
 # upload_dataset_from_folder("./dataset", max_workers=24)
 
 points = load_points()
-print(points)
+print(f"Total points saved in S3: {len(points)}")

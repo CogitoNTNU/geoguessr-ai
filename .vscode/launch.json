@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug Street View Script",
+      "type": "python",
+      "request": "launch",
+      "module": "data.street_view_images_collection.main",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}
