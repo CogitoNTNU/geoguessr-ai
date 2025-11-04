@@ -77,11 +77,7 @@ def evaluate_model(
 
     # Get predictions
     with torch.no_grad():
-        (
-            combined_loss,
-            combined_loss_clf,
-            combined_loss_reg,
-        ) = 0, 0, 0, 0, 0
+        combined_loss = combined_loss_clf = combined_loss_reg = 0.0
         combined_preds = []
         combined_geocell_preds = []
         combined_top5_cells = []
@@ -255,7 +251,7 @@ def train_model(
 
             # Evaluation
             eval_loss = evaluate_model(
-                model, dataset["val"], metrics, train_args, None, writer, epoch
+                model, dataset["val"], metrics, train_args, refiner, writer, epoch
             )
 
             # Save model if geolocation prediction is best
