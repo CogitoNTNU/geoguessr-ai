@@ -13,7 +13,6 @@
 - **models**
   - `super_guessr.py` (partially unfinished): Main geocell-classification model on top of a vision encoder; panoramic handling, optional attention, top‑k cell outputs; references missing `smooth_labels`.
   - `layers/positional_encoder.py`: Sinusoidal positional encoder module.
-  - `layers/hedge.py`: Probability hedging layer over top‑k guesses (uses distances).
   - `utils.py`: `ModelOutput` tuple, prediction and state-dict utilities.
 
 - **preprocessing**
@@ -103,9 +102,6 @@
 
 - **models/layers/positional_encoder.py**
   - `PositionalEncoder`: Sinusoidal PE with dropout; `forward` adds fixed PE.
-
-- **models/layers/hedge.py**
-  - `HedgeLayer`: Reweight top‑k probabilities by centrality using Haversine distance; `_temperature_softmax`. (Contains TODO note but functional.)
 
 - **models/utils.py**
   - `ModelOutput`: Named tuple fields for losses/preds.

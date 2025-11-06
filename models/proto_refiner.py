@@ -16,7 +16,6 @@ from datasets import (
     concatenate_datasets,
 )
 from config import PROTO_PATH, DATASET_PATH
-from models.layers import HedgeLayer
 from preprocessing import haversine
 
 # Cluster refinement model
@@ -28,7 +27,6 @@ class ProtoRefiner(nn.Module):
     def __init__(
         self,
         topk: int = 5,
-        hedge: bool = False,
         max_refinement: int = 1000,
         temperature: float = 1.6,
         proto_path: str = PROTO_PATH,
@@ -41,8 +39,6 @@ class ProtoRefiner(nn.Module):
         Args:
             topk (int, optional): number geocell candidates to consider.
                 Defaults to 5.
-            hedge (bool, optional): whether guesses should be hedged.
-                Defaults to False.
             max_refinement (int, optional): max refinement distance in km.
                 Defaults to 1000.
             temperature (float, optional): temperature influencing the softmax strength of
@@ -60,7 +56,6 @@ class ProtoRefiner(nn.Module):
 
         # Variables
         self.topk = topk
-        self.hedge = hedge
         self.max_refinement = max_refinement
         self.verbose = verbose
 
@@ -96,10 +91,6 @@ class ProtoRefiner(nn.Module):
         else:
             self.protos = protos
 
-        # Hedge layer for competitive games
-        if self.hedge:
-            self.hedge_layer = HedgeLayer(temperature=5)  # 1.4
-
         # Learnable parameters
         self.temperature = Parameter(torch.tensor(temperature), requires_grad=False)
         self.geo_scaling = Parameter(torch.tensor(20.0), requires_grad=False)
@@ -126,7 +117,6 @@ class ProtoRefiner(nn.Module):
     def __str__(self):
         rep = "ProtoRefiner(\n"
         rep += f"\ttopk\t\t= {self.topk}\n"
-        rep += f"\thedge\t\t= {self.hedge}\n"
         rep += f"\tmax_refinement\t= {self.max_refinement}\n"
         rep += f"\ttemperature\t= {self.temperature.data.item()}\n"
         rep += f"\tgeo_scaling\t= {self.geo_scaling.data.item()}\n"
@@ -225,20 +215,6 @@ class ProtoRefiner(nn.Module):
                 final_probs = c_probs[: self.topk]
                 if self.verbose:
                     print("\t\tCancelled refinement: distance too far.")
-
-            # Hedge guesses in competitive games
-            if self.hedge:
-                preds = torch.from_numpy(np.array(top_preds)).to("cuda")
-                final_probs = self.hedge_layer(preds, final_probs)
-                new_guess = torch.argmax(final_probs).item()
-                if refined_guess != new_guess:
-                    if self.verbose:
-                        print("\t\tHedging changed location prediction.")
-                        print(
-                            f"\t\t{top_preds[refined_guess]} -> {top_preds[new_guess]}"
-                        )
-                        if new_guess == initial_guess:
-                            print("\t\tHedging changed back to original geocell.")
 
             final_pred_id = torch.argmax(final_probs).item()
             guess_index.append(final_pred_id)
