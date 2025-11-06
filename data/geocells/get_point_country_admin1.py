@@ -71,15 +71,13 @@ if __name__ == "__main__":
     total_points = 0
     max_points = 0
     max_cell = None
-    print(mang.geocells)
-    for admin1 in mang.geocells["Brazil"]:
-        for cell in mang.geocells["Brazil"][admin1]:
-            total_points += len(cell)
-            if cell.id.endswith("0"):
-                print(cell)
-            if len(cell) > max_points:
-                max_cell = cell
-                max_points = len(cell)
+    for country in mang.geocells:
+        for admin1 in mang.geocells[country]:
+            for cell in mang.geocells[country][admin1]:
+                total_points += len(cell)
+                if len(cell) > max_points:
+                    max_cell = cell
+                    max_points = len(cell)
     print(f"{total_points=}\n {max_cell}: {max_points}")
 
     # print((points.iloc[0]["longitude"]))
