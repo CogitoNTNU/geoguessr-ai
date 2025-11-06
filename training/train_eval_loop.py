@@ -10,7 +10,7 @@ from datasets import DatasetDict, Dataset
 from transformers import TrainingArguments, AutoModel
 from typing import Any, Callable
 from tqdm.auto import tqdm
-from dataset_creation.benchmark import BenchmarkDataset
+#from dataset_creation.benchmark import BenchmarkDataset
 from models import ProtoRefiner
 from config import CURRENT_SAVE_PATH
 
@@ -77,11 +77,7 @@ def evaluate_model(
 
     # Get predictions
     with torch.no_grad():
-        (
-            combined_loss,
-            combined_loss_clf,
-            combined_loss_reg,
-        ) = 0, 0, 0, 0, 0
+        combined_loss = combined_loss_clf = combined_loss_reg = 0.0
         combined_preds = []
         combined_geocell_preds = []
         combined_top5_cells = []
@@ -141,16 +137,16 @@ def evaluate_model(
         eval_dict = metrics(results)
 
     # Write loss to TensorBoard
-    if not isinstance(dataset, BenchmarkDataset):
-        writer.add_scalar("Loss/val", combined_loss / len(dataset), step)
-        writer.add_scalar("Loss_clf/val", combined_loss_clf / len(dataset), step)
+    # if not isinstance(dataset, BenchmarkDataset):
+    #     writer.add_scalar("Loss/val", combined_loss / len(dataset), step)
+    #     writer.add_scalar("Loss_clf/val", combined_loss_clf / len(dataset), step)
 
-        if outputs.loss_reg is not None and outputs.loss_reg > 0:
-            writer.add_scalar("Loss_reg/val", combined_loss_reg / len(dataset), step)
+    #     if outputs.loss_reg is not None and outputs.loss_reg > 0:
+    #         writer.add_scalar("Loss_reg/val", combined_loss_reg / len(dataset), step)
 
-        # Write metrics to TensorBoard
-        for metric, value in eval_dict.items():
-            writer.add_scalar(metric, value, step)
+    #     # Write metrics to TensorBoard
+    #     for metric, value in eval_dict.items():
+    #         writer.add_scalar(metric, value, step) 
 
     model.train()
     logger.warning("Back to training ...")
@@ -255,7 +251,7 @@ def train_model(
 
             # Evaluation
             eval_loss = evaluate_model(
-                model, dataset["val"], metrics, train_args, None, writer, epoch
+                model, dataset["val"], metrics, train_args, refiner, writer, epoch
             )
 
             # Save model if geolocation prediction is best

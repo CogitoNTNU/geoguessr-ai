@@ -73,7 +73,7 @@ def main():
 
         print(cells[0][1])
     elif args.mode == 7:
-        geocells = geocell_visualizer.GenerateGeocells(["Norway"])
+        geocells = geocell_visualizer.GenerateGeocells(["France"])
 
     elif args.mode == 8:
         points = [{"lng": random.random(), "lat": random.random()} for i in range(100)]
@@ -90,7 +90,7 @@ def main():
         sql.close()
 
         countries = list(countries)
-        countries = countries[27:]
+        countries = countries[44:]
 
         for i in trange(len(countries)):
             generate_geocells.GenerateGeocells([countries[i]])

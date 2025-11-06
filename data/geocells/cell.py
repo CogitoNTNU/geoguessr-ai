@@ -9,8 +9,6 @@ from sklearn.cluster import OPTICS
 
 import uuid
 
-CRS = "EPSG:4326"
-
 
 class Cell:
     def __init__(
@@ -146,8 +144,6 @@ class Cell:
                 clusters_split.append(cluster)
 
                 new_cell.cluster(0.00005)
-                for cluster in new_cell.clusters:
-                    print(new_cell.id, len(new_cell.clusters[cluster]["points"]))
 
                 cells_made.append(new_cell)
 
@@ -167,83 +163,7 @@ class Cell:
                 np.mean([x[1] for x in self.curr_coords]),
                 np.mean([x[0] for x in self.curr_coords]),
             ]
-        print(self, self.points)
         return cells_made
-
-    # def split_cell(self, add_to, cluster_args, min_cell_size, max_cell_size):
-    #     if len(self.points) < max_cell_size:
-    #         return []
-
-    #     self.curr_coords = self.coords()
-    #     self.point_centroid = [
-    #         np.mean([x[1] for x in self.curr_coords]),
-    #         np.mean([x[0] for x in self.curr_coords]),
-    #     ]
-    #     if self.curr_coords == 0:
-    #         return []
-    #     lats = []
-    #     longs = []
-    #     for i in self.curr_coords:
-    #         lats.append(i[0])
-    #         longs.append(i[1])
-    #     data = [[point[0], point[1]] for point in self.curr_coords]
-
-    #     df = pd.DataFrame(data=data, columns=["lat", "lng"])
-    #     df = gpd.GeoDataFrame(df, geometry=gpd.points_from_xy(df.lat, df.lng), crs=CRS)
-
-    #     clusterer = OPTICS(min_samples=cluster_args[0], xi=cluster_args[1])
-    #     df["cluster"] = clusterer.fit_predict(df[["lat", "lng"]].values)
-
-    #     uniques_clusters = df["cluster"].nunique()
-    #     if uniques_clusters < 2:
-    #         return []
-
-    #     print(df)
-
-    #     cluster_count = df["cluster"].value_counts()
-    #     large_clusters = cluster_count[cluster_count >= min_cell_size].index
-    #     non_null_large_clusters = [x for x in large_clusters if x != -1]
-
-    #     if len(large_clusters) < 2:
-    #         return []
-
-    #     if len(large_clusters) == 2 and len(non_null_large_clusters) == 1:
-    #         null_df = df[df["cluster"] == -1]
-    #         if len(null_df) > max_cell_size:
-    #             return []
-
-    #         new_cells, remove_cells = self.separate_single_cluster(
-    #             df, non_null_large_clusters
-    #         )
-    #     else:
-    #         new_cells, remove_cells = self.separate_multi_cluster(
-    #             df, non_null_large_clusters
-    #         )
-
-    #     for new_cell in new_cells:
-    #         self.subtract(new_cell)
-    #         add_to.append(new_cell)
-    #     print(f"{remove_cells=}")
-    #     for cell in remove_cells:
-    #         if cell in add_to:
-    #             # add_to.remove(cell)
-    #             pass
-
-    #     clean_cells = new_cells
-    #     if len(remove_cells) == 0:
-    #         clean_cells += [self]
-
-    #     self.clean_dirty_splits(clean_cells)
-
-    #     proc_cells = []
-    #     if len(self.points) > max_cell_size and self not in remove_cells:
-    #         proc_cells.append(self)
-
-    #     for cell in new_cells:
-    #         if len(cell.points) > max_cell_size:
-    #             proc_cells.append(cell)
-
-    #     return proc_cells
 
     def to_list(self):
         return [
