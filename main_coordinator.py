@@ -17,7 +17,7 @@ from backend.data import GeoImageIterableDataset
 from backend.s3bucket import load_latest_snapshot_df, load_latest_holdout_snapshot_df
 from loguru import logger
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
-from data.geocells.geocell_manager import get_geocell_id
+from data.geocells.geocell_manager import GeocellManager    
 from dotenv import load_dotenv
 import os
 import wandb
@@ -53,7 +53,36 @@ def main(config):
     test_dataloader = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
     val_dataset = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
 
+    
+
     # Initialize model and set it to train
+    geocell_manager = GeocellManager("data/geocells/finished_geocells")
+    num_geocells = geocell_manager.get_num_geocells()
+
+    class Net(torch.nn.Module):
+        def __init__(self, num_geocells: int):
+            super(Net, self).__init__()
+            self.conv1 = torch.nn.Conv2d(3, 16, 3, 1)
+            self.conv2 = torch.nn.Conv2d(16, 32, 3, 1)
+            self.fc1 = torch.nn.Linear(32 * 6 * 6, 128)
+            self.fc2 = torch.nn.Linear(128, num_geocells) # get_num_geocells() in data/geocells/geocell_manager.py
+
+        def forward(self, x):
+            x = self.conv1(x)
+            x = F.relu(x)
+
+            x = self.conv2(x)
+            x = F.relu(x)
+
+            x = F.max_pool2d(x, 2)
+            x = torch.flatten(x, 1)
+            x = self.fc1(x)
+            x = F.relu(x)
+            logits = self.fc2(x)
+
+            class_probabilities = F.softmax(logits, dim=1)
+            return logits, class_probabilities
+            
     train(model=None, train_dataloader=train_dataloader, validation_dataloader=val_dataset, device=device, config=config)
 
     """
@@ -105,6 +134,7 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
         )
     scheduler = CosineAnnealingWarmRestarts(optimizer, config.T_0, config.T_mult, config.eta_min) 
     criterion = CrossEntropyLoss()
+    geocell_manager = GeocellManager("data/geocells/finished_geocells")
 
     for epoch in range(config.epocs):
         for batch_idx, (images, targets) in enumerate(train_dataloader):
@@ -113,17 +143,17 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
             # Find target geocell labels from lat, lon
             lat = targets['lat']
             lon = targets['lon']
-            geocell_info = get_geocell_id({'latitude': lat, 'longitude': lon})
+            geocell_info = geocell_manager.get_geocell_id({'latitude': lat, 'longitude': lon})
             geocell_id = 0
             targets = geocell_info[geocell_id]
 
             # Zero your gradients for every batch!           
             optimizer.zero_grad()
             # Make predictions for this batch
-            outputs = model(images)
+            logits, class_probabilities = model(images)
 
             # Compute the loss and its gradients
-            loss = criterion(outputs, targets)
+            loss = criterion(class_probabilities, targets)
             geocell_topk = None  # Placeholder for model output
             # Find gradients
             loss.backward()
