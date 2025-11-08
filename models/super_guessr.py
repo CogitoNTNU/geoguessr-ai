@@ -136,9 +136,6 @@ class SuperGuessr(nn.Module):
             elif (
                 "tiny-vit" in self.base_model.config._name_or_path and not self.serving
             ):
-                head = CLIP_PRETRAINED_HEAD  # TODO
-                self.load_state(head)
-                print(f"Initialized model parameters from model: {head}")
                 for param in self.base_model.vision_model.encoder.layers[
                     :-1
                 ].parameters():

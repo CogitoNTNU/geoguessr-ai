@@ -95,11 +95,13 @@ def collect_google_streetview(lat: float, lon: float) -> bool:
 
 
 def getAllCoordinates() -> np.ndarray[(float, float)]:
+    cities = np.loadtxt(
+        "data/out/sv_points_cities_latlong.txt", delimiter=","
+    )  # (lat, lon)
+    dist = np.loadtxt(
+        "data/out/geoguessr_distributed_points_40k.txt", delimiter=" "
+    )  # (lat, lon)
 
-    cities = np.loadtxt("data/out/sv_points_cities_latlong.txt", delimiter=",")  # (lat, lon)
-    dist   = np.loadtxt("src/point_sampling_algorithm/geoguessr_distributed_points_50k.txt", delimiter=",")  # (lon, lat)
-
-    dist = dist[:, [1, 0]]  # → (lat, lon)
     pts = np.vstack([cities, dist])
 
     r = np.round(pts, 6)
@@ -222,7 +224,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = int(9900 / pictures_per_point)
+    amount_of_pictures = int(30 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )

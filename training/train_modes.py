@@ -10,6 +10,7 @@ from transformers import (
     CLIPModel,
     CLIPProcessor,
 )
+import timm
 from models import SuperGuessr, load_state_dict
 from datasets import DatasetDict
 from dataset_creation.pretrain import PretrainDataset
@@ -105,8 +106,12 @@ def finetune_model(
             state_dict = torch.load(PRETRAINED_CLIP, map_location=torch.device("cuda"))
             load_state_dict(loaded_model, state_dict)
             print(f"Initialized base model with weights from: {PRETRAINED_CLIP}")
+        elif "tiny" in model:
+            loaded_model = timm.create_model(
+                "tiny_vit_21m_512.dist_in22k_ft_in1k", pretrained=True, num_classes=0
+            )
         else:
-            raise Exception("Not a clip-vit model.")
+            raise Exception("Not a clip-vit or tiny-vit model.")
 
         model = SuperGuessr(
             loaded_model.base_model,
