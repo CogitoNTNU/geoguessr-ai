@@ -381,6 +381,6 @@ def get_snapshot_metadata():
 
 # upload_dataset_from_folder("./dataset", max_workers=24)
 
-points = load_points()
-print(f"Total points saved in S3: {len(points)}")
+# points = load_points()
+# print(f"Total points saved in S3: {len(points)}")
 # points.to_csv("./test.csv")
