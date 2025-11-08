@@ -59,13 +59,6 @@ CURRENT_SAVE_PATH = "saved_models/WorldCLIP_head_landmarks.model"
 PRETRAINED_CLIP = "saved_models/StreetviewCLIP.model"
 CLIP_PRETRAINED_HEAD = "saved_models/New_Base_smooth_avg_MT_Geo_SV.model"
 
-### YFCC & Landmarks (PIGEOTTO)
-PRETRAINED_CLIP_YFCC = "saved_models/WorldCLIP.model"
-CLIP_PRETRAINED_HEAD_YFCC = (
-    "saved_models/WorldCLIP_head.model"  # PIGEOTTO prediction head
-)
-CLIP_PRETRAINED_HEAD_YFCC_LANDMARKS = "saved_models/WorldCLIP_head_landmarks.model"  # PIGEOTTO prediction head with landmarks
-
 # Embedding
 EMBED_BATCH_SIZE_PER_GPU = 512
 

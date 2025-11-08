@@ -69,8 +69,8 @@ class SuperGuessr(nn.Module):
         # Setup
         self._set_hidden_size()
         geocell_path = GEOCELL_PATH
-        self.lla_geocells = self.load_geocells(geocell_path)
-        self.num_cells = self.lla_geocells.size(0)
+        self.geocell_centroid_coords = self.load_geocells(geocell_path)
+        self.num_cells = self.geocell_centroid_coords.size(0)
 
         # Input dimension for cell layer
         self.input_dim = self.hidden_size
@@ -136,9 +136,6 @@ class SuperGuessr(nn.Module):
             elif (
                 "tiny-vit" in self.base_model.config._name_or_path and not self.serving
             ):
-                head = CLIP_PRETRAINED_HEAD  # TODO
-                self.load_state(head)
-                print(f"Initialized model parameters from model: {head}")
                 for param in self.base_model.vision_model.encoder.layers[
                     :-1
                 ].parameters():
@@ -154,9 +151,9 @@ class SuperGuessr(nn.Module):
             Tensor: ECEF geocell centroids
         """
         geo_df = pd.read_csv(path)
-        lla_coords = torch.tensor(geo_df[["lng", "lat"]].values)
-        lla_geocells = nn.parameter.Parameter(data=lla_coords, requires_grad=False)
-        return lla_geocells
+        centroid_coords = torch.tensor(geo_df[["lng", "lat"]].values)
+        geocell_centroid_coords = nn.parameter.Parameter(data=centroid_coords, requires_grad=False)
+        return geocell_centroid_coords
 
     def _move_to_cuda(
         self,
@@ -350,7 +347,7 @@ class SuperGuessr(nn.Module):
 
         # Compute coordinate prediction
         geocell_preds = torch.argmax(geocell_probs, dim=-1)
-        pred_LLH = torch.index_select(self.lla_geocells.data, 0, geocell_preds)
+        pred_centroid_coordinate = torch.index_select(self.geocell_centroid_coords.data, 0, geocell_preds)
         label_probs = self._to_one_hot(labels_clf)  # labels_clf if normal
 
         # Get top 'num_candidates' geocell candidates
@@ -358,11 +355,11 @@ class SuperGuessr(nn.Module):
 
         # Serving
         if not self.training and self.serving:
-            return pred_LLH, geocell_topk, embedding
+            return pred_centroid_coordinate, geocell_topk, embedding
 
         # Soft labels based on distance
         if self.should_smooth_labels:
-            distances = haversine_matrix(labels, self.lla_geocells.data.t())
+            distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
             label_probs = smooth_labels(distances)
 
         # Loss
@@ -373,7 +370,7 @@ class SuperGuessr(nn.Module):
         output = ModelOutput(
             loss,
             loss_clf,
-            pred_LLH,
+            pred_centroid_coordinate,
             geocell_preds,
             geocell_topk,
             embedding,
