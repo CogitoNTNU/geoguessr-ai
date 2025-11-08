@@ -71,10 +71,8 @@ class SuperGuessr(nn.Module):
             "data/geocells/finished_geocells"  # must be a DIRECTORY containing *.pickle
         )
         self._geocell_mgr = GeocellManager(geocell_dir)
-        centroids, id2idx, idx_meta = _build_centroids_from_manager(self._geocell_mgr)
+        centroids = _build_centroids_from_manager(self._geocell_mgr)
 
-        self.id2idx = id2idx  # geocell_id -> row index
-        self.idx_meta = idx_meta  # index -> (country, admin1, geocell_id)
         self.geocell_centroid_coords = nn.Parameter(centroids, requires_grad=False)
         self.num_cells = centroids.size(0)
 
@@ -353,7 +351,7 @@ class SuperGuessr(nn.Module):
         # Get top 'num_candidates' geocell candidates
         geocell_topk = torch.topk(geocell_probs, self.num_candidates, dim=-1)
 
-        # Serving
+        # Serving (inference)
         if not self.training and self.serving:
             return pred_centroid_coordinate, geocell_topk, embedding
 
@@ -405,8 +403,6 @@ def _build_centroids_from_manager(mgr: GeocellManager):
     """
     Returns:
       centroids: (num_cells, 2) float32 tensor in (lng, lat)
-      id2idx: dict geocell_id -> row index
-      idx_meta: list[(country, admin1, geocell_id)] for inverse mapping
     """
     rows = []
     for country in mgr.geocells:
@@ -430,12 +426,8 @@ def _build_centroids_from_manager(mgr: GeocellManager):
     rows.sort(key=lambda r: (r[0], r[1], str(r[2])))
 
     centroids = []
-    id2idx = {}
-    idx_meta = []
     for idx, (country, adm1, geocell_id, lng, lat, _cell) in enumerate(rows):
         centroids.append([lng, lat])  # (lng, lat)
-        id2idx[geocell_id] = idx
-        idx_meta.append((country, adm1, geocell_id))
 
     centroids = torch.tensor(centroids, dtype=torch.float32)
-    return centroids, id2idx, idx_meta
+    return centroids
