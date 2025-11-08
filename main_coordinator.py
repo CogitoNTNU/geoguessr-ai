@@ -1,4 +1,5 @@
 import os
+from pyarrow import null
 import yaml
 import argparse
 import json
@@ -12,9 +13,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from data import GeoImageIterableDataset
-from s3bucket import load_latest_snapshot_df
-
-
+from s3bucket import load_latest_snapshot_df, load_latest_holdout_snapshot_df
 
 
 # ----------------------------
@@ -25,16 +24,26 @@ def main():
     # Overall-modus for å velge mellom training og inference 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    # Load entire dataset from s3-bucket
+    # Fetch main dataset from s3-bucket
     df = load_latest_snapshot_df()
     df = df.head(10)
 
-    dataset = GeoImageIterableDataset(df)
-    train_dataloader = DataLoader(dataset, batch_size=64, num_workers=4)
+    train_test_split = 0.9
+    num_training_samples = len(df) * train_test_split
+    df_train = df.iloc[:num_training_samples]
+    df_test = df.iloc[num_training_samples:]
 
-    # Make variables  with train, test and eval dataset, fetched from datalaoder. 
-    # Make train and test dataset by splitting the already fetched dataset
+    # Fetch holdout dataset (validation set) from s3-bucket
+    df_val = load_latest_holdout_snapshot_df()
+    df_val = df.head(10)
 
+    train_dataset = GeoImageIterableDataset(df_train)
+    test_dataset = GeoImageIterableDataset(df_test)
+    val_dataset = GeoImageIterableDataset(df_val)
+
+    train_dataloader = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
+    test_dataloader = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
+    val_dataset = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
 
     # Initialize model and set it to train
 
