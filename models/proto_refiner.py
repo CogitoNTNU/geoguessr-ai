@@ -62,7 +62,7 @@ class ProtoRefiner(nn.Module):
         # Load dataset with embeddings and prototypes
         if type(dataset_path) is list:
             if len(dataset_path) > 2:
-                raise NotImplementedError("Can't concatentate more than 2 datasets.")
+                raise NotImplementedError("Can't concatenate more than 2 datasets.")
 
             # Dataset
             data_1 = DatasetDict.load_from_disk(dataset_path[0])
@@ -186,7 +186,7 @@ class ProtoRefiner(nn.Module):
                     continue
 
                 cell_emb = cell_emb["embedding"].to("cuda")
-                logits = -self._euclidian_distance(cell_emb, emb)
+                logits = -self._euclidean_distance(cell_emb, emb)
 
                 # Get top cluster and corresponding coordinates
                 top_distances.append(torch.max(logits).item())
@@ -250,7 +250,7 @@ class ProtoRefiner(nn.Module):
         if embeddings.size(1) == 4:
             embeddings = embeddings.mean(dim=1)
 
-        distances = self._euclidian_distance(embeddings, emb)
+        distances = self._euclidean_distance(embeddings, emb)
         max_index = torch.argmax(distances).item()
         max_point = points["labels"][max_index]
         return max_point[0].item(), max_point[1].item()
@@ -335,7 +335,7 @@ class ProtoRefiner(nn.Module):
 
         return cosine_similarities.flatten()
 
-    def _euclidian_distance(self, matrix: Tensor, vector: Tensor) -> Tensor:
+    def _euclidean_distance(self, matrix: Tensor, vector: Tensor) -> Tensor:
         """Computes the euclidian distance between all vectors in matrix and vector.
 
         Args:
@@ -343,7 +343,7 @@ class ProtoRefiner(nn.Module):
             vector (Tensor): vector of shape (dim_vector)
 
         Returns:
-            Tensor: euclidian distances
+            Tensor: euclidean distances
         """
         v = vector.unsqueeze(0)
         distances = torch.cdist(matrix, v)
