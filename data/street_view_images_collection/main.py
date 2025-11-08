@@ -143,7 +143,7 @@ def update_failed_points(points: np.ndarray[(float, float)]):
 def cleanup_temp_files():
     folder = "out"
     for filename in os.listdir(folder):
-        if filename.startswith("streetview_") and filename.endswith(".jpg"):
+        if filename.endswith(".jpg"):
             file_path = os.path.join(folder, filename)
             try:
                 os.remove(file_path)
@@ -234,7 +234,7 @@ if __name__ == "__main__":
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
     if extra_credits_result.lower() == "y":
-        amount_of_pictures = int(25_000 / pictures_per_point)
+        amount_of_pictures = int(16_000 / pictures_per_point)
 
     start_time = time.time()
 
