@@ -37,6 +37,8 @@ dependencies = [
     "s3fs>=2025.9.0",
     "mmpretrain>=1.2.0",
     "botocore>=1.40.61",
+    "wandb>=0.22.3",
+    "tensorboard>=2.20.0",
 ]
 
 
