@@ -1,10 +1,10 @@
 import torch
-import pandas as pd
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
 from models.layers.positional_encoder import PositionalEncoder
 from models.utils import ModelOutput
 from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM, GEOCELL_PATH
+from data.geocells.geocell_manager import GeocellManager
 
 
 # Constants
@@ -67,9 +67,14 @@ class SuperGuessr(nn.Module):
 
         # Setup
         self._set_hidden_size()
-        geocell_path = GEOCELL_PATH
-        self.geocell_centroid_coords = self.load_geocells(geocell_path)
-        self.num_cells = self.geocell_centroid_coords.size(0)
+        geocell_dir = GEOCELL_PATH  # must be a DIRECTORY containing *.pickle
+        self._geocell_mgr = GeocellManager(geocell_dir)
+        centroids, id2idx, idx_meta = _build_centroids_from_manager(self._geocell_mgr)
+
+        self.id2idx = id2idx  # geocell_id -> row index
+        self.idx_meta = idx_meta  # index -> (country, admin1, geocell_id)
+        self.geocell_centroid_coords = nn.Parameter(centroids, requires_grad=False)
+        self.num_cells = centroids.size(0)
 
         # Input dimension for cell layer
         self.input_dim = self.hidden_size
@@ -133,26 +138,23 @@ class SuperGuessr(nn.Module):
                     param.requires_grad = False
 
             elif "tiny" in self.base_model.config._name_or_path and not self.serving:
-                for param in self.base_model.vision_model.encoder.layers[
-                    :-1
-                ].parameters():
-                    param.requires_grad = False
+                self.base_model.freeze_all_but_last_stage()
 
-    def load_geocells(self, path: str) -> Tensor:
-        """Loads geocell centroids and converts them to ECEF format
+    # def load_geocells(self, path: str) -> Tensor:
+    #     """Loads geocell centroids and converts them to ECEF format
 
-        Args:
-            path (str, optional): path to geocells. Defaults to GEOCELL_PATH.
+    #     Args:
+    #         path (str, optional): path to geocells. Defaults to GEOCELL_PATH.
 
-        Returns:
-            Tensor: ECEF geocell centroids
-        """
-        geo_df = pd.read_csv(path)
-        centroid_coords = torch.tensor(geo_df[["lng", "lat"]].values)
-        geocell_centroid_coords = nn.parameter.Parameter(
-            data=centroid_coords, requires_grad=False
-        )
-        return geocell_centroid_coords
+    #     Returns:
+    #         Tensor: ECEF geocell centroids
+    #     """
+    #     geo_df = pd.read_csv(path)
+    #     centroid_coords = torch.tensor(geo_df[["lng", "lat"]].values)
+    #     geocell_centroid_coords = nn.parameter.Parameter(
+    #         data=centroid_coords, requires_grad=False
+    #     )
+    #     return geocell_centroid_coords
 
     def _move_to_cuda(
         self,
@@ -386,3 +388,52 @@ class SuperGuessr(nn.Module):
         rep += f"\tserving\t\t= {self.serving}\n"
         rep += ")"
         return rep
+
+
+def _centroid_from_points(cell):
+    # crude mean; replace with your preferred centroid logic if you have one
+    lngs = [p["longitude"] for p in cell.points]
+    lats = [p["latitude"] for p in cell.points]
+    if len(lngs) == 0:
+        return (0.0, 0.0)
+    return (sum(lngs) / len(lngs), sum(lats) / len(lats))
+
+
+def _build_centroids_from_manager(mgr: GeocellManager):
+    """
+    Returns:
+      centroids: (num_cells, 2) float32 tensor in (lng, lat)
+      id2idx: dict geocell_id -> row index
+      idx_meta: list[(country, admin1, geocell_id)] for inverse mapping
+    """
+    rows = []
+    for country in mgr.geocells:
+        for adm1 in mgr.geocells[country]:
+            for cell in mgr.geocells[country][adm1]:
+                # prefer centroid attribute if present
+                cen = getattr(cell, "centroid", None)
+                if cen is None:
+                    lng, lat = _centroid_from_points(cell)
+                else:
+                    # handle dict or tuple; ensure (lng, lat) order
+                    if isinstance(cen, dict):
+                        lng, lat = cen["longitude"], cen["latitude"]
+                    else:
+                        lng, lat = cen[0], cen[1]
+                rows.append(
+                    (str(country), str(adm1), cell.id, float(lng), float(lat), cell)
+                )
+
+    # deterministic ordering
+    rows.sort(key=lambda r: (r[0], r[1], str(r[2])))
+
+    centroids = []
+    id2idx = {}
+    idx_meta = []
+    for idx, (country, adm1, geocell_id, lng, lat, _cell) in enumerate(rows):
+        centroids.append([lng, lat])  # (lng, lat)
+        id2idx[geocell_id] = idx
+        idx_meta.append((country, adm1, geocell_id))
+
+    centroids = torch.tensor(centroids, dtype=torch.float32)
+    return centroids, id2idx, idx_meta
