@@ -64,7 +64,7 @@ def main(config):
             super(Net, self).__init__()
             self.conv1 = torch.nn.Conv2d(3, 16, 3, 1)
             self.conv2 = torch.nn.Conv2d(16, 32, 3, 1)
-            self.fc1 = torch.nn.Linear(32 * 6 * 6, 128)
+            self.fc1 = torch.nn.Linear(508032 , 128)
             self.fc2 = torch.nn.Linear(128, num_geocells) # get_num_geocells() in data/geocells/geocell_manager.py
 
         def forward(self, x):
@@ -83,7 +83,7 @@ def main(config):
             class_probabilities = F.softmax(logits, dim=1)
             return logits, class_probabilities
             
-    train(model=None, train_dataloader=train_dataloader, validation_dataloader=val_dataset, device=device, config=config)
+    train(model=Net(12002), train_dataloader=train_dataloader, validation_dataloader=val_dataset, device=device, config=config)
 
     """
     Hva som må gjøres (roughly)
@@ -114,28 +114,26 @@ class Configuration:
     #Optimizer
     betas: tuple[float] = (0.9, 0.999)
     lr: float = 5e-5
-    weight_decay: float =0.01,
-    epocs: int = 5
+    weight_decay: float = 0.01
+    epochs: int = 5
     #Scheduler
     T_0: int = 10
     T_mult: int = 2
     eta_min: int = 1e-6
 
 
-
-
 def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device, config: Configuration):
     optimizer = AdamW(
         model.parameters(), 
-        betas=config.betas,
         lr=config.lr,
+        betas=config.betas,
         weight_decay=config.weight_decay,
-        )
+    )
     scheduler = CosineAnnealingWarmRestarts(optimizer, config.T_0, config.T_mult, config.eta_min) 
     criterion = CrossEntropyLoss()
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
 
-    for epoch in range(config.epocs):
+    for epoch in range(config.epochs):
         for batch_idx, (images, targets) in enumerate(train_dataloader):
             print(batch_idx, images, targets)
             
@@ -183,11 +181,11 @@ if __name__ == '__main__':
     api_key = os.getenv("WANDB_API_KEY")
     config = Configuration()
 
-    wandb.login(api_key)
+    wandb.login(key=api_key)
     run = wandb.init(
             project="geoguessr-ai",        # Your project name
             entity="cogito-geoguessr-ai", # Your team name
-            config=config.asdict(),
+            config=asdict(config),
             mode="online" if api_key else "disabled"
             )
     

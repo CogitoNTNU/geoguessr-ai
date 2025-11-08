@@ -1,13 +1,11 @@
-from torch.utils.data import Dataset
-from backend.s3bucket import load_latest_snapshot_df, download_latest_images, load_points
-from loguru import logger
+from backend.s3bucket import load_latest_snapshot_df
 
 
 import io
 from typing import Iterator, Optional, Dict, Any
 import pandas as pd
 import torch
-from torch.utils.data import IterableDataset, get_worker_info, DataLoader
+from torch.utils.data import IterableDataset, get_worker_info
 from PIL import Image
 import fsspec
 from torchvision import transforms as T
@@ -15,15 +13,23 @@ from torchvision import transforms as T
 # ---- Your existing helpers (assumed available) ----
 # from backend.s3bucket import load_latest_snapshot_df
 
+
 def _ensure_s3_uri(path: str, bucket: Optional[str] = None) -> str:
     # Accept either s3://bucket/key or just key with provided bucket
     if path.startswith("s3://"):
         return path
     if bucket is None:
-        raise ValueError(f"image_path='{path}' is not an s3:// URI and no bucket provided.")
+        raise ValueError(
+            f"image_path='{path}' is not an s3:// URI and no bucket provided."
+        )
     return f"s3://{bucket}/{path.lstrip('/')}"
 
-def _build_fs(cache_dir: Optional[str] = None, anon: bool = False, s3_kwargs: Optional[Dict[str, Any]] = None):
+
+def _build_fs(
+    cache_dir: Optional[str] = None,
+    anon: bool = False,
+    s3_kwargs: Optional[Dict[str, Any]] = None,
+):
     """
     Make a per-worker filesystem. If cache_dir is set, wrap S3 with a local file cache.
     """
@@ -31,7 +37,7 @@ def _build_fs(cache_dir: Optional[str] = None, anon: bool = False, s3_kwargs: Op
     base = fsspec.filesystem(
         "s3",
         anon=anon,
-        **s3_kwargs,     # e.g. {"client_kwargs": {"endpoint_url": "..."}}
+        **s3_kwargs,  # e.g. {"client_kwargs": {"endpoint_url": "..."}}
     )
     if cache_dir:
         # Use filecache layer to avoid re-downloading across epochs
@@ -40,12 +46,13 @@ def _build_fs(cache_dir: Optional[str] = None, anon: bool = False, s3_kwargs: Op
             target_protocol="s3",
             target_options={"anon": anon, **s3_kwargs},
             cache_storage=cache_dir,
-            cache_check=600,      # seconds between cache validity checks
-            same_names=True
+            cache_check=600,  # seconds between cache validity checks
+            same_names=True,
         )
         # filecache returns an FS directly usable with open(s3://...)
         return fs
     return base
+
 
 class GeoImageIterableDataset(IterableDataset):
     """
@@ -58,6 +65,7 @@ class GeoImageIterableDataset(IterableDataset):
       - location_id (str)
       - ... (other metadata allowed)
     """
+
     def __init__(
         self,
         df: Optional[pd.DataFrame] = None,
@@ -68,7 +76,7 @@ class GeoImageIterableDataset(IterableDataset):
         self.df = df if df is not None else load_latest_snapshot_df()
         if self.df is None or len(self.df) == 0:
             raise RuntimeError("Empty snapshot DataFrame.")
-        self.bucket = "cogito-geoguessr"  
+        self.bucket = "cogito-geoguessr"
         self.transform = transform
         self.cache_dir = "./.s3cache"
         self.s3_anon = False
@@ -111,11 +119,13 @@ class GeoImageIterableDataset(IterableDataset):
     def __iter__(self):
         """
         Yields (image_tensor, target_dict) tuples.
-        Target-dict is a dictionary of all the metadata connected to the picture, 
+        Target-dict is a dictionary of all the metadata connected to the picture,
         which is fetched from the connected parquet-file.
         """
         # Build a per-worker filesystem (thread/process-safe)
-        fs = _build_fs(cache_dir=self.cache_dir, anon=self.s3_anon, s3_kwargs=self.s3_options)
+        fs = _build_fs(
+            cache_dir=self.cache_dir, anon=self.s3_anon, s3_kwargs=self.s3_options
+        )
 
         for idx in self._iter_shard():
             row = self.df.iloc[idx]
@@ -152,4 +162,83 @@ class GeoImageIterableDataset(IterableDataset):
 
             yield tensor, target
 
-# ---------- Example usage ----------
+
+class PanoramaIterableDataset(IterableDataset):
+    """
+    Yields (image_stack, target) where:
+      - image_stack: (4, C, H, W)
+      - target: dict (shared metadata for the panorama)
+    Assumes df contains 'pano_id' and each pano has >= tiles_per_pano tiles.
+    """
+
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        transform,
+        tiles_per_pano: int = 4,
+        order_cols=("tile_idx", "yaw"),
+    ):
+        super().__init__()
+        self.transform = transform
+        self.tiles_per_pano = tiles_per_pano
+        self.bucket = "cogito-geoguessr"
+
+        if "pano_id" not in df.columns:
+            raise ValueError(
+                "DataFrame must contain a 'pano_id' column for panorama grouping."
+            )
+
+        # Pre-group & sort deterministically so workers shard by group, not by row
+        groups = []
+        for pid, g in df.groupby("pano_id"):
+            g = g.copy()
+            for col in order_cols:
+                if col in g.columns:
+                    g = g.sort_values(col)
+                    break
+            rows = list(g.itertuples(index=False))
+            if len(rows) >= tiles_per_pano:
+                groups.append(rows[:tiles_per_pano])  # exactly 4
+        self.groups = groups
+
+    def __len__(self) -> int:
+        return len(self.groups)
+
+    def _iter_group_shard(self):
+        """Shard by panorama groups so a pano never crosses workers."""
+        worker = get_worker_info()
+        n = len(self.groups)
+        if worker is None:
+            yield from range(n)
+        else:
+            wid, wnum = worker.id, worker.num_workers
+            for i in range(wid, n, wnum):
+                yield i
+
+    def _load_image_from_row(self, fs, row):
+        """Open image from S3 using a shared filesystem."""
+        uri = _ensure_s3_uri(str(row.image_path), bucket=self.bucket)
+        with fs.open(uri, "rb") as f:
+            return Image.open(io.BytesIO(f.read())).convert("RGB")
+
+    def __iter__(self):
+        # Build FS ONCE per worker
+        fs = _build_fs(cache_dir="./.s3cache", anon=False, s3_kwargs={})
+
+        for gi in self._iter_group_shard():
+            rows = self.groups[gi]
+            imgs = []
+            target = {
+                "pano_id": getattr(rows[0], "pano_id", None),
+                "lat": float(getattr(rows[0], "lat", 0.0)),
+                "lon": float(getattr(rows[0], "lon", 0.0)),
+                "location_id": str(getattr(rows[0], "location_id", "")),
+                "image_paths": [],
+            }
+            for r in rows:
+                pil = self._load_image_from_row(fs, r)  # PIL.Image
+                tensor = self.transform(pil)  # (C,H,W) -> ensure ToTensor()+Normalize
+                imgs.append(tensor)
+                if hasattr(r, "image_path"):
+                    target["image_paths"].append(str(r.image_path))
+            yield torch.stack(imgs, dim=0), target  # (4,C,H,W)
