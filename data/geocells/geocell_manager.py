@@ -2,7 +2,7 @@ import pickle
 import os
 
 
-class GeocellMananger:
+class GeocellManager:
     def __init__(self, dir: str):
         self.geocells = self.load_geocells(dir)
         self.point_info_dict = self.generate_dict()
@@ -64,7 +64,7 @@ class GeocellMananger:
 
 if __name__ == "__main__":
     filepath = "data/geocells/finished_geocells"
-    mang = GeocellMananger(filepath)
+    mang = GeocellManager(filepath)
 
     with open("data/out/sv_points_all_latlong.pkl", "rb") as file:
         data = pickle.load(file)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     print(f"Total number of geocells: {total_cells}")
 
     print(mang.get_num_geocells())
-    
+
     # print((points.iloc[0]["longitude"]))
     # for i in range(1, 100000):
     #     c = mang.get_geocell_id(points.iloc[i])
