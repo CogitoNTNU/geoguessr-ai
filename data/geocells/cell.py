@@ -105,7 +105,7 @@ class Cell:
                 np.mean([x[1] for x in self.curr_coords]),
                 np.mean([x[0] for x in self.curr_coords]),
             ]
-        try:
+        try: # Jens: Måtte modifsere blokken under for å bli kvitt en feil som skjedde for 4 land og blokkerte geocell-generation
             c = self.current_shape.centroid
             if c.is_empty:
                 raise ValueError("empty centroid")
