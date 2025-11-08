@@ -95,7 +95,6 @@ class Configuration:
 
 
 
-
 def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device, config: Configuration):
     optimizer = AdamW(
         model.parameters(), 
