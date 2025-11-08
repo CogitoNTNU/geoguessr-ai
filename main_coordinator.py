@@ -1,3 +1,4 @@
+from dataclasses import dataclass, asdict
 import os
 from pyarrow import null
 import yaml
@@ -17,12 +18,16 @@ from backend.s3bucket import load_latest_snapshot_df, load_latest_holdout_snapsh
 from loguru import logger
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from data.geocells.geocell_manager import get_geocell_id
+from dotenv import load_dotenv
+import os
+import wandb
 
 
 # ----------------------------
 # Main training script
 # ----------------------------
-def main():
+def main(config):
+
 
     # Overall-modus for å velge mellom training og inference 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -49,7 +54,7 @@ def main():
     val_dataset = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
 
     # Initialize model and set it to train
-    
+    train(model=None, train_dataloader=train_dataloader, validation_dataloader=val_dataset, device=device, config=config)
 
     """
     Hva som må gjøres (roughly)
@@ -75,19 +80,33 @@ def main():
     batch_date: str
     """
 
-def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device):
+@dataclass
+class Configuration:
+    #Optimizer
+    betas: tuple[float] = (0.9, 0.999)
+    lr: float = 5e-5
+    weight_decay: float =0.01,
+    epocs: int = 5
+    #Scheduler
+    T_0: int = 10
+    T_mult: int = 2
+    eta_min: int = 1e-6
+
+
+
+
+
+def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device, config: Configuration):
     optimizer = AdamW(
         model.parameters(), 
-        betas=(0.9, 0.999),
-        lr=5e-5,
-        weight_decay=0.01,
+        betas=config.betas,
+        lr=config.lr,
+        weight_decay=config.weight_decay,
         )
-    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2, eta_min=1e-6) # 
+    scheduler = CosineAnnealingWarmRestarts(optimizer, config.T_0, config.T_mult, config.eta_min) 
     criterion = CrossEntropyLoss()
 
-    num_epochs = 5
-
-    for epoch in range(num_epochs):
+    for epoch in range(config.epocs):
         for batch_idx, (images, targets) in enumerate(train_dataloader):
             print(batch_idx, images, targets)
             
@@ -126,6 +145,21 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
         * Optimizer.step()
         * Repeat
         """
+
  
 if __name__ == '__main__':
-    main()
+    
+
+    load_dotenv()
+    api_key = os.getenv("WANDB_API_KEY")
+    config = Configuration()
+
+    wandb.login(api_key)
+    run = wandb.init(
+            project="geoguessr-ai",        # Your project name
+            entity="cogito-geoguessr-ai", # Your team name
+            config=config.asdict(),
+            mode="online" if api_key else "disabled"
+            )
+    
+    main(config)
