@@ -111,6 +111,8 @@ class GeoImageIterableDataset(IterableDataset):
     def __iter__(self):
         """
         Yields (image_tensor, target_dict) tuples.
+        Target-dict is a dictionary of all the metadata connected to the picture, 
+        which is fetched from the connected parquet-file.
         """
         # Build a per-worker filesystem (thread/process-safe)
         fs = _build_fs(cache_dir=self.cache_dir, anon=self.s3_anon, s3_kwargs=self.s3_options)
