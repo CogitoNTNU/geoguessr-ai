@@ -142,13 +142,12 @@ class GeoImageIterableDataset(IterableDataset):
             target = {
                 "lat": float(row["lat"]),
                 "lon": float(row["lon"]),
-                "heading": int(row["heading"]),
                 "location_id": str(row["location_id"]),
                 # Optional fields if present:
-                "pano_id": (None if pd.isna(row.get("pano_id", None)) else str(row["pano_id"])),
+                # "pano_id": (None if pd.isna(row.get("pano_id", None)) else str(row["pano_id"])),
                 "capture_date": (None if pd.isna(row.get("capture_date", None)) else str(row["capture_date"])),
-                "batch_date": str(row.get("batch_date", "")),
-                "image_path": uri,
+                # "batch_date": str(row.get("batch_date", "")),
+                # "image_path": uri,
             }
 
             yield tensor, target
