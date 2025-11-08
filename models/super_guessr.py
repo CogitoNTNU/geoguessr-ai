@@ -142,15 +142,15 @@ class SuperGuessr(nn.Module):
             elif "tiny" in self.base_model.config._name_or_path and not self.serving:
                 self.base_model.freeze_all_but_last_stage()
 
-    # def load_geocells(self, path: str) -> Tensor:
+    # def load_geocells(self) -> Tensor:
     #     """Loads geocell centroids and converts them to ECEF format
 
-    #     Args:
-    #         path (str, optional): path to geocells. Defaults to GEOCELL_PATH.
+    # #     Args:
+    # #         path (str, optional): path to geocells. Defaults to GEOCELL_PATH.
 
-    #     Returns:
-    #         Tensor: ECEF geocell centroids
-    #     """
+    # #     Returns:
+    # #         Tensor: ECEF geocell centroids
+    # #     """
     #     geo_df = pd.read_csv(path)
     #     centroid_coords = torch.tensor(geo_df[["lng", "lat"]].values)
     #     geocell_centroid_coords = nn.parameter.Parameter(
