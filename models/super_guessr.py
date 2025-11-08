@@ -3,7 +3,7 @@ from torch import nn, Tensor
 from torch.nn.parameter import Parameter
 from models.layers.positional_encoder import PositionalEncoder
 from models.utils import ModelOutput
-from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM, GEOCELL_PATH
+from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM
 from data.geocells.geocell_manager import GeocellManager
 
 
@@ -67,7 +67,9 @@ class SuperGuessr(nn.Module):
 
         # Setup
         self._set_hidden_size()
-        geocell_dir = GEOCELL_PATH  # must be a DIRECTORY containing *.pickle
+        geocell_dir = (
+            "data/geocells/finished_geocells"  # must be a DIRECTORY containing *.pickle
+        )
         self._geocell_mgr = GeocellManager(geocell_dir)
         centroids, id2idx, idx_meta = _build_centroids_from_manager(self._geocell_mgr)
 
