@@ -64,7 +64,7 @@ def main(config):
             super(Net, self).__init__()
             self.conv1 = torch.nn.Conv2d(3, 16, 3, 1)
             self.conv2 = torch.nn.Conv2d(16, 32, 3, 1)
-            self.fc1 = torch.nn.Linear(32 * 6 * 6, 128)
+            self.fc1 = torch.nn.Linear(508032 , 128)
             self.fc2 = torch.nn.Linear(128, num_geocells) # get_num_geocells() in data/geocells/geocell_manager.py
 
         def forward(self, x):
