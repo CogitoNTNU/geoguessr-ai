@@ -105,10 +105,13 @@ class Cell:
                 np.mean([x[1] for x in self.curr_coords]),
                 np.mean([x[0] for x in self.curr_coords]),
             ]
-        self.geom_centroid = [
-            self.current_shape.centroid.x,
-            self.current_shape.centroid.y,
-        ]
+        try:
+            c = self.current_shape.centroid
+            if c.is_empty:
+                raise ValueError("empty centroid")
+            self.geom_centroid = [c.x, c.y]
+        except Exception:
+            self.geom_centroid = self.point_centroid
 
     def separate_points(self, points, polygons, contain_points):
         coords = ((p["latitude"], p["longitude"]) for p in points)
