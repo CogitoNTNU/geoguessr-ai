@@ -8,13 +8,15 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import AdamW
-from torch.nn import CrossEntropyLoss
+from torch.nn import CrossEntropyLoss, Module
 import torch.nn.functional as F
 from tqdm import tqdm
 from torch.utils.data import DataLoader
 from backend.data import GeoImageIterableDataset
 from backend.s3bucket import load_latest_snapshot_df, load_latest_holdout_snapshot_df
 from loguru import logger
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
+from data.geocells.geocell_manager import get_geocell_id
 
 
 # ----------------------------
@@ -73,13 +75,44 @@ def main():
     batch_date: str
     """
 
+def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device):
+    optimizer = AdamW(
+        model.parameters(), 
+        betas=(0.9, 0.999),
+        lr=5e-5,
+        weight_decay=0.01,
+        )
+    scheduler = CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2, eta_min=1e-6) # 
+    criterion = CrossEntropyLoss()
+
     num_epochs = 5
 
     for epoch in range(num_epochs):
-        break
         for batch_idx, (images, targets) in enumerate(train_dataloader):
             print(batch_idx, images, targets)
-            break
+            
+            # Find target geocell labels from lat, lon
+            lat = targets['lat']
+            lon = targets['lon']
+            geocell_info = get_geocell_id({'latitude': lat, 'longitude': lon})
+            geocell_id = 0
+            targets = geocell_info[geocell_id]
+
+            # Zero your gradients for every batch!           
+            optimizer.zero_grad()
+            # Make predictions for this batch
+            outputs = model(images)
+
+            # Compute the loss and its gradients
+            loss = criterion(outputs, targets)
+            geocell_topk = None  # Placeholder for model output
+            # Find gradients
+            loss.backward()
+            # Adjust learning weights
+            optimizer.step()
+
+            scheduler.step(epoch)
+
         """
         * Hente 4 bilder av gangen
         * Lage variabel for lat, long hentet fra batch_metadata
@@ -93,7 +126,6 @@ def main():
         * Optimizer.step()
         * Repeat
         """
-
-
+ 
 if __name__ == '__main__':
     main()
