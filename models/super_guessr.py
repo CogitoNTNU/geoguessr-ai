@@ -2,8 +2,7 @@ import torch
 import pandas as pd
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
-from preprocessing import haversine_matrix, smooth_labels
-from models.layers import PositionalEncoder
+from models.layers.positional_encoder import PositionalEncoder
 from models.utils import ModelOutput
 from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM, GEOCELL_PATH
 
@@ -21,7 +20,7 @@ class SuperGuessr(nn.Module):
         base_model: nn.Module,
         panorama: bool = False,
         hierarchical: bool = False,
-        should_smooth_labels: bool = False,
+        # should_smooth_labels: bool = False,
         serving: bool = False,
         freeze_base: bool = False,
         num_candidates: int = 5,
@@ -61,7 +60,7 @@ class SuperGuessr(nn.Module):
         self.panorama = panorama
         self.hidden_size = embed_dim
         self.serving = serving
-        self.should_smooth_labels = should_smooth_labels
+        # self.should_smooth_labels = should_smooth_labels
         self.freeze_base = freeze_base
         self.hierarchical = hierarchical
         self.num_candidates = num_candidates
@@ -133,9 +132,7 @@ class SuperGuessr(nn.Module):
                 ].parameters():
                     param.requires_grad = False
 
-            elif (
-                "tiny-vit" in self.base_model.config._name_or_path and not self.serving
-            ):
+            elif "tiny" in self.base_model.config._name_or_path and not self.serving:
                 for param in self.base_model.vision_model.encoder.layers[
                     :-1
                 ].parameters():
@@ -152,7 +149,9 @@ class SuperGuessr(nn.Module):
         """
         geo_df = pd.read_csv(path)
         centroid_coords = torch.tensor(geo_df[["lng", "lat"]].values)
-        geocell_centroid_coords = nn.parameter.Parameter(data=centroid_coords, requires_grad=False)
+        geocell_centroid_coords = nn.parameter.Parameter(
+            data=centroid_coords, requires_grad=False
+        )
         return geocell_centroid_coords
 
     def _move_to_cuda(
@@ -291,55 +290,50 @@ class SuperGuessr(nn.Module):
             labels_clf,
         )
 
-        # If panorama, (N, 4 * pixels) -> (N * 4, pixels)
+        # If panorama, (N, 4, C, H, W) -> (N * 4, C, H, W)
         if self.panorama and pixel_values is not None:
-            num_samples = pixel_values.size(0)
-            pixel_values = pixel_values.reshape((num_samples * 4, 3, 336, 336))
+            # Expect pixel_values as (B, 4, C, H, W)
+            assert pixel_values.dim() == 5, "panorama=True expects (B, 4, C, H, W)"
+            n, v, c, h, w = pixel_values.shape
+            pixel_values = pixel_values.view(n * v, c, h, w)
 
         # Feed through base model
         if self.base_model is not None and pixel_values is not None:
             if pixel_values.dim() > 4:
                 pixel_values = pixel_values.squeeze(1)
 
-            embedding = self.base_model(pixel_values=pixel_values)
-            if self.mode == "transformer":
-                embedding = embedding.last_hidden_state
-                embedding = torch.mean(embedding, dim=1)
+            outs = self.base_model(pixel_values=pixel_values)
 
+            # Accept HF-style outputs OR a raw tensor from timm
+            if hasattr(outs, "last_hidden_state") and self.mode == "transformer":
+                # (B, T, C) -> mean over tokens
+                embedding = outs.last_hidden_state.mean(dim=1)
+            elif hasattr(outs, "pooler_output"):
+                embedding = outs.pooler_output  # (B, C)
             else:
-                embedding = embedding.pooler_output
+                # timm(num_classes=0) returns a (B, C) tensor
+                embedding = outs
 
-            # (N * 4, pixels) -> (N, 4, pixels)
+            # (N * 4, C) -> (N, 4, C) for panoramas
             if self.panorama:
-                embedding = embedding.reshape((num_samples, 4, -1))
+                embedding = embedding.view(n, v, -1)
 
         layer_input = embedding
 
         # Handle four image input
         if self.panorama:
-            # Hierarchical architecture
             if self.hierarchical:
-                # Positional encoding
                 layer_input = self.pos_encoder(layer_input)
-
-                # Multi-head self attention
                 output = self.self_attn(
                     layer_input, layer_input, layer_input, need_weights=False
                 )[0]
-
-                # Pool (CLS) and remove zero concats
                 output = output[:, 0]
-
-            # Average embeddings
             else:
-                output = layer_input.mean(dim=1)
+                output = layer_input.mean(dim=1)  # (N, 4, C) -> (N, C)
 
-        # Single Image
-        elif layer_input.size(1) == 4:
-            output = embedding[:, 0]
-
+        # Single image
         else:
-            output = embedding
+            output = embedding  # (N, C)
 
         # Linear layer
         logits = self.cell_layer(output)
@@ -347,7 +341,9 @@ class SuperGuessr(nn.Module):
 
         # Compute coordinate prediction
         geocell_preds = torch.argmax(geocell_probs, dim=-1)
-        pred_centroid_coordinate = torch.index_select(self.geocell_centroid_coords.data, 0, geocell_preds)
+        pred_centroid_coordinate = torch.index_select(
+            self.geocell_centroid_coords.data, 0, geocell_preds
+        )
         label_probs = self._to_one_hot(labels_clf)  # labels_clf if normal
 
         # Get top 'num_candidates' geocell candidates
@@ -358,9 +354,9 @@ class SuperGuessr(nn.Module):
             return pred_centroid_coordinate, geocell_topk, embedding
 
         # Soft labels based on distance
-        if self.should_smooth_labels:
-            distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
-            label_probs = smooth_labels(distances)
+        # if self.should_smooth_labels:
+        # distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
+        # label_probs = smooth_labels(distances)
 
         # Loss
         loss_clf = self.loss_fnc(logits, label_probs)
@@ -385,7 +381,7 @@ class SuperGuessr(nn.Module):
         rep += f"\tembedding_size\t= {self.hidden_size}\n"
         rep += f"\tinput_dim\t= {self.input_dim}\n"
         rep += f"\tnum_geocells\t= {self.num_cells}\n"
-        rep += f"\tlabel_smoothing\t= {self.should_smooth_labels}\n"
+        # rep += f"\tlabel_smoothing\t= {self.should_smooth_labels}\n"
         rep += f"\tfreeze_base\t= {self.freeze_base}\n"
         rep += f"\tserving\t\t= {self.serving}\n"
         rep += ")"
