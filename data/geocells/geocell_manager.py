@@ -31,13 +31,13 @@ class GeocellManager:
         self.geocells = self.load_geocells(dir)
         self.point_info_dict = self.generate_dict()
 
-        def get_num_geocells(self):
-            # len(self.geocells) counts countries; compute total cells instead
-            return sum(
-                len(self.geocells[country][admin1])
-                for country in self.geocells
-                for admin1 in self.geocells[country]
-            )
+    def get_num_geocells(self):
+        # len(self.geocells) counts countries; compute total cells instead
+        return sum(
+            len(self.geocells[country][admin1])
+            for country in self.geocells
+            for admin1 in self.geocells[country]
+        )
 
     def _safe_pickle_load(self, f):
         # Try normal unpickle first
@@ -101,34 +101,34 @@ class GeocellManager:
         return None
 
 
-if __name__ == "__main__":
-    filepath = "data/geocells/finished_geocells"
-    mang = GeocellManager(filepath)
+# if __name__ == "__main__":
+# filepath = "data/geocells/finished_geocells"
+# mang = GeocellManager(filepath)
 
-    with open("data/out/sv_points_all_latlong.pkl", "rb") as file:
-        data = pickle.load(file)
-    points = data
+# with open("data/out/sv_points_all_latlong.pkl", "rb") as file:
+#     data = pickle.load(file)
+# points = data
 
-    # print(mang.dict)
-    total_points = 0
-    total_cells = 0
-    max_points = 0
-    max_cell = None
-    for country in mang.geocells:
-        for admin1 in mang.geocells[country]:
-            for cell in mang.geocells[country][admin1]:
-                total_points += len(cell)
-                total_cells += 1
-                if len(cell) > max_points:
-                    max_cell = cell
-                    max_points = len(cell)
-    print(f"{total_points=}\n {max_cell}: {max_points}")
-    print(f"Total number of geocells: {total_cells}")
+# # print(mang.dict)
+# total_points = 0
+# total_cells = 0
+# max_points = 0
+# max_cell = None
+# for country in mang.geocells:
+#     for admin1 in mang.geocells[country]:
+#         for cell in mang.geocells[country][admin1]:
+#             total_points += len(cell)
+#             total_cells += 1
+#             if len(cell) > max_points:
+#                 max_cell = cell
+#                 max_points = len(cell)
+# print(f"{total_points=}\n {max_cell}: {max_points}")
+# print(f"Total number of geocells: {total_cells}")
 
-    print(mang.get_num_geocells())
+# print(mang.get_num_geocells())
 
-    # print((points.iloc[0]["longitude"]))
-    # for i in range(1, 100000):
-    #     c = mang.get_geocell_id(points.iloc[i])
-    #     if c is not None:
-    #         print(mang.get_geocell_info(*c))
+# print((points.iloc[0]["longitude"]))
+# for i in range(1, 100000):
+#     c = mang.get_geocell_id(points.iloc[i])
+#     if c is not None:
+#         print(mang.get_geocell_info(*c))
