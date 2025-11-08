@@ -263,3 +263,4 @@ awscliv2.zip
 *.env
 out/*
 gadm_world_all_levels.filtered_noadm345.gpkg
+.vscode/
