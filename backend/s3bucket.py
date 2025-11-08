@@ -200,7 +200,7 @@ def parse_streetview_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
     for name in os.listdir(root_dir):
         if not name.lower().endswith(".jpg"):
             continue
-        m = name.split(":")
+        m = name.split("_")
         if not m:
             continue
 
