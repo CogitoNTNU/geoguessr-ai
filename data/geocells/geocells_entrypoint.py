@@ -73,7 +73,7 @@ def main(args):
         sql.close()
 
         countries = list(countries)
-        countries = countries[44:]
+        countries = countries
 
         for i in trange(len(countries)):
             generate_geocells.GenerateGeocells([countries[i]])

@@ -7,8 +7,8 @@ import torch
 from torch import Tensor
 from config import LABEL_SMOOTHING_CONSTANT
 
-ModelOutput = namedtuple('ModelOutput', 'loss loss_clf loss_reg loss_climate loss_month \
-                         preds_LLH preds_geocell preds_mt preds_climate preds_month \
+ModelOutput = namedtuple('ModelOutput', 'loss loss_clf \
+                         preds_LLH preds_geocell \
                          top5_geocells embedding')
 
 def smooth_labels(distances: Tensor) -> Tensor:

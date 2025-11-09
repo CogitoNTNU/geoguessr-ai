@@ -22,6 +22,8 @@ from models.super_guessr import SuperGuessr
 from models.tinyvit import TinyViTAdapter
 from transformers import CLIPVisionModel
 from config import CLIP_MODEL, TINYVIT_MODEL
+import pandas as pd
+from models.utils import haversine_matrix
 
 
 def main(config):
@@ -29,7 +31,7 @@ def main(config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     # Fetch main dataset from s3-bucket
-    df = load_latest_snapshot_df()
+    df = load_latest_snapshot_df().head(10)
 
     train_test_split = 0.9
     num_training_samples = int(len(df) * train_test_split)
@@ -37,7 +39,7 @@ def main(config):
     df_test = df.iloc[num_training_samples:]
 
     # Fetch holdout dataset (validation set) from s3-bucket
-    df_val = load_latest_holdout_snapshot_df()
+    df_val = load_latest_holdout_snapshot_df().head(1)
 
     train_dataset = GeoImageIterableDataset(df_train)
     test_dataset = GeoImageIterableDataset(df_test)
@@ -46,10 +48,9 @@ def main(config):
     logger.info(f"Dataset loaded with {len(train_dataset)} training samples, {len(test_dataset)} test samples, {len(val_dataset)} validation samples")
 
     train_dataloader = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=64, num_workers=4, pin_memory=True)
     test_dataloader = DataLoader(test_dataset, batch_size=64, num_workers=4, pin_memory=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=64, num_workers=4, pin_memory=True)
     
-
     # Initialize model and set it to train
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
@@ -103,10 +104,10 @@ def main(config):
         norm_std = None
 
     # Instantiate SuperGuessr with CLIP embedding model
-    model = SuperGuessr(base_model=embedding_model, panorama=True, serving=False, should_smooth_labels=True).to(device)
+    model = SuperGuessr(base_model=embedding_model, panorama=False, serving=False, should_smooth_labels=True).to(device)
     model.train()
 
-
+    train(model, train_dataloader, val_dataloader, device, config, target_dimensions=target_dimensions, norm_mean=norm_mean, norm_std=norm_std)
 
 
     """
@@ -155,21 +156,10 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
     )
     scheduler = CosineAnnealingWarmRestarts(optimizer, config.T_0, config.T_mult, config.eta_min) 
 
-    # Build index mapping aligned with SuperGuessr's internal ordering
-    geocell_manager = getattr(model, "_geocell_mgr", None)
-    if geocell_manager is None:
-        geocell_manager = GeocellManager("data/geocells/finished_geocells")
-    rows = []
-    for country in geocell_manager.geocells:
-        for admin1 in geocell_manager.geocells[country]:
-            for cell in geocell_manager.geocells[country][admin1]:
-                rows.append((str(country), str(admin1), cell.id))
-    rows.sort(key=lambda r: (r[0], r[1], str(r[2])))
-    geocell_index_map = { (country, admin1, cell_id): idx for idx, (country, admin1, cell_id) in enumerate(rows) }
+    # Prepare geocell centroids from model (ordered by proto_df geocell_index)
+    centroids = model.geocell_centroid_coords.to(device)  # (num_cells, 2) in (lng, lat)
 
-
-
-    for epoch in range(config.epochs):
+    for epoch in range(3):  # run only one epoch for quick test
         for batch_idx, (images, targets) in enumerate(tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{config.epochs}")):
             # Resize images to match embedding model input resolution (CLIP or Tiny-Vit)
             if target_dimensions is not None:
@@ -196,36 +186,24 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
                     std_t = torch.tensor(norm_std, device=images.device).view(1, 3, 1, 1)
                 images = (images - mean_t) / std_t
 
-            # Find target geocell labels from lat, lon
+            # Build coordinate labels and derive class indices by nearest centroid (proto_df ordering)
             lat = targets['lat']
             lon = targets['lon']
-            list_of_geocell_indices = []
-            
-            for lat_item, lon_item in zip(lat, lon):
-                point = {'latitude': lat_item.item(), 'longitude': lon_item.item()}
-                info = geocell_manager.get_geocell_id(point)
-                # info -> (geocell_id, country, admin1)
-                geocell_id, country, admin1 = info
-                idx = geocell_index_map[(str(country), str(admin1), geocell_id)]
-                list_of_geocell_indices.append(idx)
-            
-            targets = torch.tensor(list_of_geocell_indices, dtype=torch.long).to(device) # Now the indices of the geocells here will match the ordering inside SuperGuessr. 
-            # They are sorted according to the geocell-id, which is (country, admin1, str(cell.id))
-
-            # Zero your gradients for every batch!           
-            optimizer.zero_grad()
-            # Make predictions for this batch
-            # Build coordinate labels (lng, lat) for smoothing
             lat_t = torch.as_tensor(lat, dtype=torch.float32, device=device)
             lon_t = torch.as_tensor(lon, dtype=torch.float32, device=device)
             coord_labels = torch.stack([lon_t, lat_t], dim=1)  # (B, 2) in (lng, lat)
+            # distances: (B, num_cells), centroids.t(): (2, num_cells)
+            distances = haversine_matrix(coord_labels, centroids.t())
+            targets = torch.argmin(distances, dim=-1).to(device, dtype=torch.long)
 
+            # Zero your gradients for every batch!           
+            optimizer.zero_grad()
             # Run a forward pass through the model
             output = model(pixel_values=images, labels_clf=targets, labels=coord_labels)
 
             # Compute the loss and its gradients
             loss = output.loss
-            geocell_topk = output.geocell_topk
+            geocell_topk = output.top5_geocells
             # Metrics: top-1 and top-k accuracy
             with torch.no_grad():
                 top1_pred = geocell_topk.indices[:, 0]
@@ -243,6 +221,7 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
             loss.backward()
             # Adjust learning weights
             optimizer.step()
+            break  # process only the first batch for quick test
 
         scheduler.step(epoch)
 

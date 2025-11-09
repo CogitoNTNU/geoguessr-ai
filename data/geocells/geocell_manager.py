@@ -110,8 +110,9 @@ class GeocellManager:
         return None
 
     def generate_proto_df(self):
-        # output a pandas dataframe to csv, data: geocell_idx, cluster_id, indices, count, centroid_lat, centroid_lng
-        geocell_id = 0
+        # output a pandas dataframe to csv, data: geocell_index, country, admin1, cell_id,
+        # cluster_id, indices, count, centroid_lat, centroid_lng
+        geocell_index = 0
         rows = []
         for country in self.geocells:
             for admin1 in self.geocells[country]:
@@ -119,8 +120,10 @@ class GeocellManager:
                     for cluster_id, cluster_data in cell.clusters.items():
                         rows.append(
                             {
-                                "geocell_id": geocell_id,
+                                "geocell_index": geocell_index,
                                 "country": country,
+                                "admin1": admin1,
+                                "cell_id": cell.id,
                                 "cluster_id": cluster_id,
                                 "count": len(cluster_data["points"]),
                                 "indices": [x.name for x in cluster_data["points"]],
@@ -128,7 +131,7 @@ class GeocellManager:
                                 "centroid_lng": cell.geom_centroid[0],  # Longitude
                             }
                         )
-                    geocell_id += 1
+                    geocell_index += 1
         df = pd.DataFrame(rows)
         df.to_csv("data/geocells/proto_df.csv", index=False)
 

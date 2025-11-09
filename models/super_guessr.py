@@ -6,6 +6,7 @@ from models.layers.positional_encoder import PositionalEncoder
 from models.utils import ModelOutput, haversine_matrix, smooth_labels
 from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM
 from data.geocells.geocell_manager import GeocellManager
+import pandas as pd
 
 
 # Constants
@@ -72,7 +73,10 @@ class SuperGuessr(nn.Module):
             "data/geocells/finished_geocells"  # must be a DIRECTORY containing *.pickle
         )
         self._geocell_mgr = GeocellManager(geocell_dir)
-        centroids = _build_centroids_from_manager(self._geocell_mgr)
+        # Prefer proto_df.csv ordering via geocell_index if available
+        centroids = _build_centroids_from_proto_df("data/geocells/proto_df.csv")
+        if centroids is None:
+            centroids = _build_centroids_from_manager(self._geocell_mgr)
 
         self.geocell_centroid_coords = nn.Parameter(centroids, requires_grad=False)
         self.num_cells = centroids.size(0)
@@ -437,4 +441,33 @@ def _build_centroids_from_manager(mgr: GeocellManager):
         centroids.append([lng, lat])  # (lng, lat)
 
     centroids = torch.tensor(centroids, dtype=torch.float32)
+    return centroids
+
+def _build_centroids_from_proto_df(csv_path: str):
+    """
+    Build centroids ordered by geocell_index from proto_df.csv.
+    Returns:
+      centroids: (num_cells, 2) float32 tensor in (lng, lat) or None if csv not found.
+    """
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception:
+        return None
+
+    # Support legacy column name fallback
+    idx_col = "geocell_index" if "geocell_index" in df.columns else ("geocell_id" if "geocell_id" in df.columns else None)
+    if idx_col is None:
+        return None
+
+    # Deduplicate to one row per geocell_index (there may be multiple rows per clusters)
+    df = df.sort_values(by=[idx_col])
+    dedup = df.drop_duplicates(subset=[idx_col], keep="first")
+
+    # Ensure required centroid columns exist
+    if not {"centroid_lng", "centroid_lat"}.issubset(dedup.columns):
+        return None
+
+    centroids = torch.tensor(
+        dedup[["centroid_lng", "centroid_lat"]].values, dtype=torch.float32
+    )
     return centroids
