@@ -21,11 +21,13 @@ from data.geocells.geocell_manager import GeocellManager
 from dotenv import load_dotenv
 import os
 import wandb
+from models.super_guessr import SuperGuessr
+from models.tinyvit import TinyViTAdapter
+from transformers import CLIPVisionModel
+from config import CLIP_MODEL, TINYVIT_MODEL
 
 
 def main(config):
-
-
     # Overall-modus for å velge mellom training og inference 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
@@ -51,37 +53,58 @@ def main(config):
     test_dataloader = DataLoader(test_dataset, batch_size=64, num_workers=4, pin_memory=True)
     
 
-    
-
     # Initialize model and set it to train
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
 
-    class Net(torch.nn.Module):
-        def __init__(self, num_geocells: int):
-            super(Net, self).__init__()
-            self.conv1 = torch.nn.Conv2d(3, 16, 3, 1)
-            self.conv2 = torch.nn.Conv2d(16, 32, 3, 1)
-            self.fc1 = torch.nn.Linear(508032 , 128)
-            self.fc2 = torch.nn.Linear(128, num_geocells) # get_num_geocells() in data/geocells/geocell_manager.py
+    # class Net(torch.nn.Module):
+    #     def __init__(self, num_geocells: int):
+    #         super(Net, self).__init__()
+    #         self.conv1 = torch.nn.Conv2d(3, 16, 3, 1)
+    #         self.conv2 = torch.nn.Conv2d(16, 32, 3, 1)
+    #         self.fc1 = torch.nn.Linear(508032 , 128)
+    #         self.fc2 = torch.nn.Linear(128, num_geocells) # get_num_geocells() in data/geocells/geocell_manager.py
 
-        def forward(self, x):
-            x = self.conv1(x)
-            x = F.relu(x)
+    #     def forward(self, x):
+    #         x = self.conv1(x)
+    #         x = F.relu(x)
 
-            x = self.conv2(x)
-            x = F.relu(x)
+    #         x = self.conv2(x)
+    #         x = F.relu(x)
 
-            x = F.max_pool2d(x, 2)
-            x = torch.flatten(x, 1)
-            x = self.fc1(x)
-            x = F.relu(x)
-            logits = self.fc2(x)
+    #         x = F.max_pool2d(x, 2)
+    #         x = torch.flatten(x, 1)
+    #         x = self.fc1(x)
+    #         x = F.relu(x)
+    #         logits = self.fc2(x)
 
-            class_probabilities = F.softmax(logits, dim=1)
-            return logits, class_probabilities
-    model = Net(num_geocells).to(device)       
-    train(model=model, train_dataloader=train_dataloader, validation_dataloader=val_dataloader, device=device, config=config)
+    #         class_probabilities = F.softmax(logits, dim=1)
+    #         return logits, class_probabilities
+    # model = Net(num_geocells).to(device)       
+    # train(model=model, train_dataloader=train_dataloader, validation_dataloader=val_dataloader, device=device, config=config)@
+
+    embeddingModelUsed = "TINYVIT" # Possible values are "CLIP" or "TINYVIT"
+    
+    embedding_model = 0
+    if embeddingModelUsed == "CLIP":
+        embedding_model = CLIPVisionModel.from_pretrained(CLIP_MODEL)
+    elif embeddingModelUsed == "TINYVIT":
+        embedding_model = TinyViTAdapter(model_name=TINYVIT_MODEL, pretrained=True)
+
+    # Select target input resolution per embedding model
+    if embeddingModelUsed == "CLIP":
+        target_dimensions = (336, 336)
+    elif embeddingModelUsed == "TINYVIT":
+        target_dimensions = (512, 512)
+    else:
+        target_dimensions = None
+
+    # Instantiate SuperGuessr with CLIP backbone
+    model = SuperGuessr(base_model=embedding_model, panorama=True, serving=False).to(device)
+    model.train()
+
+    
+
 
     """
     Hva som må gjøres (roughly)
@@ -120,7 +143,7 @@ class Configuration:
     eta_min: int = 1e-6
 
 
-def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device, config: Configuration):
+def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device, config: Configuration, target_dimensions=None):
     optimizer = AdamW(
         model.parameters(), 
         lr=config.lr,
@@ -129,31 +152,70 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
     )
     scheduler = CosineAnnealingWarmRestarts(optimizer, config.T_0, config.T_mult, config.eta_min) 
     criterion = CrossEntropyLoss()
-    geocell_manager = GeocellManager("data/geocells/finished_geocells")
+    # Build index mapping aligned with SuperGuessr's internal ordering
+    geocell_manager = getattr(model, "_geocell_mgr", None)
+    if geocell_manager is None:
+        geocell_manager = GeocellManager("data/geocells/finished_geocells")
+    rows = []
+    for country in geocell_manager.geocells:
+        for admin1 in geocell_manager.geocells[country]:
+            for cell in geocell_manager.geocells[country][admin1]:
+                rows.append((str(country), str(admin1), cell.id))
+    rows.sort(key=lambda r: (r[0], r[1], str(r[2])))
+    geocell_index_map = { (country, admin1, cell_id): idx for idx, (country, admin1, cell_id) in enumerate(rows) }
 
     for epoch in range(config.epochs):
-        for batch_idx, (images, targets) in enumerate(train_dataloader):
+        for batch_idx, (images, targets) in enumerate(tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{config.epochs}")):
+            # Resize images to match backbone input resolution (CLIP or Tiny-Vit)
+            if target_dimensions is not None:
+                if images.dim() == 5:  # (B, V, C, H, W) panorama batches
+                    b, v, c, h, w = images.shape
+                    images = images.view(b * v, c, h, w)
+                    images = F.interpolate(images, size=target_dimensions, mode='bilinear', align_corners=False)
+                    images = images.view(b, v, c, target_dimensions[0], target_dimensions[1])
+                elif images.dim() == 4:  # (B, C, H, W)
+                    images = F.interpolate(images, size=target_dimensions, mode='bilinear', align_corners=False)
+
+            # Move tensors to device for training
+            images = images.to(device, non_blocking=True)
+
             # Find target geocell labels from lat, lon
             lat = targets['lat']
             lon = targets['lon']
-            list_of_geocell_ids = []
+            list_of_geocell_indices = []
             
             for lat_item, lon_item in zip(lat, lon):
                 point = {'latitude': lat_item.item(), 'longitude': lon_item.item()}
-                geocell_id = 0
-                geocell_info = geocell_manager.get_geocell_id(point)[geocell_id]
-                list_of_geocell_ids.append(geocell_info)
+                info = geocell_manager.get_geocell_id(point)
+                # info -> (geocell_id, country, admin1)
+                geocell_id, country, admin1 = info
+                idx = geocell_index_map[(str(country), str(admin1), geocell_id)]
+                list_of_geocell_indices.append(idx)
             
-            targets = torch.tensor(list_of_geocell_ids, dtype=torch.long).to(device)
+            targets = torch.tensor(list_of_geocell_indices, dtype=torch.long).to(device) # Now the indices of the geocells here will match the ordering inside SuperGuessr. 
+            # They are sorted according to the geocell-id, which is (country, admin1, str(cell.id))
 
             # Zero your gradients for every batch!           
             optimizer.zero_grad()
             # Make predictions for this batch
-            logits, class_probabilities = model(images)
+            output = model(pixel_values=images, labels_clf=targets)
 
             # Compute the loss and its gradients
-            loss = criterion(class_probabilities, targets)
-            geocell_topk = None  # Placeholder for model output
+            loss = output.loss
+            geocell_topk = output.geocell_topk
+            # Metrics: top-1 and top-k accuracy
+            with torch.no_grad():
+                top1_pred = geocell_topk.indices[:, 0]
+                top1_acc = (top1_pred == targets).float().mean().item()
+                topk_acc = (
+                    (geocell_topk.indices == targets.unsqueeze(1))
+                    .any(dim=1)
+                    .float()
+                    .mean()
+                    .item()
+                )
+            # Update progress bar
+            tqdm.write(f"batch={batch_idx} loss={loss.item():.4f} top1={top1_acc:.3f} topk={topk_acc:.3f}")
             # Find gradients
             loss.backward()
             # Adjust learning weights
