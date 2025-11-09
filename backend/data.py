@@ -70,7 +70,7 @@ class GeoImageIterableDataset(IterableDataset):
         self,
         df: Optional[pd.DataFrame] = None,
         transform: Optional[torch.nn.Module] = None,
-        required_size: Optional[int] = 256,
+        required_size: Optional[int] = 336,
     ):
         super().__init__()
         self.df = df if df is not None else load_latest_snapshot_df()
@@ -132,30 +132,45 @@ class GeoImageIterableDataset(IterableDataset):
             uri = _ensure_s3_uri(str(row["image_path"]), bucket=self.bucket)
 
             # Robustness: basic retry loop
+            img = None
             last_exc = None
-            for _ in range(3):
+            for attempt in range(3):
                 try:
                     img = self._open_image(fs, uri)
                     break
                 except Exception as e:
                     last_exc = e
                     continue
-            if last_exc is not None and "img" not in locals():
-                # You can choose to skip or raise; here we skip with a warning sample.
-                # If you prefer to crash fast, replace with: raise last_exc
-                continue
 
-            # Apply transform to get a tensor (C,H,W)
-            tensor = self.transform(img) if self.transform else img
+            # FIX: Return a placeholder instead of skipping (which causes None in batch)
+            if img is None:
+                # Log warning and yield a black placeholder image
+                print(
+                    f"Warning: Failed to load image at index {idx} (uri={uri}): {last_exc}"
+                )
+                # Create a placeholder tensor of expected size
+                if self.required_size:
+                    placeholder = torch.zeros(3, self.required_size, self.required_size)
+                else:
+                    placeholder = torch.zeros(3, 224, 224)
+                tensor = placeholder
+            else:
+                # Apply transform to get a tensor (C,H,W)
+                tensor = self.transform(img) if self.transform else img
 
             # Build label/target dict (adjust to your needs)
+            # Note: Avoid None values in targets; default_collate can't handle NoneType.
+            # Use empty string for missing optional fields to keep types consistent across the batch.
             target = {
                 "lat": float(row["lat"]),
                 "lon": float(row["lon"]),
                 "location_id": str(row["location_id"]),
-                # Optional fields if present:
-                # "pano_id": (None if pd.isna(row.get("pano_id", None)) else str(row["pano_id"])),
-                "capture_date": (None if pd.isna(row.get("capture_date", None)) else str(row["capture_date"])),
+                "heading": int(row.get("heading", 0)),
+                # Optional fields (always strings, never None)
+                # "pano_id": "" if pd.isna(row.get("pano_id", None)) else str(row["pano_id"]),
+                "capture_date": ""
+                if pd.isna(row.get("capture_date", None))
+                else str(row["capture_date"]),
                 # "batch_date": str(row.get("batch_date", "")),
                 # "image_path": uri,
             }
@@ -174,11 +189,14 @@ class PanoramaIterableDataset(IterableDataset):
     def __init__(
         self,
         df: pd.DataFrame,
-        transform,
+        transform: Optional[torch.nn.Module] = None,
         tiles_per_pano: int = 4,
         order_cols=("tile_idx", "yaw"),
     ):
         super().__init__()
+        # Provide a safe default transform that converts PIL -> Tensor if none supplied.
+        # Users can still pass their own (e.g., with Resize/Normalize). If they pass an identity
+        # lambda returning a PIL Image, we will convert it just before stacking to avoid TypeError.
         self.transform = transform
         self.tiles_per_pano = tiles_per_pano
         self.bucket = "cogito-geoguessr"
@@ -237,8 +255,27 @@ class PanoramaIterableDataset(IterableDataset):
             }
             for r in rows:
                 pil = self._load_image_from_row(fs, r)  # PIL.Image
-                tensor = self.transform(pil)  # (C,H,W) -> ensure ToTensor()+Normalize
-                imgs.append(tensor)
+                img_obj = pil
+                # Apply user transform if provided
+                if self.transform is not None:
+                    try:
+                        img_obj = self.transform(pil)
+                    except Exception as e:
+                        # Fallback: attempt basic ToTensor if user transform fails
+                        print(
+                            f"Warning: transform failed for pano_id={getattr(r, 'pano_id', 'NA')} - {e}. Using raw image."
+                        )
+                        img_obj = pil
+                # Ensure we have a tensor (C,H,W); if still PIL, convert.
+                if isinstance(img_obj, Image.Image):
+                    # Minimal default: resize to 336 if large dimension differs? Keep original for now.
+                    to_tensor = T.ToTensor()
+                    img_obj = to_tensor(img_obj)
+                if not torch.is_tensor(img_obj):
+                    raise TypeError(
+                        f"Transform must return a Tensor, got {type(img_obj)} for pano_id={getattr(r, 'pano_id', 'NA')}"
+                    )
+                imgs.append(img_obj)
                 if hasattr(r, "image_path"):
                     target["image_paths"].append(str(r.image_path))
             yield torch.stack(imgs, dim=0), target  # (4,C,H,W)
