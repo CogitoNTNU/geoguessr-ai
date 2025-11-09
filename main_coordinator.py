@@ -1,15 +1,12 @@
 from dataclasses import dataclass, asdict
 import os
 from pyarrow import null
-import yaml
-import argparse
-import json
 from sklearn.metrics import roc_auc_score
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, Dataset
 from torch.optim import AdamW
-from torch.nn import CrossEntropyLoss, Module
+from torch.nn import Module
 import torch.nn.functional as F
 from tqdm import tqdm
 from torch.utils.data import DataLoader
@@ -103,7 +100,7 @@ def main(config):
     model = SuperGuessr(base_model=embedding_model, panorama=True, serving=False).to(device)
     model.train()
 
-    
+
 
 
     """
@@ -151,7 +148,7 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
         weight_decay=config.weight_decay,
     )
     scheduler = CosineAnnealingWarmRestarts(optimizer, config.T_0, config.T_mult, config.eta_min) 
-    criterion = CrossEntropyLoss()
+
     # Build index mapping aligned with SuperGuessr's internal ordering
     geocell_manager = getattr(model, "_geocell_mgr", None)
     if geocell_manager is None:
@@ -163,6 +160,8 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
                 rows.append((str(country), str(admin1), cell.id))
     rows.sort(key=lambda r: (r[0], r[1], str(r[2])))
     geocell_index_map = { (country, admin1, cell_id): idx for idx, (country, admin1, cell_id) in enumerate(rows) }
+
+
 
     for epoch in range(config.epochs):
         for batch_idx, (images, targets) in enumerate(tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{config.epochs}")):
