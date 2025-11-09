@@ -91,13 +91,19 @@ def main(config):
     # Select target input resolution per embedding model
     if embeddingModelUsed == "CLIP":
         target_dimensions = (336, 336)
+        norm_mean = (0.48145466, 0.4578275, 0.40821073)
+        norm_std = (0.26862954, 0.26130258, 0.27577711)
     elif embeddingModelUsed == "TINYVIT":
         target_dimensions = (512, 512)
+        norm_mean = (0.485, 0.456, 0.406)
+        norm_std = (0.229, 0.224, 0.225)
     else:
         target_dimensions = None
+        norm_mean = None
+        norm_std = None
 
-    # Instantiate SuperGuessr with CLIP backbone
-    model = SuperGuessr(base_model=embedding_model, panorama=True, serving=False).to(device)
+    # Instantiate SuperGuessr with CLIP embedding model
+    model = SuperGuessr(base_model=embedding_model, panorama=True, serving=False, should_smooth_labels=True).to(device)
     model.train()
 
 
@@ -140,7 +146,7 @@ class Configuration:
     eta_min: int = 1e-6
 
 
-def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device, config: Configuration, target_dimensions=None):
+def train(model: Module, train_dataloader: DataLoader, validation_dataloader: DataLoader, device, config: Configuration, target_dimensions=None, norm_mean=None, norm_std=None):
     optimizer = AdamW(
         model.parameters(), 
         lr=config.lr,
@@ -165,7 +171,7 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
 
     for epoch in range(config.epochs):
         for batch_idx, (images, targets) in enumerate(tqdm(train_dataloader, desc=f"Epoch {epoch+1}/{config.epochs}")):
-            # Resize images to match backbone input resolution (CLIP or Tiny-Vit)
+            # Resize images to match embedding model input resolution (CLIP or Tiny-Vit)
             if target_dimensions is not None:
                 if images.dim() == 5:  # (B, V, C, H, W) panorama batches
                     b, v, c, h, w = images.shape
@@ -177,6 +183,18 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
 
             # Move tensors to device for training
             images = images.to(device, non_blocking=True)
+            # Ensure float [0,1] before normalization if needed
+            if images.dtype == torch.uint8:
+                images = images.float().div_(255.0)
+            # Normalize per embedding model if provided
+            if norm_mean is not None and norm_std is not None:
+                if images.dim() == 5:
+                    mean_t = torch.tensor(norm_mean, device=images.device).view(1, 1, 3, 1, 1)
+                    std_t = torch.tensor(norm_std, device=images.device).view(1, 1, 3, 1, 1)
+                else:
+                    mean_t = torch.tensor(norm_mean, device=images.device).view(1, 3, 1, 1)
+                    std_t = torch.tensor(norm_std, device=images.device).view(1, 3, 1, 1)
+                images = (images - mean_t) / std_t
 
             # Find target geocell labels from lat, lon
             lat = targets['lat']
@@ -197,7 +215,13 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
             # Zero your gradients for every batch!           
             optimizer.zero_grad()
             # Make predictions for this batch
-            output = model(pixel_values=images, labels_clf=targets)
+            # Build coordinate labels (lng, lat) for smoothing
+            lat_t = torch.as_tensor(lat, dtype=torch.float32, device=device)
+            lon_t = torch.as_tensor(lon, dtype=torch.float32, device=device)
+            coord_labels = torch.stack([lon_t, lat_t], dim=1)  # (B, 2) in (lng, lat)
+
+            # Run a forward pass through the model
+            output = model(pixel_values=images, labels_clf=targets, labels=coord_labels)
 
             # Compute the loss and its gradients
             loss = output.loss

@@ -1,6 +1,7 @@
 import torch
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
+import torch.nn.functional as F
 from models.layers.positional_encoder import PositionalEncoder
 from models.utils import ModelOutput, haversine_matrix, smooth_labels
 from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM
@@ -20,7 +21,7 @@ class SuperGuessr(nn.Module):
         base_model: nn.Module,
         panorama: bool = False,
         hierarchical: bool = False,
-        # should_smooth_labels: bool = False,
+        should_smooth_labels: bool = False,
         serving: bool = False,
         freeze_base: bool = False,
         num_candidates: int = 5,
@@ -60,7 +61,7 @@ class SuperGuessr(nn.Module):
         self.panorama = panorama
         self.hidden_size = embed_dim
         self.serving = serving
-        # self.should_smooth_labels = should_smooth_labels
+        self.should_smooth_labels = should_smooth_labels
         self.freeze_base = freeze_base
         self.hierarchical = hierarchical
         self.num_candidates = num_candidates
@@ -356,12 +357,18 @@ class SuperGuessr(nn.Module):
             return pred_centroid_coordinate, geocell_topk, embedding
 
         # Soft labels based on distance
-        if self.should_smooth_labels:
+        if getattr(self, "should_smooth_labels", False) and labels is not None:
+            # distances: (B, num_cells)
             distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
-            label_probs = smooth_labels(distances)
-
-        # Loss
-        loss_clf = self.loss_fnc(logits, label_probs)
+            # unnormalized similarities -> normalize to probability distribution
+            soft_targets = smooth_labels(distances)
+            soft_targets = soft_targets / soft_targets.sum(dim=-1, keepdim=True).clamp_min(1e-12)
+            # soft cross-entropy with log-softmax
+            log_probs = F.log_softmax(logits, dim=-1)
+            loss_clf = -(soft_targets * log_probs).sum(dim=-1).mean()
+        else:
+            # standard hard-label CE expects class indices
+            loss_clf = self.loss_fnc(logits, labels_clf)
         loss = loss_clf
 
         # Results
@@ -383,7 +390,7 @@ class SuperGuessr(nn.Module):
         rep += f"\tembedding_size\t= {self.hidden_size}\n"
         rep += f"\tinput_dim\t= {self.input_dim}\n"
         rep += f"\tnum_geocells\t= {self.num_cells}\n"
-        # rep += f"\tlabel_smoothing\t= {self.should_smooth_labels}\n"
+        rep += f"\tlabel_smoothing\t= {self.should_smooth_labels}\n"
         rep += f"\tfreeze_base\t= {self.freeze_base}\n"
         rep += f"\tserving\t\t= {self.serving}\n"
         rep += ")"
