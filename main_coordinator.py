@@ -23,9 +23,6 @@ import os
 import wandb
 
 
-# ----------------------------
-# Main training script
-# ----------------------------
 def main(config):
 
 
@@ -50,8 +47,9 @@ def main(config):
     logger.info(f"Dataset loaded with {len(train_dataset)} training samples, {len(test_dataset)} test samples, {len(val_dataset)} validation samples")
 
     train_dataloader = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
-    test_dataloader = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
-    val_dataset = DataLoader(train_dataset, batch_size=64, num_workers=4, pin_memory=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=64, num_workers=4, pin_memory=True)
+    test_dataloader = DataLoader(test_dataset, batch_size=64, num_workers=4, pin_memory=True)
+    
 
     
 
@@ -82,8 +80,8 @@ def main(config):
 
             class_probabilities = F.softmax(logits, dim=1)
             return logits, class_probabilities
-            
-    train(model=Net(12002), train_dataloader=train_dataloader, validation_dataloader=val_dataset, device=device, config=config)
+    model = Net(num_geocells).to(device)       
+    train(model=model, train_dataloader=train_dataloader, validation_dataloader=val_dataloader, device=device, config=config)
 
     """
     Hva som må gjøres (roughly)
@@ -135,14 +133,18 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
 
     for epoch in range(config.epochs):
         for batch_idx, (images, targets) in enumerate(train_dataloader):
-            print(batch_idx, images, targets)
-            
             # Find target geocell labels from lat, lon
             lat = targets['lat']
             lon = targets['lon']
-            geocell_info = geocell_manager.get_geocell_id({'latitude': lat, 'longitude': lon})
-            geocell_id = 0
-            targets = geocell_info[geocell_id]
+            list_of_geocell_ids = []
+            
+            for lat_item, lon_item in zip(lat, lon):
+                point = {'latitude': lat_item.item(), 'longitude': lon_item.item()}
+                geocell_id = 0
+                geocell_info = geocell_manager.get_geocell_id(point)[geocell_id]
+                list_of_geocell_ids.append(geocell_info)
+            
+            targets = torch.tensor(list_of_geocell_ids, dtype=torch.long).to(device)
 
             # Zero your gradients for every batch!           
             optimizer.zero_grad()
@@ -157,7 +159,7 @@ def train(model: Module, train_dataloader: DataLoader, validation_dataloader: Da
             # Adjust learning weights
             optimizer.step()
 
-            scheduler.step(epoch)
+        scheduler.step(epoch)
 
         """
         * Hente 4 bilder av gangen
