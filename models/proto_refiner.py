@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import numpy as np
 import pandas as pd
 import torch
 from torch import nn, Tensor
@@ -15,8 +14,8 @@ from datasets import (
     disable_progress_bar,
     concatenate_datasets,
 )
-from config import PROTO_PATH, DATASET_PATH
-from preprocessing import haversine
+from config import PROTO_PATH, DATASET_PATH  # Needs changing later TODO
+from preprocessing import haversine  # TODO: make this work
 
 # Cluster refinement model
 

@@ -1,5 +1,6 @@
 import pickle
 import os
+import pandas as pd
 
 
 class _CellShim:
@@ -84,6 +85,14 @@ class GeocellManager:
                         }
         return d
 
+    def _get_cell_cluster_id(self, point):
+        h = hash((point["latitude"], point["longitude"]))
+        if h not in self.point_info_dict:
+            print("Point not found in any geocell.")
+            return None
+        print(self.point_info_dict[h])
+        return self.point_info_dict[h]["cluster_id"]
+
     def get_geocell_id(self, point):
         h = hash((point["latitude"], point["longitude"]))
         if h not in self.point_info_dict:
@@ -100,35 +109,33 @@ class GeocellManager:
                 return cell
         return None
 
+    def generate_proto_df(self):
+        # output a pandas dataframe to csv, data: geocell_idx, cluster_id, indices, count, centroid_lat, centroid_lng
+        geocell_id = 0
+        rows = []
+        for country in self.geocells:
+            for admin1 in self.geocells[country]:
+                for cell in self.geocells[country][admin1]:
+                    for cluster_id, cluster_data in cell.clusters.items():
+                        rows.append(
+                            {
+                                "geocell_id": geocell_id,
+                                "country": country,
+                                "cluster_id": cluster_id,
+                                "count": len(cluster_data["points"]),
+                                "indices": [x.name for x in cluster_data["points"]],
+                                "centroid_lat": cell.geom_centroid[1],  # Latitude
+                                "centroid_lng": cell.geom_centroid[0],  # Longitude
+                            }
+                        )
+                    geocell_id += 1
+        df = pd.DataFrame(rows)
+        df.to_csv("data/geocells/proto_df.csv", index=False)
+
 
 # if __name__ == "__main__":
-# filepath = "data/geocells/finished_geocells"
-# mang = GeocellManager(filepath)
-
-# with open("data/out/sv_points_all_latlong.pkl", "rb") as file:
-#     data = pickle.load(file)
-# points = data
-
-# # print(mang.dict)
-# total_points = 0
-# total_cells = 0
-# max_points = 0
-# max_cell = None
-# for country in mang.geocells:
-#     for admin1 in mang.geocells[country]:
-#         for cell in mang.geocells[country][admin1]:
-#             total_points += len(cell)
-#             total_cells += 1
-#             if len(cell) > max_points:
-#                 max_cell = cell
-#                 max_points = len(cell)
-# print(f"{total_points=}\n {max_cell}: {max_points}")
-# print(f"Total number of geocells: {total_cells}")
-
-# print(mang.get_num_geocells())
-
-# print((points.iloc[0]["longitude"]))
-# for i in range(1, 100000):
-#     c = mang.get_geocell_id(points.iloc[i])
-#     if c is not None:
-#         print(mang.get_geocell_info(*c))
+#     filepath = "data/geocells/finished_geocells"
+#     print("Loading geocell manager...")
+#     mang = GeocellManager(filepath)
+#     mang.generate_proto_df()
+#     print("generate_proto_df complete.")
