@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import pydeck as pdk
 import geopandas as gpd
+from tqdm.auto import tqdm
 
 
 def _load_sv_points(points_txt_path: str) -> np.ndarray:
@@ -99,7 +100,9 @@ def _build_points_from_proto(proto_csv_path: str, sv_points: np.ndarray) -> List
     df = pd.read_csv(proto_csv_path)
     out_points: List[Dict] = []
 
-    for _, row in df.iterrows():
+    for _, row in tqdm(
+        df.iterrows(), total=len(df), desc="Building cluster points", unit="row", leave=False
+    ):
         cluster_id = int(row["cluster_id"])
         color = _cluster_id_to_rgba(cluster_id)
         indices = _parse_indices_column(row["indices"])
@@ -220,14 +223,28 @@ def main():
     sv_points_txt_path = os.path.join(data_root, "out", "sv_points_all_latlong.txt")
     gpkg_path = _resolve_gpkg_path(repo_root)
 
-    adm2_geojson = _load_adm2_geojson(gpkg_path)
+    # High-level progress bar for HTML creation workflow
+    with tqdm(total=5, desc="Creating globe HTML", unit="step") as pbar:
+        # 1) Resolve and load ADM_2 boundaries
+        adm2_geojson = _load_adm2_geojson(gpkg_path)
+        pbar.update(1)
 
-    sv_points = _load_sv_points(sv_points_txt_path)
-    point_data = _build_points_from_proto(proto_csv_path, sv_points)
+        # 2) Load Street View points
+        sv_points = _load_sv_points(sv_points_txt_path)
+        pbar.update(1)
 
-    deck = create_deck(adm2_geojson, point_data)
-    out_html = os.path.join(os.path.dirname(__file__), "finished_geocells_globe.html")
-    show(deck, out_html)
+        # 3) Build colored cluster points
+        point_data = _build_points_from_proto(proto_csv_path, sv_points)
+        pbar.update(1)
+
+        # 4) Create deck
+        deck = create_deck(adm2_geojson, point_data)
+        pbar.update(1)
+
+        # 5) Write and open HTML
+        out_html = os.path.join(os.path.dirname(__file__), "finished_geocells_globe.html")
+        show(deck, out_html)
+        pbar.update(1)
 
 
 if __name__ == "__main__":
