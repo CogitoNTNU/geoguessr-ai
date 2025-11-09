@@ -2,7 +2,7 @@ import torch
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
 from models.layers.positional_encoder import PositionalEncoder
-from models.utils import ModelOutput
+from models.utils import ModelOutput, haversine_matrix, smooth_labels
 from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM
 from data.geocells.geocell_manager import GeocellManager
 
@@ -356,9 +356,9 @@ class SuperGuessr(nn.Module):
             return pred_centroid_coordinate, geocell_topk, embedding
 
         # Soft labels based on distance
-        # if self.should_smooth_labels:
-        # distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
-        # label_probs = smooth_labels(distances)
+        if self.should_smooth_labels:
+            distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
+            label_probs = smooth_labels(distances)
 
         # Loss
         loss_clf = self.loss_fnc(logits, label_probs)
