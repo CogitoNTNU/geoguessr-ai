@@ -271,8 +271,8 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
             getTargetPosition: d => d.target,
             getSourceColor: d => d.color,
             getTargetColor: d => d.color,
-            getWidth: 20,
-            widthMinPixels: 0.5,
+            getWidth: 2,
+            widthMinPixels: 0.2,
             parameters: {{depthTest: false}}
         }});
         const pointsLayer = new deck.ScatterplotLayer({{
@@ -282,9 +282,9 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
             getFillColor: d => d.color,
             stroked: false,
             pickable: true,
-            radiusMinPixels: 1,
-            radiusMaxPixels: 6,
-            getRadius: 20000,
+            radiusMinPixels: 3,
+            radiusMaxPixels: 8,
+            getRadius: 40000,
             parameters: {{depthTest: false}}
         }});
         const deckgl = new deck.Deck({{
@@ -318,8 +318,8 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
                     getTargetPosition: d => d.target,
                     getSourceColor: d => d.color,
                     getTargetColor: d => d.color,
-                    getWidth: 20,
-                    widthMinPixels: 0.5,
+                    getWidth: 2,
+                    widthMinPixels: 0.2,
                     parameters: {{depthTest: false}}
                 }}),
                 new deck.ScatterplotLayer({{
@@ -329,9 +329,9 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
                     getFillColor: d => d.color,
                     stroked: false,
                     pickable: true,
-                    radiusMinPixels: 1,
-                    radiusMaxPixels: 6,
-                    getRadius: 20000,
+                    radiusMinPixels: 3,
+                    radiusMaxPixels: 8,
+                    getRadius: 40000,
                     parameters: {{depthTest: false}}
                 }})
             ]
