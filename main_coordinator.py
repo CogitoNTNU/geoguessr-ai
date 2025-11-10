@@ -26,7 +26,7 @@ def main(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Fetch main dataset from s3-bucket
-    df = load_latest_snapshot_df().head(100)
+    df = load_latest_snapshot_df()
 
     train_test_split = 0.9
     num_training_samples = int(len(df) * train_test_split)
@@ -34,7 +34,7 @@ def main(config):
     df_test = df.iloc[num_training_samples:]
 
     # Fetch holdout dataset (validation set) from s3-bucket
-    df_val = load_latest_holdout_snapshot_df().head(10)
+    df_val = load_latest_holdout_snapshot_df()
 
     train_dataset = GeoImageIterableDataset(df_train)
     test_dataset = GeoImageIterableDataset(df_test)
@@ -175,8 +175,8 @@ def train(
         except Exception as e:
             logger.error(f"Failed to resume from '{config.resume_path}': {e}")
 
-    # for epoch in range(start_epoch, config.epochs):
-    for epoch in range(3):
+    for epoch in range(start_epoch, config.epochs):
+    # for epoch in range(3):
         model.train()
         running_loss, running_top1, running_topk = 0.0, 0.0, 0.0
         num_batches = 0
