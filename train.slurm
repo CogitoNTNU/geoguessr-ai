@@ -4,7 +4,7 @@
 #SBATCH --time=03:00:00
 #SBATCH --partition=GPUQ
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64GB
+#SBATCH --mem=128GB
 #SBATCH --nodes=1
 #SBATCH --constraint="(a100|h100|h200)&(gpu40g|gpu80g)"
 #SBATCH --output=slurm_outputs/output_geo-guessr-ai.txt
