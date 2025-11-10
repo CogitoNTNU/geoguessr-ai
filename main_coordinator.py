@@ -26,7 +26,7 @@ def main(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Fetch main dataset from s3-bucket
-    df = load_latest_snapshot_df()
+    df = load_latest_snapshot_df().head(100)
 
     train_test_split = 0.9
     num_training_samples = int(len(df) * train_test_split)
@@ -34,7 +34,7 @@ def main(config):
     df_test = df.iloc[num_training_samples:]
 
     # Fetch holdout dataset (validation set) from s3-bucket
-    df_val = load_latest_holdout_snapshot_df()
+    df_val = load_latest_holdout_snapshot_df().head(10)
 
     train_dataset = GeoImageIterableDataset(df_train)
     test_dataset = GeoImageIterableDataset(df_test)
