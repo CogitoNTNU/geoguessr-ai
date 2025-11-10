@@ -109,6 +109,8 @@ class Configuration:
     lr: float = 5e-5
     weight_decay: float = 0.01
     epochs: int = 5000
+    # Early stopping (defaults approximate common built-ins)
+    early_stopping_patience: int = 2
     # Scheduler
     T_0: int = 10
     T_mult: int = 2
@@ -158,6 +160,9 @@ def train(
     # Resume if provided
     start_epoch = 0
     global_step = 0
+    # Early stopping state
+    patience_counter = 0
+    patience = getattr(config, "early_stopping_patience", None)
     if config.resume_path:
         try:
             checkpoint = torch.load(config.resume_path, map_location=device)
@@ -410,6 +415,20 @@ def train(
                 wandb.summary["best_value"] = best_value
             except Exception as e:
                 logger.error(f"Failed to save best checkpoint: {e}")
+
+        # Early stopping check (uses monitored metric according to monitor_mode)
+        if patience is not None and patience > 0:
+            if improved:
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    logger.warning(
+                        f"Early stopping triggered after {epoch + 1} epochs "
+                        f"with patience={patience} on metric "
+                        f"{'epoch_loss' if is_min_mode else 'epoch_top1'}."
+                    )
+                    break
 
         """
         * Hente 4 bilder av gangen
