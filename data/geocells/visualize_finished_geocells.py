@@ -7,7 +7,6 @@ import json
 
 import numpy as np
 import pandas as pd
-import pydeck as pdk
 from tqdm.auto import tqdm
 
 

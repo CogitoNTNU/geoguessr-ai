@@ -1,7 +1,6 @@
 import pandas as pd
 from typing import Optional
 from PIL import Image
-import os
 
 # Reuse the S3 helpers already present in this repo
 from s3bucket import load_latest_snapshot_df, download
