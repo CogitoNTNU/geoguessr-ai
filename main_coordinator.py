@@ -44,20 +44,20 @@ def main(config):
     )
 
     train_dataloader = DataLoader(
-        train_dataset, batch_size=64, num_workers=4, pin_memory=True
+        train_dataset, batch_size=1024, num_workers=4, pin_memory=True
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=64, num_workers=4, pin_memory=True
+        test_dataset, batch_size=1024, num_workers=4, pin_memory=True
     )
     val_dataloader = DataLoader(
-        val_dataset, batch_size=64, num_workers=4, pin_memory=True
+        val_dataset, batch_size=1024, num_workers=4, pin_memory=True
     )
 
     # Initialize model and set it to train
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
 
-    embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
+    embeddingModelUsed = "CLIP"  # Possible values are "CLIP" or "TINYVIT"
 
     embedding_model = 0
     if embeddingModelUsed == "CLIP":

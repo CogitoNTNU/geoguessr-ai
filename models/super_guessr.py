@@ -2,6 +2,7 @@ import torch
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
 import torch.nn.functional as F
+import os
 from models.layers.positional_encoder import PositionalEncoder
 from models.utils import ModelOutput, haversine_matrix, smooth_labels
 from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM
@@ -135,12 +136,18 @@ class SuperGuessr(nn.Module):
                 "clip-vit" in self.base_model.config._name_or_path and not self.serving
             ):
                 head = CLIP_PRETRAINED_HEAD
-                self.load_state(head)
-                print(f"Initialized model parameters from model: {head}")
-                for param in self.base_model.vision_model.encoder.layers[
-                    :-1
-                ].parameters():
-                    param.requires_grad = False
+                if os.path.exists(head):
+                    self.load_state(head)
+                    print(f"Initialized model parameters from model: {head}")
+                    for param in self.base_model.vision_model.encoder.layers[
+                        :-1
+                    ].parameters():
+                        param.requires_grad = False
+                else:
+                    print(
+                        f"Warning: pretrained head not found at '{head}'. "
+                        "Proceeding without loading and without freezing base layers."
+                    )
 
             elif "tiny" in self.base_model.config._name_or_path and not self.serving:
                 self.base_model.freeze_all_but_last_stage()
@@ -205,7 +212,8 @@ class SuperGuessr(nn.Module):
             path (str): path to model weights
         """
         own_state = self.state_dict()
-        state_dict = torch.load(path, map_location=torch.device("cuda"))
+        device_str = "cuda" if torch.cuda.is_available() else "cpu"
+        state_dict = torch.load(path, map_location=device_str)
         for name, param in state_dict.items():
             if name not in own_state:
                 print(f"Parameter {name} not in model's state.")
