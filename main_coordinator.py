@@ -18,6 +18,7 @@ from models.tinyvit import TinyViTAdapter
 from transformers import CLIPVisionModel
 from config import CLIP_MODEL, TINYVIT_MODEL
 from models.utils import haversine_matrix
+from typing import Optional
 
 
 def main(config):
@@ -112,6 +113,12 @@ class Configuration:
     T_0: int = 10
     T_mult: int = 2
     eta_min: int = 1e-6
+    # Checkpointing
+    checkpoint_dir: str = "checkpoints"
+    save_every_epochs: int = 1
+    keep_last_n: int = 3
+    monitor_mode: str = "min"  # "min" uses epoch_loss, "max" uses epoch_top1
+    resume_path: Optional[str] = None
 
 
 def train(
@@ -123,7 +130,15 @@ def train(
     target_dimensions=None,
     norm_mean=None,
     norm_std=None,
+    checkpoint_dir: Optional[str] = None,
 ):
+    # Prepare checkpoint directory
+    if checkpoint_dir is None:
+        run_id = getattr(getattr(wandb, "run", None), "id", None)
+        run_suffix = run_id if run_id else "default"
+        checkpoint_dir = os.path.join(config.checkpoint_dir, run_suffix)
+    os.makedirs(checkpoint_dir, exist_ok=True)
+
     optimizer = AdamW(
         model.parameters(),
         lr=config.lr,
@@ -137,8 +152,31 @@ def train(
     # Prepare geocell centroids from model (ordered by proto_df geocell_index)
     centroids = model.geocell_centroid_coords.to(device)  # (num_cells, 2) in (lng, lat)
 
+    is_min_mode = (config.monitor_mode or "min").lower() == "min"
+    best_value = float("inf") if is_min_mode else float("-inf")
+
+    # Resume if provided
+    start_epoch = 0
     global_step = 0
-    for epoch in range(config.epochs):
+    if config.resume_path:
+        try:
+            checkpoint = torch.load(config.resume_path, map_location=device)
+            model.load_state_dict(checkpoint["model_state_dict"])
+            optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            # Scheduler state may not always be present (older checkpoints)
+            if "scheduler_state_dict" in checkpoint:
+                scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+            start_epoch = int(checkpoint.get("epoch", -1)) + 1
+            global_step = int(checkpoint.get("global_step", 0))
+            best_value = checkpoint.get("best_value", best_value)
+            logger.info(
+                f"Resumed from '{config.resume_path}' at epoch {start_epoch}, global_step {global_step}"
+            )
+        except Exception as e:
+            logger.error(f"Failed to resume from '{config.resume_path}': {e}")
+
+    # for epoch in range(start_epoch, config.epochs):
+    for epoch in range(3):
         model.train()
         running_loss, running_top1, running_topk = 0.0, 0.0, 0.0
         num_batches = 0
@@ -263,6 +301,115 @@ def train(
             },
             step=global_step,
         )
+
+        # Checkpoint saving
+        current_value = epoch_loss if is_min_mode else epoch_top1
+        state = {
+            "epoch": epoch,
+            "global_step": global_step,
+            "model_state_dict": model.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "scheduler_state_dict": scheduler.state_dict(),
+            "best_value": best_value,
+            "monitored_value": current_value,
+            "config": asdict(config),
+        }
+
+        # Always update 'last' checkpoint
+        last_path = os.path.join(checkpoint_dir, "last.pt")
+        try:
+            torch.save(state, last_path)
+        except Exception as e:
+            logger.error(f"Failed to save last checkpoint: {e}")
+
+        # Save per-epoch checkpoints only if among top-K best
+        if (epoch + 1) % max(1, int(config.save_every_epochs)) == 0:
+            # Helper to parse value from filename "epoch_XXXX_VALUE.pt"
+            def parse_value_from_filename(filename: str) -> Optional[float]:
+                try:
+                    stem = filename[:-3]  # remove '.pt'
+                    parts = stem.split("_")
+                    # last token should be numeric value if present
+                    value_str = parts[-1]
+                    return float(value_str)
+                except Exception:
+                    return None
+
+            # Gather existing epoch checkpoints with values
+            existing: list[tuple[str, float]] = []
+            for f in os.listdir(checkpoint_dir):
+                if not (f.startswith("epoch_") and f.endswith(".pt")):
+                    continue
+                value = parse_value_from_filename(f)
+                if value is None:
+                    # Unknown value; push to worst side so it gets pruned first
+                    value = float("inf") if is_min_mode else float("-inf")
+                existing.append((f, value))
+
+            k = max(0, int(config.keep_last_n))
+            should_save = False
+            if k == 0:
+                should_save = False
+            elif len(existing) < k:
+                should_save = True
+            else:
+                # Determine worst among current kept set
+                worst_value = max(v for _, v in existing) if is_min_mode else min(v for _, v in existing)
+                should_save = (current_value < worst_value) if is_min_mode else (current_value > worst_value)
+
+            if should_save:
+                # Encode metric in filename for efficient pruning/sorting
+                epoch_path = os.path.join(checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt")
+                try:
+                    torch.save(state, epoch_path)
+                    # Upload to Weights & Biases Artifacts
+                    try:
+                        if getattr(wandb, "run", None) is not None:
+                            artifact_name = f"{wandb.run.id}-epoch-{epoch:04d}"
+                            artifact = wandb.Artifact(name=artifact_name, type="model", metadata={
+                                "epoch": epoch,
+                                "monitored_value": current_value,
+                                "monitor_mode": "min" if is_min_mode else "max",
+                            })
+                            artifact.add_file(epoch_path, name=os.path.basename(epoch_path))
+                            wandb.log_artifact(artifact, aliases=[f"epoch-{epoch:04d}", "topk"])
+                    except Exception as e:
+                        logger.warning(f"Failed to upload epoch artifact to W&B: {e}")
+                except Exception as e:
+                    logger.error(f"Failed to save epoch checkpoint: {e}")
+
+                # Recompute including the newly saved file
+                existing = []
+                for f in os.listdir(checkpoint_dir):
+                    if not (f.startswith("epoch_") and f.endswith(".pt")):
+                        continue
+                    value = parse_value_from_filename(f)
+                    if value is None:
+                        value = float("inf") if is_min_mode else float("-inf")
+                    existing.append((f, value))
+
+                # Sort by best first
+                existing.sort(key=lambda t: t[1], reverse=not is_min_mode)
+                # Keep top-k, remove the rest
+                for f, _ in existing[k:]:
+                    try:
+                        os.remove(os.path.join(checkpoint_dir, f))
+                    except FileNotFoundError:
+                        pass
+                    except Exception as e:
+                        logger.warning(f"Failed to remove old checkpoint '{f}': {e}")
+
+        # Save best checkpoint
+        improved = (current_value < best_value) if is_min_mode else (current_value > best_value)
+        if improved:
+            best_value = current_value
+            best_path = os.path.join(checkpoint_dir, "best.pt")
+            try:
+                state["best_value"] = best_value
+                torch.save(state, best_path)
+                wandb.summary["best_value"] = best_value
+            except Exception as e:
+                logger.error(f"Failed to save best checkpoint: {e}")
 
         """
         * Hente 4 bilder av gangen
