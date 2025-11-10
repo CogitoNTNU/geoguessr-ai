@@ -57,32 +57,6 @@ def main(config):
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
 
-    # class Net(torch.nn.Module):
-    #     def __init__(self, num_geocells: int):
-    #         super(Net, self).__init__()
-    #         self.conv1 = torch.nn.Conv2d(3, 16, 3, 1)
-    #         self.conv2 = torch.nn.Conv2d(16, 32, 3, 1)
-    #         self.fc1 = torch.nn.Linear(508032 , 128)
-    #         self.fc2 = torch.nn.Linear(128, num_geocells) # get_num_geocells() in data/geocells/geocell_manager.py
-
-    #     def forward(self, x):
-    #         x = self.conv1(x)
-    #         x = F.relu(x)
-
-    #         x = self.conv2(x)
-    #         x = F.relu(x)
-
-    #         x = F.max_pool2d(x, 2)
-    #         x = torch.flatten(x, 1)
-    #         x = self.fc1(x)
-    #         x = F.relu(x)
-    #         logits = self.fc2(x)
-
-    #         class_probabilities = F.softmax(logits, dim=1)
-    #         return logits, class_probabilities
-    # model = Net(num_geocells).to(device)
-    # train(model=model, train_dataloader=train_dataloader, validation_dataloader=val_dataloader, device=device, config=config)@
-
     embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
 
     embedding_model = 0
@@ -125,30 +99,6 @@ def main(config):
         norm_mean=norm_mean,
         norm_std=norm_std,
     )
-
-    """
-    Hva som må gjøres (roughly)
-    * Sette scriptet til å kjøre på GPU: device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    * Initialisere SuperGuessr-modellen
-    * Sette modellen i treningsmodus ved å kalle model.train()
-    * Initialisere en optimizer 
-    """
-
-    # =========================
-    # MAIN TRAINING LOOP
-    # =========================
-    """
-    Train the model
-    Data = bilder
-    Labels = tilhørende metadata med følgende felter:
-    lat: float
-    lon: float
-    heading: int
-    location_id: str
-    pano_id: str
-    capture_date: str
-    batch_date: str
-    """
 
 
 @dataclass
