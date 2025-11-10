@@ -137,11 +137,16 @@ def train(
     # Prepare geocell centroids from model (ordered by proto_df geocell_index)
     centroids = model.geocell_centroid_coords.to(device)  # (num_cells, 2) in (lng, lat)
 
-    for epoch in range(3):  # run only one epoch for quick test
+    global_step = 0
+    for epoch in range(config.epochs):
+        model.train()
+        running_loss, running_top1, running_topk = 0.0, 0.0, 0.0
+        num_batches = 0
+
         for batch_idx, (images, targets) in enumerate(
             tqdm(train_dataloader, desc=f"Epoch {epoch + 1}/{config.epochs}")
         ):
-            # Resize images to match embedding model input resolution (CLIP or Tiny-Vit)
+            # Resize images to match embedding model input resolution (CLIP or Tiny-ViT)
             if target_dimensions is not None:
                 if images.dim() == 5:  # (B, V, C, H, W) panorama batches
                     b, v, c, h, w = images.shape
@@ -163,9 +168,9 @@ def train(
                         align_corners=False,
                     )
 
-            # Move tensors to device for training
             images = images.to(device, non_blocking=True)
-            # Ensure float [0,1] before normalization if needed
+
+            # Normalize input
             if images.dtype == torch.uint8:
                 images = images.float().div_(255.0)
             # Normalize per embedding model if provided
@@ -196,15 +201,12 @@ def train(
             distances = haversine_matrix(coord_labels, centroids.t())
             targets = torch.argmin(distances, dim=-1).to(device, dtype=torch.long)
 
-            # Zero your gradients for every batch!
             optimizer.zero_grad()
-            # Run a forward pass through the model
             output = model(pixel_values=images, labels_clf=targets, labels=coord_labels)
-
-            # Compute the loss and its gradients
             loss = output.loss
             geocell_topk = output.top5_geocells
-            # Metrics: top-1 and top-k accuracy
+
+            # Compute metrics
             with torch.no_grad():
                 top1_pred = geocell_topk.indices[:, 0]
                 top1_acc = (top1_pred == targets).float().mean().item()
@@ -215,17 +217,52 @@ def train(
                     .mean()
                     .item()
                 )
-            # Update progress bar
-            tqdm.write(
-                f"batch={batch_idx} loss={loss.item():.4f} top1={top1_acc:.3f} topk={topk_acc:.3f}"
-            )
-            # Find gradients
-            loss.backward()
-            # Adjust learning weights
-            optimizer.step()
-            break  # process only the first batch for quick test
 
+            # Log per batch
+            wandb.log(
+                {
+                    "train/loss": loss.item(),
+                    "train/top1_acc": top1_acc,
+                    "train/top5_acc": topk_acc,
+                    "train/lr": optimizer.param_groups[0]["lr"],
+                    "epoch": epoch,
+                },
+                step=global_step,
+            )
+
+            # Backward + optimize
+            loss.backward()
+            optimizer.step()
+
+            running_loss += loss.item()
+            running_top1 += top1_acc
+            running_topk += topk_acc
+            num_batches += 1
+            global_step += 1
+
+            tqdm.write(
+                f"[Epoch {epoch + 1} | Batch {batch_idx}] Loss={loss.item():.4f} "
+                f"Top1={top1_acc:.3f} Top5={topk_acc:.3f}"
+            )
+
+        # Scheduler step at the end of each epoch
         scheduler.step(epoch)
+
+        # Aggregate training metrics per epoch
+        epoch_loss = running_loss / num_batches
+        epoch_top1 = running_top1 / num_batches
+        epoch_topk = running_topk / num_batches
+
+        # Log validation metrics
+        wandb.log(
+            {
+                "epoch": epoch,
+                "train/epoch_loss": epoch_loss,
+                "train/epoch_top1": epoch_top1,
+                "train/epoch_top5": epoch_topk,
+            },
+            step=global_step,
+        )
 
         """
         * Hente 4 bilder av gangen
@@ -248,9 +285,9 @@ if __name__ == "__main__":
     config = Configuration()
 
     wandb.login(key=api_key)
-    run = wandb.init(
+    wandb.init(
         project="geoguessr-ai",  # Your project name
-        entity="cogito-geoguessr-ai",  # Your team name
+        # entity="cogito-geoguessr-ai",  # Your team name
         config=asdict(config),
         mode="online" if api_key else "disabled",
     )
