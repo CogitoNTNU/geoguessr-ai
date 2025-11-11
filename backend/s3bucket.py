@@ -1221,7 +1221,8 @@ def main():
             )
     except Exception:
         pass
-    result = create_and_upload_sqlite_from_latest_snapshot()
+    # result = create_and_upload_sqlite_from_latest_snapshot()
+    result = create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot()
     print(json.dumps(result, indent=2))
 
 
