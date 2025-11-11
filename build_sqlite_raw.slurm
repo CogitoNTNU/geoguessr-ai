@@ -3,7 +3,6 @@
 #SBATCH --job-name="sqlite-raw"
 #SBATCH --time=03-00:00:00
 #SBATCH --partition=CPUQ
-#SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=2  # 2 CPU cores
 #SBATCH --mem=300GB
 #SBATCH --nodes=1
