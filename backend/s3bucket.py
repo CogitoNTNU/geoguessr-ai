@@ -7,6 +7,7 @@ import datetime
 import struct
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import sqlite3
+import shutil
 
 import boto3
 import pandas as pd
@@ -538,8 +539,27 @@ def create_and_upload_sqlite_from_latest_snapshot(
     # Write/update pointer
     put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_PREFIX}/_latest.json")
 
+    # Also write a local copy beside the repository directory
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
+    os.makedirs(repo_parent_dir, exist_ok=True)
+    local_sqlite_path = os.path.join(repo_parent_dir, f"dataset_sqlite_{run_id}.sqlite")
+    # Recreate the DB to copy from S3-uploaded temp path
+    # Note: db_path no longer exists outside the with block; create file again by downloading is costly.
+    # Instead, regenerate inside a new temp block for copy consistency.
+    # Simpler: move creation before temp cleanup. As we are outside, reuse last built path by creating again.
+    # Rebuild locally by downloading from S3 would cost network; better generate inside the previous block.
+    # Since temp dir is gone, copy must occur before it. Adjusted: regenerate is not feasible here.
+    # Fallback: we already have sqlite_key in S3; download and save locally.
+    bucket_key = sqlite_key
+    with tempfile.TemporaryDirectory() as td2:
+        tmp_local = os.path.join(td2, "dataset.sqlite")
+        s3.download_file(BUCKET, bucket_key, tmp_local)
+        shutil.copyfile(tmp_local, local_sqlite_path)
+
     return {
         "sqlite_key": sqlite_key,
+        "local_sqlite_path": local_sqlite_path,
         "rows": int(len(df)),
         "run_id": run_id,
     }
@@ -676,8 +696,19 @@ def create_and_upload_sqlite_clip_embeddings_from_latest_snapshot(
 
     put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_CLIP_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_CLIP_PREFIX}/_latest.json")
 
+    # Also write a local copy beside the repository directory
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
+    os.makedirs(repo_parent_dir, exist_ok=True)
+    local_sqlite_path = os.path.join(repo_parent_dir, f"dataset_sqlite_clip_embeddings_{run_id}.sqlite")
+    with tempfile.TemporaryDirectory() as td2:
+        tmp_local = os.path.join(td2, "dataset.sqlite")
+        s3.download_file(BUCKET, sqlite_key, tmp_local)
+        shutil.copyfile(tmp_local, local_sqlite_path)
+
     return {
         "sqlite_key": sqlite_key,
+        "local_sqlite_path": local_sqlite_path,
         "rows": int(len(df)),
         "run_id": run_id,
         "device": dev,
@@ -817,8 +848,19 @@ def create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot(
 
     put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_TINYVIT_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_TINYVIT_PREFIX}/_latest.json")
 
+    # Also write a local copy beside the repository directory
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
+    os.makedirs(repo_parent_dir, exist_ok=True)
+    local_sqlite_path = os.path.join(repo_parent_dir, f"dataset_sqlite_tinyvit_embeddings_{run_id}.sqlite")
+    with tempfile.TemporaryDirectory() as td2:
+        tmp_local = os.path.join(td2, "dataset.sqlite")
+        s3.download_file(BUCKET, sqlite_key, tmp_local)
+        shutil.copyfile(tmp_local, local_sqlite_path)
+
     return {
         "sqlite_key": sqlite_key,
+        "local_sqlite_path": local_sqlite_path,
         "rows": int(len(df)),
         "run_id": run_id,
         "device": dev,
