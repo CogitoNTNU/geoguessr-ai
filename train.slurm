@@ -1,7 +1,7 @@
 #!/bin/sh
 #SBATCH --account=studiegrupper-cogito
 #SBATCH --job-name="geoguessr-ai"
-#SBATCH --time=03:00:00
+#SBATCH --time=03-00:00:00
 #SBATCH --partition=GPUQ
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128GB
@@ -9,7 +9,7 @@
 #SBATCH --constraint="(a100|h100|h200)&(gpu40g|gpu80g)"
 #SBATCH --output=slurm_outputs/output_geo-guessr-ai.txt
 #SBATCH --error=slurm_outputs/output_geo-guessr-ai.err
-#SBATCH --mail-user=danielnh@stud.ntnu.no
+#SBATCH --mail-user=danielnh@stud.ntnu.no,jmberget@ntnu.no
 #SBATCH --mail-type=ALL
 
 
