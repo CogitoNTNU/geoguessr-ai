@@ -1184,7 +1184,21 @@ def main():
     Convenience entrypoint: builds SQLite with JPEG bytes from latest snapshot
     and uploads it to S3 under dataset_sqlite/. Prints the resulting manifest.
     """
-    wandb.init()
+    # Initialize Weights & Biases if available and not already initialized
+    try:
+        import wandb  # local import to ensure availability
+        if getattr(wandb, "run", None) is None:
+            wandb.init(
+                project="geoguessr-ai",
+                job_type="sqlite_build",
+                config={
+                    "mode": "jpeg",
+                    "num_workers": 64,
+                    "writer_batch_size": 1000,
+                },
+            )
+    except Exception:
+        pass
     result = create_and_upload_sqlite_from_latest_snapshot()
     print(json.dumps(result, indent=2))
 
