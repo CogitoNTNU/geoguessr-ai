@@ -3,7 +3,7 @@
 #SBATCH --job-name="sqlite-raw"
 #SBATCH --time=03-00:00:00
 #SBATCH --partition=CPUQ
-#SBATCH --cpus-per-task=2  # 2 CPU cores
+#SBATCH --cpus-per-task=4  # 2 CPU cores
 #SBATCH --mem=128GB
 #SBATCH --nodes=1
 #SBATCH --output=slurm_outputs/output_sqlite_raw.txt
