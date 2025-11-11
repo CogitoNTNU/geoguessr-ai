@@ -2,11 +2,11 @@
 #SBATCH --account=studiegrupper-cogito
 #SBATCH --job-name="sqlite-raw"
 #SBATCH --time=03-00:00:00
-#SBATCH --partition=GPUQ
+#SBATCH --partition=CPUQ
 #SBATCH --gres=gpu:1
-#SBATCH --mem=128GB
+#SBATCH --cpus-per-task=64   # 2 CPU cores
+#SBATCH --mem=512GB
 #SBATCH --nodes=1
-#SBATCH --constraint="(a100|h100|h200)&(gpu40g|gpu80g)"
 #SBATCH --output=slurm_outputs/output_sqlite_raw.txt
 #SBATCH --error=slurm_outputs/output_sqlite_raw.err
 #SBATCH --mail-user=danielnh@stud.ntnu.no,jmberget@ntnu.no
