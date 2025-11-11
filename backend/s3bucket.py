@@ -455,6 +455,7 @@ def create_and_upload_sqlite_from_latest_snapshot(
     commit_interval: int = 1000,
     num_workers: int = 64,
     writer_batch_size: int = 1000,
+    fetch_window_size: int = 10000,
 ):
     """
     Builds a SQLite DB from the latest v1 snapshot and uploads it to S3 at
@@ -525,10 +526,8 @@ def create_and_upload_sqlite_from_latest_snapshot(
                 obj = s3.get_object(Bucket=bucket, Key=key)
                 return obj["Body"].read()
 
-            # Concurrent downloads, single-writer batched inserts
-            rows = df[
-                ["location_id", "lat", "lon", "heading", "capture_date", "pano_id", "batch_date", "image_path"]
-            ].to_dict("records")
+            # Concurrent downloads in bounded windows, single-writer batched inserts
+            cols = ["location_id", "lat", "lon", "heading", "capture_date", "pano_id", "batch_date", "image_path"]
 
             def fetch(rec):
                 b = _get_image_bytes(rec.get("image_path"))
@@ -543,66 +542,77 @@ def create_and_upload_sqlite_from_latest_snapshot(
                     sqlite3.Binary(b),
                 )
 
+            total_rows = int(len(df))
             rows_since_commit = 0
-            batch = []
-            cur.execute("BEGIN;")
-            pbar = tqdm(total=len(rows), desc="Building SQLite (JPEG bytes)")
             processed_total = 0
-            with ThreadPoolExecutor(max_workers=num_workers) as ex:
-                futs = [ex.submit(fetch, r) for r in rows]
-                for fut in as_completed(futs):
-                    batch.append(fut.result())
-                    pbar.update(1)
-                    if len(batch) >= writer_batch_size:
-                        cur.executemany(
-                            """
-                            INSERT OR REPLACE INTO samples
-                              (location_id, lat, lon, heading, capture_date, pano_id, batch_date, image)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                            """,
-                            batch,
-                        )
-                        inserted = len(batch)
-                        rows_since_commit += inserted
-                        processed_total += inserted
-                        _wandb_log(
-                            {
-                                "mode": "jpeg",
-                                "processed": processed_total,
-                                "total": len(rows),
-                                "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
-                                "phase": "inserting",
-                            },
-                            step=processed_total,
-                        )
-                        batch.clear()
-                        if rows_since_commit >= commit_interval:
-                            conn.commit()
-                            cur.execute("BEGIN;")
-                            rows_since_commit = 0
-            if batch:
-                cur.executemany(
-                    """
-                    INSERT OR REPLACE INTO samples
-                      (location_id, lat, lon, heading, capture_date, pano_id, batch_date, image)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    """,
-                    batch,
-                )
-                inserted = len(batch)
-                rows_since_commit += inserted
-                processed_total += inserted
-                _wandb_log(
-                    {
-                        "mode": "jpeg",
-                        "processed": processed_total,
-                        "total": len(rows),
-                        "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
-                        "phase": "inserting",
-                    },
-                    step=processed_total,
-                )
-                batch.clear()
+            pbar = tqdm(total=total_rows, desc="Building SQLite (JPEG bytes)")
+            cur.execute("BEGIN;")
+            for start in range(0, total_rows, fetch_window_size):
+                end = min(start + fetch_window_size, total_rows)
+                rows_chunk = df.iloc[start:end][cols].to_dict("records")
+                batch = []
+                # New executor per window keeps memory bounded
+                with ThreadPoolExecutor(max_workers=num_workers) as ex:
+                    futs = [ex.submit(fetch, r) for r in rows_chunk]
+                    for fut in as_completed(futs):
+                        batch.append(fut.result())
+                        pbar.update(1)
+                        if len(batch) >= writer_batch_size:
+                            cur.executemany(
+                                """
+                                INSERT OR REPLACE INTO samples
+                                  (location_id, lat, lon, heading, capture_date, pano_id, batch_date, image)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                batch,
+                            )
+                            inserted = len(batch)
+                            rows_since_commit += inserted
+                            processed_total += inserted
+                            _wandb_log(
+                                {
+                                    "mode": "jpeg",
+                                    "processed": processed_total,
+                                    "total": total_rows,
+                                    "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                                    "phase": "inserting",
+                                },
+                                step=processed_total,
+                            )
+                            batch.clear()
+                            if rows_since_commit >= commit_interval:
+                                conn.commit()
+                                cur.execute("BEGIN;")
+                                rows_since_commit = 0
+                # Flush remainder of this window
+                if batch:
+                    cur.executemany(
+                        """
+                        INSERT OR REPLACE INTO samples
+                          (location_id, lat, lon, heading, capture_date, pano_id, batch_date, image)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        batch,
+                    )
+                    inserted = len(batch)
+                    rows_since_commit += inserted
+                    processed_total += inserted
+                    _wandb_log(
+                        {
+                            "mode": "jpeg",
+                            "processed": processed_total,
+                            "total": total_rows,
+                            "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                            "phase": "inserting",
+                        },
+                        step=processed_total,
+                    )
+                    batch.clear()
+                # Commit at end of window to keep WAL small
+                conn.commit()
+                cur.execute("BEGIN;")
+                rows_since_commit = 0
+            # Final commit and close bar
             conn.commit()
             pbar.close()
         finally:
