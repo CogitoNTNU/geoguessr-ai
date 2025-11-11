@@ -229,12 +229,12 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = int(30 / pictures_per_point)
+    amount_of_pictures = int(9900 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
     if extra_credits_result.lower() == "y":
-        amount_of_pictures = int(16_000 / pictures_per_point)
+        amount_of_pictures = int(25_000 / pictures_per_point)
 
     start_time = time.time()
 
