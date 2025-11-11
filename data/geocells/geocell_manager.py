@@ -96,7 +96,7 @@ class GeocellManager:
     def get_geocell_id(self, point):
         h = hash((point["latitude"], point["longitude"]))
         if h not in self.point_info_dict:
-            return None
+            return None, None, None
         return (
             self.point_info_dict[h]["geocell"],
             self.point_info_dict[h]["country"],
