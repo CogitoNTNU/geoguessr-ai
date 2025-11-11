@@ -126,11 +126,11 @@ class ProtoRefiner(nn.Module):
     def forward(
         self,
         embedding: Tensor = None,
-        geo_tensor: Tensor = None,
+        geo_tensor: Tensor = None, #not used
         initial_preds: Tensor = None,
         candidate_cells: Tensor = None,
         candidate_probs: Tensor = None,
-        cluster: Tensor = None,
+        cluster: Tensor = None, #not used
     ):
         """Forward function for proto refinement model.
 
@@ -213,7 +213,7 @@ class ProtoRefiner(nn.Module):
             distance = haversine(initial_LLH, refined_LLH)[0]
             if distance > self.max_refinement:
                 final_probs = c_probs[: self.topk]
-                if self.verbose:
+                if self.verbose:  
                     print("\t\tCancelled refinement: distance too far.")
 
             final_pred_id = torch.argmax(final_probs).item()
