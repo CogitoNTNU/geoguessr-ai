@@ -265,3 +265,10 @@ out/*
 gadm_world_all_levels.filtered_noadm345.gpkg
 
 proto_refiner.md
+<<<<<<< HEAD
+.vscode/
+=======
+
+
+wandb/
+>>>>>>> 80d6732 (chore: add entries for filtered geopackage and wandb to .gitignore)

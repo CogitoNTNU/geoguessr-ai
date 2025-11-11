@@ -14,26 +14,9 @@ import random
 
 import argparse
 
-parser = argparse.ArgumentParser("simple_example")
-parser.add_argument(
-    "mode",
-    help="""Mode:\n
-                     0: geocell_visualizer \n
-                     1: admin_visualizer \n
-                     2: generate_geocells \n
-                     3: cell_visualizer \n
-                     4: load_admin_data \n
-                     5: cell \n
-                     6: test_geocells\n
-                     7: Kjør geocells\n
-                     8: Test clustering\n
-                     9: Lagre geocells fra alle land""",
-    type=int,
-)
-args = parser.parse_args()
 
 
-def main():
+def main(args):
     print(f"Mode {args.mode} selected")
     if args.mode == 0:
         num_points = int(input("How many points? "))
@@ -90,7 +73,7 @@ def main():
         sql.close()
 
         countries = list(countries)
-        countries = countries[44:]
+        countries = countries
 
         for i in trange(len(countries)):
             generate_geocells.GenerateGeocells([countries[i]])
@@ -100,4 +83,21 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser("simple_example")
+    parser.add_argument(
+        "mode",
+        help="""Mode:\n
+                         0: geocell_visualizer \n
+                         1: admin_visualizer \n
+                         2: generate_geocells \n
+                         3: cell_visualizer \n
+                         4: load_admin_data \n
+                         5: cell \n
+                         6: test_geocells\n
+                         7: Kjør geocells\n
+                         8: Test clustering\n
+                         9: Lagre geocells fra alle land""",
+        type=int,
+    )
+    args = parser.parse_args()
+    main(args)

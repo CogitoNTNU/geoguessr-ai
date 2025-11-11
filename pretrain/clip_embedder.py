@@ -1,8 +1,8 @@
 import torch
-from torch import nn, Tensor
+from torch import Tensor
 from typing import Dict, Callable
 from .utils import load_state_dict
-from config import PRETRAINED_CLIP, CLIP_MODEL
+from config import CLIP_MODEL
 from transformers import CLIPProcessor, CLIPVisionModel
 from PIL import Image
 import torch.distributed

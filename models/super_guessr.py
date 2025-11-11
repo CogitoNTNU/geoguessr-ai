@@ -1,11 +1,13 @@
 import torch
-import pandas as pd
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
-from preprocessing import haversine_matrix, smooth_labels
-from models.layers import PositionalEncoder
-from models.utils import ModelOutput
-from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM, GEOCELL_PATH
+import torch.nn.functional as F
+import os
+from models.layers.positional_encoder import PositionalEncoder
+from models.utils import ModelOutput, haversine_matrix, smooth_labels
+from config import CLIP_PRETRAINED_HEAD, CLIP_EMBED_DIM
+from data.geocells.geocell_manager import GeocellManager
+import pandas as pd
 
 
 # Constants
@@ -68,9 +70,17 @@ class SuperGuessr(nn.Module):
 
         # Setup
         self._set_hidden_size()
-        geocell_path = GEOCELL_PATH
-        self.lla_geocells = self.load_geocells(geocell_path)
-        self.num_cells = self.lla_geocells.size(0)
+        geocell_dir = (
+            "data/geocells/finished_geocells"  # must be a DIRECTORY containing *.pickle
+        )
+        self._geocell_mgr = GeocellManager(geocell_dir)
+        # Prefer proto_df.csv ordering via geocell_index if available
+        centroids = _build_centroids_from_proto_df("data/geocells/proto_df.csv")
+        if centroids is None:
+            centroids = _build_centroids_from_manager(self._geocell_mgr)
+
+        self.geocell_centroid_coords = nn.Parameter(centroids, requires_grad=False)
+        self.num_cells = centroids.size(0)
 
         # Input dimension for cell layer
         self.input_dim = self.hidden_size
@@ -126,34 +136,37 @@ class SuperGuessr(nn.Module):
                 "clip-vit" in self.base_model.config._name_or_path and not self.serving
             ):
                 head = CLIP_PRETRAINED_HEAD
-                self.load_state(head)
-                print(f"Initialized model parameters from model: {head}")
-                for param in self.base_model.vision_model.encoder.layers[
-                    :-1
-                ].parameters():
-                    param.requires_grad = False
+                if os.path.exists(head):
+                    self.load_state(head)
+                    print(f"Initialized model parameters from model: {head}")
+                    for param in self.base_model.vision_model.encoder.layers[
+                        :-1
+                    ].parameters():
+                        param.requires_grad = False
+                else:
+                    print(
+                        f"Warning: pretrained head not found at '{head}'. "
+                        "Proceeding without loading and without freezing base layers."
+                    )
 
-            elif (
-                "tiny-vit" in self.base_model.config._name_or_path and not self.serving
-            ):
-                for param in self.base_model.vision_model.encoder.layers[
-                    :-1
-                ].parameters():
-                    param.requires_grad = False
+            elif "tiny" in self.base_model.config._name_or_path and not self.serving:
+                self.base_model.freeze_all_but_last_stage()
 
-    def load_geocells(self, path: str) -> Tensor:
-        """Loads geocell centroids and converts them to ECEF format
+    # def load_geocells(self) -> Tensor:
+    #     """Loads geocell centroids and converts them to ECEF format
 
-        Args:
-            path (str, optional): path to geocells. Defaults to GEOCELL_PATH.
+    # #     Args:
+    # #         path (str, optional): path to geocells. Defaults to GEOCELL_PATH.
 
-        Returns:
-            Tensor: ECEF geocell centroids
-        """
-        geo_df = pd.read_csv(path)
-        lla_coords = torch.tensor(geo_df[["lng", "lat"]].values)
-        lla_geocells = nn.parameter.Parameter(data=lla_coords, requires_grad=False)
-        return lla_geocells
+    # #     Returns:
+    # #         Tensor: ECEF geocell centroids
+    # #     """
+    #     geo_df = pd.read_csv(path)
+    #     centroid_coords = torch.tensor(geo_df[["lng", "lat"]].values)
+    #     geocell_centroid_coords = nn.parameter.Parameter(
+    #         data=centroid_coords, requires_grad=False
+    #     )
+    #     return geocell_centroid_coords
 
     def _move_to_cuda(
         self,
@@ -199,7 +212,8 @@ class SuperGuessr(nn.Module):
             path (str): path to model weights
         """
         own_state = self.state_dict()
-        state_dict = torch.load(path, map_location=torch.device("cuda"))
+        device_str = "cuda" if torch.cuda.is_available() else "cpu"
+        state_dict = torch.load(path, map_location=device_str)
         for name, param in state_dict.items():
             if name not in own_state:
                 print(f"Parameter {name} not in model's state.")
@@ -291,55 +305,50 @@ class SuperGuessr(nn.Module):
             labels_clf,
         )
 
-        # If panorama, (N, 4 * pixels) -> (N * 4, pixels)
+        # If panorama, (N, 4, C, H, W) -> (N * 4, C, H, W)
         if self.panorama and pixel_values is not None:
-            num_samples = pixel_values.size(0)
-            pixel_values = pixel_values.reshape((num_samples * 4, 3, 336, 336))
+            # Expect pixel_values as (B, 4, C, H, W)
+            assert pixel_values.dim() == 5, "panorama=True expects (B, 4, C, H, W)"
+            n, v, c, h, w = pixel_values.shape
+            pixel_values = pixel_values.view(n * v, c, h, w)
 
         # Feed through base model
         if self.base_model is not None and pixel_values is not None:
             if pixel_values.dim() > 4:
                 pixel_values = pixel_values.squeeze(1)
 
-            embedding = self.base_model(pixel_values=pixel_values)
-            if self.mode == "transformer":
-                embedding = embedding.last_hidden_state
-                embedding = torch.mean(embedding, dim=1)
+            outs = self.base_model(pixel_values=pixel_values)
 
+            # Accept HF-style outputs OR a raw tensor from timm
+            if hasattr(outs, "last_hidden_state") and self.mode == "transformer":
+                # (B, T, C) -> mean over tokens
+                embedding = outs.last_hidden_state.mean(dim=1)
+            elif hasattr(outs, "pooler_output"):
+                embedding = outs.pooler_output  # (B, C)
             else:
-                embedding = embedding.pooler_output
+                # timm(num_classes=0) returns a (B, C) tensor
+                embedding = outs
 
-            # (N * 4, pixels) -> (N, 4, pixels)
+            # (N * 4, C) -> (N, 4, C) for panoramas
             if self.panorama:
-                embedding = embedding.reshape((num_samples, 4, -1))
+                embedding = embedding.view(n, v, -1)
 
         layer_input = embedding
 
         # Handle four image input
         if self.panorama:
-            # Hierarchical architecture
             if self.hierarchical:
-                # Positional encoding
                 layer_input = self.pos_encoder(layer_input)
-
-                # Multi-head self attention
                 output = self.self_attn(
                     layer_input, layer_input, layer_input, need_weights=False
                 )[0]
-
-                # Pool (CLS) and remove zero concats
                 output = output[:, 0]
-
-            # Average embeddings
             else:
-                output = layer_input.mean(dim=1)
+                output = layer_input.mean(dim=1)  # (N, 4, C) -> (N, C)
 
-        # Single Image
-        elif layer_input.size(1) == 4:
-            output = embedding[:, 0]
-
+        # Single image
         else:
-            output = embedding
+            output = embedding  # (N, C)
 
         # Linear layer
         logits = self.cell_layer(output)
@@ -347,30 +356,38 @@ class SuperGuessr(nn.Module):
 
         # Compute coordinate prediction
         geocell_preds = torch.argmax(geocell_probs, dim=-1)
-        pred_LLH = torch.index_select(self.lla_geocells.data, 0, geocell_preds)
+        pred_centroid_coordinate = torch.index_select(
+            self.geocell_centroid_coords.data, 0, geocell_preds
+        )
         label_probs = self._to_one_hot(labels_clf)  # labels_clf if normal
 
         # Get top 'num_candidates' geocell candidates
         geocell_topk = torch.topk(geocell_probs, self.num_candidates, dim=-1)
 
-        # Serving
+        # Serving (inference)
         if not self.training and self.serving:
-            return pred_LLH, geocell_topk, embedding
+            return pred_centroid_coordinate, geocell_topk, embedding
 
         # Soft labels based on distance
-        if self.should_smooth_labels:
-            distances = haversine_matrix(labels, self.lla_geocells.data.t())
-            label_probs = smooth_labels(distances)
-
-        # Loss
-        loss_clf = self.loss_fnc(logits, label_probs)
+        if getattr(self, "should_smooth_labels", False) and labels is not None:
+            # distances: (B, num_cells)
+            distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
+            # unnormalized similarities -> normalize to probability distribution
+            soft_targets = smooth_labels(distances)
+            soft_targets = soft_targets / soft_targets.sum(dim=-1, keepdim=True).clamp_min(1e-12)
+            # soft cross-entropy with log-softmax
+            log_probs = F.log_softmax(logits, dim=-1)
+            loss_clf = -(soft_targets * log_probs).sum(dim=-1).mean()
+        else:
+            # standard hard-label CE expects class indices
+            loss_clf = self.loss_fnc(logits, labels_clf)
         loss = loss_clf
 
         # Results
         output = ModelOutput(
             loss,
             loss_clf,
-            pred_LLH,
+            pred_centroid_coordinate,
             geocell_preds,
             geocell_topk,
             embedding,
@@ -390,3 +407,75 @@ class SuperGuessr(nn.Module):
         rep += f"\tserving\t\t= {self.serving}\n"
         rep += ")"
         return rep
+
+
+def _centroid_from_points(cell):
+    # crude mean; replace with your preferred centroid logic if you have one
+    lngs = [p["longitude"] for p in cell.points]
+    lats = [p["latitude"] for p in cell.points]
+    if len(lngs) == 0:
+        return (0.0, 0.0)
+    return (sum(lngs) / len(lngs), sum(lats) / len(lats))
+
+
+def _build_centroids_from_manager(mgr: GeocellManager):
+    """
+    Returns:
+      centroids: (num_cells, 2) float32 tensor in (lng, lat)
+    """
+    rows = []
+    for country in mgr.geocells:
+        for adm1 in mgr.geocells[country]:
+            for cell in mgr.geocells[country][adm1]:
+                # prefer centroid attribute if present
+                cen = getattr(cell, "centroid", None)
+                if cen is None:
+                    lng, lat = _centroid_from_points(cell)
+                else:
+                    # handle dict or tuple; ensure (lng, lat) order
+                    if isinstance(cen, dict):
+                        lng, lat = cen["longitude"], cen["latitude"]
+                    else:
+                        lng, lat = cen[0], cen[1]
+                rows.append(
+                    (str(country), str(adm1), cell.id, float(lng), float(lat), cell)
+                )
+
+    # deterministic ordering
+    rows.sort(key=lambda r: (r[0], r[1], str(r[2])))
+
+    centroids = []
+    for idx, (country, adm1, geocell_id, lng, lat, _cell) in enumerate(rows):
+        centroids.append([lng, lat])  # (lng, lat)
+
+    centroids = torch.tensor(centroids, dtype=torch.float32)
+    return centroids
+
+def _build_centroids_from_proto_df(csv_path: str):
+    """
+    Build centroids ordered by geocell_index from proto_df.csv.
+    Returns:
+      centroids: (num_cells, 2) float32 tensor in (lng, lat) or None if csv not found.
+    """
+    try:
+        df = pd.read_csv(csv_path)
+    except Exception:
+        return None
+
+    # Support legacy column name fallback
+    idx_col = "geocell_index" if "geocell_index" in df.columns else ("geocell_id" if "geocell_id" in df.columns else None)
+    if idx_col is None:
+        return None
+
+    # Deduplicate to one row per geocell_index (there may be multiple rows per clusters)
+    df = df.sort_values(by=[idx_col])
+    dedup = df.drop_duplicates(subset=[idx_col], keep="first")
+
+    # Ensure required centroid columns exist
+    if not {"centroid_lng", "centroid_lat"}.issubset(dedup.columns):
+        return None
+
+    centroids = torch.tensor(
+        dedup[["centroid_lng", "centroid_lat"]].values, dtype=torch.float32
+    )
+    return centroids

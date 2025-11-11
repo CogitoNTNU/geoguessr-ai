@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import json
-import numpy as np
 import pandas as pd
 import torch
 from torch import nn, Tensor
@@ -13,12 +12,13 @@ from datasets import (
     Dataset,
     enable_progress_bar,
     disable_progress_bar,
-    concatenate_datasets,
 )
-from config import PROTO_PATH, DATASET_PATH
-from preprocessing import haversine
+from preprocessing.geo_utils import haversine
 
 # Cluster refinement model
+
+PROTO_PATH = "data/geocells/proto_df.csv"
+DATASET_PATH = "data/datasets/embeddings_dataset"
 
 
 class ProtoRefiner(nn.Module):
@@ -60,30 +60,15 @@ class ProtoRefiner(nn.Module):
         self.verbose = verbose
 
         # Load dataset with embeddings and prototypes
-        if type(dataset_path) is list:
-            if len(dataset_path) > 2:
-                raise NotImplementedError("Can't concatentate more than 2 datasets.")
-
-            # Dataset
-            data_1 = DatasetDict.load_from_disk(dataset_path[0])
-            data_2 = DatasetDict.load_from_disk(dataset_path[1])
-            data_1 = data_1.remove_columns(["labels_climate"])
-            data_2 = data_2.remove_columns(["labels_climate"])
-            self.dataset = DatasetDict(
-                train=concatenate_datasets([data_1["train"], data_2["train"]])
-            )
-
-        else:
-            self.dataset = DatasetDict.load_from_disk(dataset_path)
+        self.dataset = DatasetDict.load_from_disk(dataset_path)
 
         # Load prototypes
         self.proto_df = pd.read_csv(proto_path)
-        self.proto_df["indices"] = self.proto_df["indices"].apply(self._load_indices)
 
         # Load prototype index dataframe
-        self.proto_df["geocell_idx"] = self.proto_df["geocell_idx"].astype(int)
-        self.num_geocells = self.proto_df["geocell_idx"].max() + 1
-        self.proto_df = self.proto_df.set_index("geocell_idx")
+        self.proto_df["geocell_id"] = self.proto_df["geocell_id"].astype(int)
+        self.num_geocells = self.proto_df["geocell_id"].max() + 1
+        self.proto_df = self.proto_df.set_index("geocell_id")
 
         # Generate prototypes for every geocells
         if protos is None:
@@ -186,7 +171,7 @@ class ProtoRefiner(nn.Module):
                     continue
 
                 cell_emb = cell_emb["embedding"].to("cuda")
-                logits = -self._euclidian_distance(cell_emb, emb)
+                logits = -self._euclidean_distance(cell_emb, emb)
 
                 # Get top cluster and corresponding coordinates
                 top_distances.append(torch.max(logits).item())
@@ -250,7 +235,7 @@ class ProtoRefiner(nn.Module):
         if embeddings.size(1) == 4:
             embeddings = embeddings.mean(dim=1)
 
-        distances = self._euclidian_distance(embeddings, emb)
+        distances = self._euclidean_distance(embeddings, emb)
         max_index = torch.argmax(distances).item()
         max_point = points["labels"][max_index]
         return max_point[0].item(), max_point[1].item()
@@ -335,7 +320,7 @@ class ProtoRefiner(nn.Module):
 
         return cosine_similarities.flatten()
 
-    def _euclidian_distance(self, matrix: Tensor, vector: Tensor) -> Tensor:
+    def _euclidean_distance(self, matrix: Tensor, vector: Tensor) -> Tensor:
         """Computes the euclidian distance between all vectors in matrix and vector.
 
         Args:
@@ -343,7 +328,7 @@ class ProtoRefiner(nn.Module):
             vector (Tensor): vector of shape (dim_vector)
 
         Returns:
-            Tensor: euclidian distances
+            Tensor: euclidean distances
         """
         v = vector.unsqueeze(0)
         distances = torch.cdist(matrix, v)

@@ -19,6 +19,8 @@ BUCKET = "cogito-geoguessr"
 VERSION = "v1"
 MANIFEST_PREFIX = f"{VERSION}/manifest"
 SNAPSHOT_PREFIX = f"{VERSION}/snapshot"
+HOLDOUT_PREFIX = "holdout_dataset"
+HOLDOUT_SNAPSHOT_PREFIX = f"{HOLDOUT_PREFIX}/snapshot"
 HEADINGS_DEFAULT = (0, 90, 180, 270)
 STREETVIEW_RE = re.compile(
     r"^streetview_([-+]?\d+(?:\.\d+)?)_([-+]?\d+(?:\.\d+)?)_heading_(\d{1,3})\.jpg$",
@@ -135,6 +137,20 @@ def load_latest_snapshot_df() -> pd.DataFrame:
     return df
 
 
+def load_latest_holdout_snapshot_df() -> pd.DataFrame:
+    """
+    Same structure as v1 snapshot, but reads from 'holdout_dataset/snapshot'.
+    """
+    ptr = get_json(BUCKET, f"{HOLDOUT_SNAPSHOT_PREFIX}/_latest.json")
+    if not ptr:
+        raise FileNotFoundError("No holdout snapshot pointer found.")
+    snap_prefix = ptr["s3"].replace(f"s3://{BUCKET}/", "")
+    df = read_parquet_prefix(snap_prefix)
+    if df is None or df.empty:
+        raise FileNotFoundError("Holdout snapshot folder has no Parquet parts.")
+    return df
+
+
 def pick_image(rec, h):
     images = rec["images"]
     ang = float(h) % 360  # handle strings/floats robustly
@@ -200,7 +216,7 @@ def parse_streetview_folder(root_dir: str) -> Dict[str, Dict[str, Any]]:
     for name in os.listdir(root_dir):
         if not name.lower().endswith(".jpg"):
             continue
-        m = name.split(":")
+        m = name.split("_")
         if not m:
             continue
 
@@ -318,8 +334,15 @@ def download(dest_dir: str, overwrite: bool, row):
     path = row["image_path"]
     if not path.startswith("s3://"):
         return (path, "skipped (not s3)")
-    local = path.replace("s3://cogito-geoguessr/v1/images", "")
     bucket, key = path[5:].split("/", 1)
+    # Make local path relative to the 'images/' subfolder regardless of top-level prefix (v1/ or holdout_dataset/)
+    images_idx = key.find("images/")
+    if images_idx != -1:
+        rel = key[images_idx + len("images/") :]
+        local = "/" + rel
+    else:
+        # Fallback: use full key
+        local = "/" + key
     local_path = dest_dir + local
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     if not overwrite and os.path.exists(local_path):
@@ -358,6 +381,14 @@ def load_points():
     return point_df
 
 
+def load_holdout_points():
+    df = load_latest_holdout_snapshot_df()
+    df = df.drop_duplicates(subset=["lat", "lon"], keep="first").reset_index(drop=True)
+    cols = ["location_id", "lat", "lon"]
+    point_df = df[cols].copy()
+    return point_df
+
+
 def add_metadata():
     df = load_latest_snapshot_df()
     df = df.drop_duplicates(subset=["lat", "lon"], keep="first").reset_index(drop=True)
@@ -381,6 +412,6 @@ def get_snapshot_metadata():
 
 # upload_dataset_from_folder("./dataset", max_workers=24)
 
-points = load_points()
-print(f"Total points saved in S3: {len(points)}")
+# points = load_points()
+# print(f"Total points saved in S3: {len(points)}")
 # points.to_csv("./test.csv")

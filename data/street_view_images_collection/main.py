@@ -31,8 +31,9 @@ def fetch_streetview_image(lat: float, lon: float, heading: int):
             if meta.get("status") == "OK":
                 date_str = meta.get("date")
                 pano_id = meta.get("pano_id")
-    except Exception:
+    except Exception as e:
         # If metadata fetch fails, continue without it
+        print(f"failed at the metadata: {e}")
         pass
 
     params = {
@@ -61,11 +62,13 @@ def fetch_streetview_image(lat: float, lon: float, heading: int):
     os.makedirs("out", exist_ok=True)
     # Build filename: out/lat-long-heading-date-panoId.jpg
     # Fallback to 'unknown' if metadata was unavailable
+
     filename = (
-        f"out/{lat}:{lon}:{heading}:"
-        f"{(date_str or 'unknown')}:"
+        f"out/{lat}_{lon}_{heading}_"
+        f"{(date_str or 'unknown')}_"
         f"{(pano_id or 'unknown')}.jpg"
     )
+
     with open(filename, "wb") as f:
         f.write(r.content)
     return filename
@@ -86,10 +89,12 @@ def collect_google_streetview(lat: float, lon: float) -> bool:
             except ConnectionError as ce:
                 print(f"❌ {ce}")
                 raise ConnectionError(ce)
-            except Exception:
+            except Exception as e:
+                print(f"Exception: {e}")
                 return False
 
     if len(results) != 4:
+        print("Den får ikke fire punkter")
         return False
     return True
 
@@ -138,7 +143,7 @@ def update_failed_points(points: np.ndarray[(float, float)]):
 def cleanup_temp_files():
     folder = "out"
     for filename in os.listdir(folder):
-        if filename.startswith("streetview_") and filename.endswith(".jpg"):
+        if filename.endswith(".jpg"):
             file_path = os.path.join(folder, filename)
             try:
                 os.remove(file_path)
@@ -171,7 +176,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
             if res:
                 return (lat, lon, True)
 
-            print(f"❌ Error collecting point (lat: {lat}, lon: {lon})")
+            print(f"❌ Error collecting 4 points (lat: {lat}, lon: {lon})")
             return (lat, lon, False)
         except ConnectionError:
             print(
@@ -224,7 +229,7 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = int(30 / pictures_per_point)
+    amount_of_pictures = int(9900 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )

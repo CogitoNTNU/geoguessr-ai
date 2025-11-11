@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch import Tensor
-import torch.nn.functional as F
 
 # Constants
 rad_np = np.float64(6378137.0)        # Radius of the Earth (in meters)

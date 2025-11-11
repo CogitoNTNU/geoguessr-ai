@@ -12,7 +12,6 @@ import argparse
 from pathlib import Path
 from typing import Dict
 
-import numpy as np
 import pandas as pd
 import timm
 import torch

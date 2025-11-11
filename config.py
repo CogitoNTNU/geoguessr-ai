@@ -89,7 +89,7 @@ TRAIN_ARGS = TrainingArguments(
     per_device_train_batch_size=256,  # 1024 (256 (Batch), 4 (Cores), 1 (Accumulation))
     per_device_eval_batch_size=256,
     num_train_epochs=1000,
-    evaluation_strategy="epoch",
+    eval_strategy="epoch",
     eval_steps=1,
     save_strategy="epoch",
     save_steps=1,
@@ -100,39 +100,6 @@ TRAIN_ARGS = TrainingArguments(
     seed=330,
 )
 
-# Pretrain arguments for PIGEOTTO --> RUN ON 4 A100 GPUs
-PRETAIN_ARGS_YFCC = TrainingArguments(
-    output_dir="saved_models/pretrained_yfcc",
-    overwrite_output_dir=True,
-    do_train=True,
-    do_eval=True,
-    evaluation_strategy="steps",
-    eval_steps=50,
-    per_device_train_batch_size=32,
-    per_device_eval_batch_size=32,
-    gradient_accumulation_steps=8,  # 12 for 3 GPUs
-    learning_rate=5e-07,  # was 1e-06 before
-    weight_decay=0.001,  # CHANGED
-    adam_beta1=0.9,
-    adam_beta2=0.98,
-    adam_epsilon=1e-06,
-    max_grad_norm=1.0,
-    num_train_epochs=4,  # 20 before
-    max_steps=-1,
-    lr_scheduler_type="linear",
-    warmup_ratio=0.02,
-    logging_first_step=False,
-    logging_steps=1,
-    save_strategy="steps",
-    save_steps=50,
-    seed=42,
-    dataloader_drop_last=True,
-    run_name=None,
-    adafactor=False,
-    report_to="tensorboard",
-    skip_memory_metrics=True,
-    resume_from_checkpoint=None,
-)
 
 # Pretrain arguments for PIGEON --> RUN ON 4 A100 GPUs
 PRETAIN_ARGS = TrainingArguments(
@@ -140,7 +107,7 @@ PRETAIN_ARGS = TrainingArguments(
     overwrite_output_dir=True,
     do_train=True,
     do_eval=True,
-    evaluation_strategy="steps",
+    eval_strategy="steps",
     eval_steps=50,
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
