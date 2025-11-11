@@ -1,8 +1,9 @@
 import rasterio
+import pandas as pd
 from data.geocells.geocell_manager import GeocellManager
 from pyproj import Transformer
 from rasterio.transform import rowcol
-from s3bucket import load_latest_snapshot_df
+from backend.s3bucket import load_latest_snapshot_df
 
 CLIMATE_DICT = {  # Köppen-Geiger Climate Zones
     1: ("a tropical rainforest climate"),
@@ -109,12 +110,10 @@ if __name__ == "__main__":
     out_path = "points_with_koppen.csv"
 
     df = load_latest_snapshot_df()
-
+    df["month"] = df["batch_date"].str[5:7]
+    df["latitude"] = df["lat"]
+    df["longitude"] = df["lon"]
+    out = df.apply(lambda r: geocell_mgr.get_geocell_id(r), axis=1)
+    df[["cell", "country", "region"]] = pd.DataFrame(out.tolist(), index=df.index)
     df = sample_koppen(df, raster_path, CLIMATE_DICT)
-    for __, row in df.iterrows():
-        row["month"] = row["batch_date"][5:7]
-        cell, country, region = geocell_mgr.get_geocell_id(row["lat"], row["lon"])
-        row["country"] = country
-        row["region"] = region
-    print(df.head())
-    # result = write_new_snapshot(df)
+    df.to_csv("pretrain_dataset.csv")
