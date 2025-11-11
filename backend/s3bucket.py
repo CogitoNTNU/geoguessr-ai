@@ -6,6 +6,7 @@ import tempfile
 import datetime
 import struct
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sqlite3
 
 import boto3
 import pandas as pd
@@ -21,6 +22,9 @@ MANIFEST_PREFIX = f"{VERSION}/manifest"
 SNAPSHOT_PREFIX = f"{VERSION}/snapshot"
 HOLDOUT_PREFIX = "holdout_dataset"
 HOLDOUT_SNAPSHOT_PREFIX = f"{HOLDOUT_PREFIX}/snapshot"
+DATASET_SQLITE_PREFIX = "dataset_sqlite"
+DATASET_SQLITE_CLIP_PREFIX = "dataset_sqlite_clip_embeddings"
+DATASET_SQLITE_TINYVIT_PREFIX = "dataset_sqlite_tinyvit_embeddings"
 HEADINGS_DEFAULT = (0, 90, 180, 270)
 STREETVIEW_RE = re.compile(
     r"^streetview_([-+]?\d+(?:\.\d+)?)_([-+]?\d+(?:\.\d+)?)_heading_(\d{1,3})\.jpg$",
@@ -31,6 +35,7 @@ _Q = 10_000_000  # 1e-7° grid (~1.1 cm)
 s3 = boto3.client(
     "s3",
     region_name=REGION,
+    endpoint_url=os.getenv("AWS_ENDPOINT_URL") or os.getenv("S3_ENDPOINT_URL"),
     config=Config(
         retries={"max_attempts": 10, "mode": "adaptive"},
         max_pool_connections=50,
@@ -359,8 +364,10 @@ def download_latest_images(
     dest_dir: str,
     overwrite: bool = False,
     max_workers: int = 16,
-    df=load_latest_snapshot_df(),
+    df=None,
 ):
+    if df is None:
+        df = load_latest_snapshot_df()
     os.makedirs(dest_dir, exist_ok=True)
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
@@ -415,3 +422,419 @@ def get_snapshot_metadata():
 # points = load_points()
 # print(f"Total points saved in S3: {len(points)}")
 # points.to_csv("./test.csv")
+
+
+def create_and_upload_sqlite_from_latest_snapshot(
+    max_rows: int | None = None,
+    commit_interval: int = 1000,
+):
+    """
+    Builds a SQLite DB from the latest v1 snapshot and uploads it to S3 at
+    dataset_sqlite/run_ts=.../dataset.sqlite. The table has the same columns
+    as the parquet (including 'image_path'), but in the SQLite table the bytes
+    are stored under the column 'image' (BLOB) instead of an s3:// URL.
+    """
+    df = load_latest_snapshot_df()
+    if max_rows is not None:
+        df = df.head(max_rows)
+
+    # Ensure expected columns exist (treat optional ones as present with NULLs)
+    expected_cols = [
+        "location_id",
+        "lat",
+        "lon",
+        "heading",
+        "capture_date",
+        "pano_id",
+        "batch_date",
+        "image_path",  # will be BLOB in SQLite
+    ]
+    for c in expected_cols:
+        if c not in df.columns:
+            df[c] = None
+
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H%M%SZ")
+    sqlite_key = f"{DATASET_SQLITE_PREFIX}/{run_id}/dataset.sqlite"
+
+    with tempfile.TemporaryDirectory() as td:
+        db_path = os.path.join(td, "dataset.sqlite")
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.cursor()
+            # Pragmas for reasonable write performance and durability trade-offs
+            cur.execute("PRAGMA journal_mode=WAL;")
+            cur.execute("PRAGMA synchronous=NORMAL;")
+            cur.execute("PRAGMA temp_store=MEMORY;")
+            cur.execute("PRAGMA mmap_size=268435456;")  # 256MB
+
+            # Schema: mirror snapshot columns, but 'image_path' is a BLOB
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS samples (
+                  location_id TEXT NOT NULL,
+                  lat REAL NOT NULL,
+                  lon REAL NOT NULL,
+                  heading INTEGER NOT NULL,
+                  capture_date TEXT,
+                  pano_id TEXT,
+                  batch_date TEXT,
+                  image BLOB NOT NULL,
+                  PRIMARY KEY (location_id, heading)
+                ) WITHOUT ROWID;
+                """
+            )
+            conn.commit()
+
+            def _get_image_bytes(path: str) -> bytes:
+                if not path or not isinstance(path, str):
+                    raise ValueError("image_path missing")
+                if not path.startswith("s3://"):
+                    # Fallback: if local path (unexpected in latest snapshot), read from disk
+                    with open(path, "rb") as f:
+                        return f.read()
+                bucket, key = path[5:].split("/", 1)
+                obj = s3.get_object(Bucket=bucket, Key=key)
+                return obj["Body"].read()
+
+            # Single transaction with periodic commits to avoid huge WAL
+            rows_since_commit = 0
+            cur.execute("BEGIN;")
+            for _, row in df.iterrows():
+                img_bytes = _get_image_bytes(row.get("image_path"))
+                cur.execute(
+                    """
+                    INSERT OR REPLACE INTO samples
+                      (location_id, lat, lon, heading, capture_date, pano_id, batch_date, image)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        row.get("location_id"),
+                        float(row.get("lat")) if row.get("lat") is not None else None,
+                        float(row.get("lon")) if row.get("lon") is not None else None,
+                        int(row.get("heading")) if row.get("heading") is not None else None,
+                        row.get("capture_date"),
+                        row.get("pano_id"),
+                        row.get("batch_date"),
+                        sqlite3.Binary(img_bytes),
+                    ),
+                )
+                rows_since_commit += 1
+                if rows_since_commit >= commit_interval:
+                    conn.commit()
+                    cur.execute("BEGIN;")
+                    rows_since_commit = 0
+            conn.commit()
+        finally:
+            conn.close()
+
+        # Upload SQLite file
+        s3.upload_file(
+            db_path,
+            BUCKET,
+            sqlite_key,
+            ExtraArgs={"ContentType": "application/octet-stream"},
+        )
+
+    # Write/update pointer
+    put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_PREFIX}/_latest.json")
+
+    return {
+        "sqlite_key": sqlite_key,
+        "rows": int(len(df)),
+        "run_id": run_id,
+    }
+
+
+def create_and_upload_sqlite_clip_embeddings_from_latest_snapshot(
+    max_rows: int | None = None,
+    commit_interval: int = 1000,
+    device: str | None = None,
+):
+    """
+    Builds a SQLite DB from the latest v1 snapshot where each row stores a CLIP
+    embedding (float32 blob) instead of the raw JPEG. Uploads to:
+      dataset_sqlite_clip_embeddings/run_ts=.../dataset.sqlite
+    Also writes dataset_sqlite_clip_embeddings/_latest.json pointer.
+    """
+    df = load_latest_snapshot_df()
+    if max_rows is not None:
+        df = df.head(max_rows)
+
+    expected_cols = [
+        "location_id",
+        "lat",
+        "lon",
+        "heading",
+        "capture_date",
+        "pano_id",
+        "batch_date",
+        "image_path",
+    ]
+    for c in expected_cols:
+        if c not in df.columns:
+            df[c] = None
+
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H%M%SZ")
+    sqlite_key = f"{DATASET_SQLITE_CLIP_PREFIX}/{run_id}/dataset.sqlite"
+
+    # Lazy imports to avoid heavy deps at module import time
+    import io
+    from PIL import Image
+    import torch
+    from pretrain.clip_embedder import CLIPEmbedding
+
+    dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    clip_model = CLIPEmbedding(model_name="", device=dev, load_checkpoint=False, panorama=False)
+    clip_model.eval()
+
+    with tempfile.TemporaryDirectory() as td:
+        db_path = os.path.join(td, "dataset.sqlite")
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.cursor()
+            cur.execute("PRAGMA journal_mode=WAL;")
+            cur.execute("PRAGMA synchronous=NORMAL;")
+            cur.execute("PRAGMA temp_store=MEMORY;")
+            cur.execute("PRAGMA mmap_size=268435456;")
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS samples (
+                  location_id TEXT NOT NULL,
+                  lat REAL NOT NULL,
+                  lon REAL NOT NULL,
+                  heading INTEGER NOT NULL,
+                  capture_date TEXT,
+                  pano_id TEXT,
+                  batch_date TEXT,
+                  embedding BLOB NOT NULL,
+                  embedding_dim INTEGER NOT NULL,
+                  PRIMARY KEY (location_id, heading)
+                ) WITHOUT ROWID;
+                """
+            )
+            conn.commit()
+
+            def _get_image_bytes(path: str) -> bytes:
+                if not path or not isinstance(path, str):
+                    raise ValueError("image_path missing")
+                if not path.startswith("s3://"):
+                    with open(path, "rb") as f:
+                        return f.read()
+                bucket, key = path[5:].split("/", 1)
+                obj = s3.get_object(Bucket=bucket, Key=key)
+                return obj["Body"].read()
+
+            rows_since_commit = 0
+            observed_dim = None
+            cur.execute("BEGIN;")
+            for _, row in df.iterrows():
+                img_bytes = _get_image_bytes(row.get("image_path"))
+                img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                with torch.no_grad():
+                    emb = clip_model(img)
+                    if emb.ndim == 2 and emb.shape[0] == 1:
+                        emb = emb[0]
+                    emb = emb.detach().cpu().to(torch.float32)
+                dim = int(emb.shape[-1])
+                observed_dim = observed_dim or dim
+                emb_bytes = emb.numpy().tobytes()
+
+                cur.execute(
+                    """
+                    INSERT OR REPLACE INTO samples
+                      (location_id, lat, lon, heading, capture_date, pano_id, batch_date, embedding, embedding_dim)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        row.get("location_id"),
+                        float(row.get("lat")) if row.get("lat") is not None else None,
+                        float(row.get("lon")) if row.get("lon") is not None else None,
+                        int(row.get("heading")) if row.get("heading") is not None else None,
+                        row.get("capture_date"),
+                        row.get("pano_id"),
+                        row.get("batch_date"),
+                        sqlite3.Binary(emb_bytes),
+                        dim,
+                    ),
+                )
+                rows_since_commit += 1
+                if rows_since_commit >= commit_interval:
+                    conn.commit()
+                    cur.execute("BEGIN;")
+                    rows_since_commit = 0
+            conn.commit()
+        finally:
+            conn.close()
+
+        s3.upload_file(
+            db_path,
+            BUCKET,
+            sqlite_key,
+            ExtraArgs={"ContentType": "application/octet-stream"},
+        )
+
+    put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_CLIP_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_CLIP_PREFIX}/_latest.json")
+
+    return {
+        "sqlite_key": sqlite_key,
+        "rows": int(len(df)),
+        "run_id": run_id,
+        "device": dev,
+        "embedding_dim": observed_dim,
+    }
+
+
+def create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot(
+    max_rows: int | None = None,
+    commit_interval: int = 1000,
+    device: str | None = None,
+    model_name: str = "tiny_vit_21m_512.dist_in22k_ft_in1k",
+):
+    """
+    Builds a SQLite DB from the latest v1 snapshot where each row stores a TinyViT
+    embedding (float32 blob) instead of the raw JPEG. Uploads to:
+      dataset_sqlite_tinyvit_embeddings/run_ts=.../dataset.sqlite
+    Also writes dataset_sqlite_tinyvit_embeddings/_latest.json pointer.
+    """
+    df = load_latest_snapshot_df()
+    if max_rows is not None:
+        df = df.head(max_rows)
+
+    expected_cols = [
+        "location_id",
+        "lat",
+        "lon",
+        "heading",
+        "capture_date",
+        "pano_id",
+        "batch_date",
+        "image_path",
+    ]
+    for c in expected_cols:
+        if c not in df.columns:
+            df[c] = None
+
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H%M%SZ")
+    sqlite_key = f"{DATASET_SQLITE_TINYVIT_PREFIX}/{run_id}/dataset.sqlite"
+
+    # Lazy imports
+    import io
+    from PIL import Image
+    import torch
+    from pretrain.tinyvit_embedder import TinyViTEmbedding
+
+    dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    tinyvit = TinyViTEmbedding(model_name=model_name, device=dev, load_checkpoint=False, panorama=False)
+    tinyvit.eval()
+
+    with tempfile.TemporaryDirectory() as td:
+        db_path = os.path.join(td, "dataset.sqlite")
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.cursor()
+            cur.execute("PRAGMA journal_mode=WAL;")
+            cur.execute("PRAGMA synchronous=NORMAL;")
+            cur.execute("PRAGMA temp_store=MEMORY;")
+            cur.execute("PRAGMA mmap_size=268435456;")
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS samples (
+                  location_id TEXT NOT NULL,
+                  lat REAL NOT NULL,
+                  lon REAL NOT NULL,
+                  heading INTEGER NOT NULL,
+                  capture_date TEXT,
+                  pano_id TEXT,
+                  batch_date TEXT,
+                  embedding BLOB NOT NULL,
+                  embedding_dim INTEGER NOT NULL,
+                  PRIMARY KEY (location_id, heading)
+                ) WITHOUT ROWID;
+                """
+            )
+            conn.commit()
+
+            def _get_image_bytes(path: str) -> bytes:
+                if not path or not isinstance(path, str):
+                    raise ValueError("image_path missing")
+                if not path.startswith("s3://"):
+                    with open(path, "rb") as f:
+                        return f.read()
+                bucket, key = path[5:].split("/", 1)
+                obj = s3.get_object(Bucket=bucket, Key=key)
+                return obj["Body"].read()
+
+            rows_since_commit = 0
+            observed_dim = None
+            cur.execute("BEGIN;")
+            for _, row in df.iterrows():
+                img_bytes = _get_image_bytes(row.get("image_path"))
+                img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                with torch.no_grad():
+                    emb = tinyvit(img)
+                    if emb.ndim == 2 and emb.shape[0] == 1:
+                        emb = emb[0]
+                    emb = emb.detach().cpu().to(torch.float32)
+                dim = int(emb.shape[-1])
+                observed_dim = observed_dim or dim
+                emb_bytes = emb.numpy().tobytes()
+
+                cur.execute(
+                    """
+                    INSERT OR REPLACE INTO samples
+                      (location_id, lat, lon, heading, capture_date, pano_id, batch_date, embedding, embedding_dim)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        row.get("location_id"),
+                        float(row.get("lat")) if row.get("lat") is not None else None,
+                        float(row.get("lon")) if row.get("lon") is not None else None,
+                        int(row.get("heading")) if row.get("heading") is not None else None,
+                        row.get("capture_date"),
+                        row.get("pano_id"),
+                        row.get("batch_date"),
+                        sqlite3.Binary(emb_bytes),
+                        dim,
+                    ),
+                )
+                rows_since_commit += 1
+                if rows_since_commit >= commit_interval:
+                    conn.commit()
+                    cur.execute("BEGIN;")
+                    rows_since_commit = 0
+            conn.commit()
+        finally:
+            conn.close()
+
+        s3.upload_file(
+            db_path,
+            BUCKET,
+            sqlite_key,
+            ExtraArgs={"ContentType": "application/octet-stream"},
+        )
+
+    put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_TINYVIT_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_TINYVIT_PREFIX}/_latest.json")
+
+    return {
+        "sqlite_key": sqlite_key,
+        "rows": int(len(df)),
+        "run_id": run_id,
+        "device": dev,
+        "embedding_dim": observed_dim,
+        "model_name": model_name,
+    }
+
+
+def main():
+    """
+    Convenience entrypoint: builds SQLite with JPEG bytes from latest snapshot
+    and uploads it to S3 under dataset_sqlite/. Prints the resulting manifest.
+    """
+    result = create_and_upload_sqlite_from_latest_snapshot()
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()
