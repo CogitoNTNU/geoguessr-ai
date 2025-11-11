@@ -6,7 +6,6 @@ import tempfile
 import datetime
 import struct
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 import boto3
 import pandas as pd
 from typing import Iterable, Dict, Any
