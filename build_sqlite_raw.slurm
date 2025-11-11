@@ -5,7 +5,7 @@
 #SBATCH --partition=CPUQ
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=2  # 2 CPU cores
-#SBATCH --mem=512GB
+#SBATCH --mem=300GB
 #SBATCH --nodes=1
 #SBATCH --output=slurm_outputs/output_sqlite_raw.txt
 #SBATCH --error=slurm_outputs/output_sqlite_raw.err
