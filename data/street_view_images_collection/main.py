@@ -231,9 +231,9 @@ if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
     print(
-        f"Points already collected: {len(load_latest_snapshot_df() // pictures_per_point)}"
+        f"Points already collected: {(len(load_latest_snapshot_df()) / pictures_per_point)}"
     )
-    amount_of_pictures = int(9900 / pictures_per_point)
+    amount_of_pictures = int(4 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
