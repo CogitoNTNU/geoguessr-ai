@@ -315,10 +315,6 @@ class PretrainDataset(torch.utils.data.Dataset):
         return acc
 
 
-# Initialize CLIP image processor
-clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL)
-
-
 def collate_fn(examples):
     images = [example[0] for example in examples]
     text = [example[1] for example in examples]
