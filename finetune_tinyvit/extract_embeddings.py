@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Extract TinyViT embeddings for images listed in a CSV manifest.
 
@@ -8,6 +6,7 @@ to obtain per-image embeddings. Saves to Parquet with columns:
   location_id, filepath, lat, lon, country, emb_0..emb_{D-1}
 """
 
+from __future__ import annotations
 import argparse
 from pathlib import Path
 from typing import Dict
@@ -28,7 +27,7 @@ class ImageCSVNoLabel(Dataset):
             is_training=False,
             mean=(0.485, 0.456, 0.406),
             std=(0.229, 0.224, 0.225),
-            interpolation='bicubic',
+            interpolation="bicubic",
         )
 
     def __len__(self):
@@ -76,7 +75,11 @@ def forward_to_emb(model, x: torch.Tensor) -> torch.Tensor:
             feats = torch.nn.functional.adaptive_avg_pool2d(feats, 1).flatten(1)
         return feats
     # Fallback: remove classifier by taking everything except last layer
-    h = model.global_pool(model.forward_features(x)) if hasattr(model, "global_pool") else model(x)
+    h = (
+        model.global_pool(model.forward_features(x))
+        if hasattr(model, "global_pool")
+        else model(x)
+    )
     if h.ndim > 2:
         h = torch.nn.functional.adaptive_avg_pool2d(h, 1).flatten(1)
     return h
@@ -84,9 +87,18 @@ def forward_to_emb(model, x: torch.Tensor) -> torch.Tensor:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--csv", type=str, required=True, help="CSV with image rows (from prepare_dataset)")
-    ap.add_argument("--ckpt", type=str, required=True, help="Trained checkpoint .pt file")
-    ap.add_argument("--out_parquet", type=str, default="finetune_tinyvit/embeddings.parquet")
+    ap.add_argument(
+        "--csv",
+        type=str,
+        required=True,
+        help="CSV with image rows (from prepare_dataset)",
+    )
+    ap.add_argument(
+        "--ckpt", type=str, required=True, help="Trained checkpoint .pt file"
+    )
+    ap.add_argument(
+        "--out_parquet", type=str, default="finetune_tinyvit/embeddings.parquet"
+    )
     ap.add_argument("--batch_size", type=int, default=128)
     ap.add_argument("--num_workers", type=int, default=4)
     ap.add_argument("--img_size", type=int, default=224)
@@ -96,7 +108,13 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     ds = ImageCSVNoLabel(args.csv, img_size=args.img_size)
-    loader = DataLoader(ds, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True)
+    loader = DataLoader(
+        ds,
+        batch_size=args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        pin_memory=True,
+    )
 
     model, _ = load_model_for_features(args.ckpt, model_name=args.model_name)
     model = model.to(device)
@@ -106,7 +124,10 @@ def main():
         x = x.to(device, non_blocking=True)
         feats = forward_to_emb(model, x).cpu().numpy()
         for i in range(feats.shape[0]):
-            m = {k: (metas[k][i] if isinstance(metas[k], list) else metas[k]) for k in metas}
+            m = {
+                k: (metas[k][i] if isinstance(metas[k], list) else metas[k])
+                for k in metas
+            }
             row = {**m}
             for j, val in enumerate(feats[i].tolist()):
                 row[f"emb_{j}"] = val

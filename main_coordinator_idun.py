@@ -159,8 +159,7 @@ def main(config: "Configuration"):
     num_geocells = geocell_manager.get_num_geocells()
     logger.info(f"Number of geocells: {num_geocells}")
 
-    embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
-
+    embeddingModelUsed = "CLIP"  # Possible values are "CLIP" or "TINYVIT"
     embedding_model = None
     if embeddingModelUsed == "CLIP":
         embedding_model = CLIPVisionModel.from_pretrained(CLIP_MODEL)

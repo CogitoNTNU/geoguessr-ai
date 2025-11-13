@@ -196,7 +196,9 @@ if __name__ == "__main__":
     api_key = os.environ.get("GOOGLE_MAPS_API_KEY")
     if not api_key:
         print("❌ Error: GOOGLE_MAPS_API_KEY environment variable not set")
-        print("   Usage: GOOGLE_MAPS_API_KEY='your_key' python src/sampling_pipeline.py")
+        print(
+            "   Usage: GOOGLE_MAPS_API_KEY='your_key' python src/sampling_pipeline.py"
+        )
         sys.exit(1)
 
     # Load Norway admin-2 data

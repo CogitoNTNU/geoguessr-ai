@@ -359,7 +359,7 @@ class SuperGuessr(nn.Module):
         pred_centroid_coordinate = torch.index_select(
             self.geocell_centroid_coords.data, 0, geocell_preds
         )
-        label_probs = self._to_one_hot(labels_clf)  # labels_clf if normal
+        # label_probs = self._to_one_hot(labels_clf)  # labels_clf if normal
 
         # Get top 'num_candidates' geocell candidates
         geocell_topk = torch.topk(geocell_probs, self.num_candidates, dim=-1)
@@ -374,7 +374,9 @@ class SuperGuessr(nn.Module):
             distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
             # unnormalized similarities -> normalize to probability distribution
             soft_targets = smooth_labels(distances)
-            soft_targets = soft_targets / soft_targets.sum(dim=-1, keepdim=True).clamp_min(1e-12)
+            soft_targets = soft_targets / soft_targets.sum(
+                dim=-1, keepdim=True
+            ).clamp_min(1e-12)
             # soft cross-entropy with log-softmax
             log_probs = F.log_softmax(logits, dim=-1)
             loss_clf = -(soft_targets * log_probs).sum(dim=-1).mean()
@@ -451,6 +453,7 @@ def _build_centroids_from_manager(mgr: GeocellManager):
     centroids = torch.tensor(centroids, dtype=torch.float32)
     return centroids
 
+
 def _build_centroids_from_proto_df(csv_path: str):
     """
     Build centroids ordered by geocell_index from proto_df.csv.
@@ -463,7 +466,11 @@ def _build_centroids_from_proto_df(csv_path: str):
         return None
 
     # Support legacy column name fallback
-    idx_col = "geocell_index" if "geocell_index" in df.columns else ("geocell_id" if "geocell_id" in df.columns else None)
+    idx_col = (
+        "geocell_index"
+        if "geocell_index" in df.columns
+        else ("geocell_id" if "geocell_id" in df.columns else None)
+    )
     if idx_col is None:
         return None
 

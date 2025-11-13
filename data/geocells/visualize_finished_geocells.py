@@ -67,7 +67,9 @@ def _cluster_id_to_rgba(cluster_id: int) -> List[int]:
     return [int(r * 255), int(g * 255), int(b * 255), 200]
 
 
-def _build_cluster_metadata(df: pd.DataFrame, sv_points: np.ndarray) -> Dict[Tuple[int, int], Dict]:
+def _build_cluster_metadata(
+    df: pd.DataFrame, sv_points: np.ndarray
+) -> Dict[Tuple[int, int], Dict]:
     """
     Returns a mapping: (geocell_id, cluster_id) -> {
         'centroid': [lat, lng],
@@ -78,10 +80,17 @@ def _build_cluster_metadata(df: pd.DataFrame, sv_points: np.ndarray) -> Dict[Tup
     meta: Dict[Tuple[int, int], Dict] = {}
     # Assign colors per geocell to ensure adjacent clusters are different
     geocell_to_clusters: Dict[int, List[int]] = (
-        df.groupby("geocell_id")["cluster_id"].apply(lambda s: sorted(set(int(x) for x in s))).to_dict()
+        df.groupby("geocell_id")["cluster_id"]
+        .apply(lambda s: sorted(set(int(x) for x in s)))
+        .to_dict()
     )
     # Compute centroid per (geocell, cluster) from indices
-    for geocell_id, clusters in tqdm(geocell_to_clusters.items(), desc="Preparing cluster colors", unit="geocell", leave=False):
+    for geocell_id, clusters in tqdm(
+        geocell_to_clusters.items(),
+        desc="Preparing cluster colors",
+        unit="geocell",
+        leave=False,
+    ):
         n = max(1, len(clusters))
         cluster_index_map = {cid: i for i, cid in enumerate(clusters)}
         for cid in clusters:
@@ -93,7 +102,13 @@ def _build_cluster_metadata(df: pd.DataFrame, sv_points: np.ndarray) -> Dict[Tup
             color = [int(r * 255), int(g * 255), int(b * 255), 200]
             meta[(int(geocell_id), int(cid))] = {"centroid": None, "color": color}
     # Compute centroids
-    for _, row in tqdm(df.iterrows(), total=len(df), desc="Computing cluster centroids", unit="row", leave=False):
+    for _, row in tqdm(
+        df.iterrows(),
+        total=len(df),
+        desc="Computing cluster centroids",
+        unit="row",
+        leave=False,
+    ):
         geocell_id = int(row["geocell_id"])
         cluster_id = int(row["cluster_id"])
         key = (geocell_id, cluster_id)
@@ -119,10 +134,18 @@ def _build_points_from_proto(proto_csv_path: str, sv_points: np.ndarray) -> List
 
     cluster_meta = _build_cluster_metadata(df, sv_points)
 
-    for _, row in tqdm(df.iterrows(), total=len(df), desc="Building cluster points", unit="row", leave=False):
+    for _, row in tqdm(
+        df.iterrows(),
+        total=len(df),
+        desc="Building cluster points",
+        unit="row",
+        leave=False,
+    ):
         geocell_id = int(row["geocell_id"])
         cluster_id = int(row["cluster_id"])
-        color = cluster_meta.get((geocell_id, cluster_id), {}).get("color", _cluster_id_to_rgba(cluster_id))
+        color = cluster_meta.get((geocell_id, cluster_id), {}).get(
+            "color", _cluster_id_to_rgba(cluster_id)
+        )
         country_val = row.get("country", None)
         country_str = None if pd.isna(country_val) else str(country_val)
         indices = _parse_indices_column(row["indices"])
@@ -153,7 +176,13 @@ def _build_arrows_from_proto(proto_csv_path: str, sv_points: np.ndarray) -> List
     arrows: List[Dict] = []
     cluster_meta = _build_cluster_metadata(df, sv_points)
 
-    for _, row in tqdm(df.iterrows(), total=len(df), desc="Building arrows to centroids", unit="row", leave=False):
+    for _, row in tqdm(
+        df.iterrows(),
+        total=len(df),
+        desc="Building arrows to centroids",
+        unit="row",
+        leave=False,
+    ):
         geocell_id = int(row["geocell_id"])
         cluster_id = int(row["cluster_id"])
         meta = cluster_meta.get((geocell_id, cluster_id))
@@ -401,7 +430,6 @@ def main():
 
     # High-level progress bar for HTML creation workflow (no GADM)
     with tqdm(total=4, desc="Creating globe HTML", unit="step") as pbar:
-
         # 1) Load Street View points
         sv_points = _load_sv_points(sv_points_txt_path)
         pbar.update(1)
@@ -416,12 +444,12 @@ def main():
 
         # 4) Create interactive HTML and write/open
         html = _build_interactive_html(point_data, arrow_data)
-        out_html = os.path.join(os.path.dirname(__file__), "finished_geocells_globe.html")
+        out_html = os.path.join(
+            os.path.dirname(__file__), "finished_geocells_globe.html"
+        )
         show_html(html, out_html)
         pbar.update(1)
 
 
 if __name__ == "__main__":
     main()
-
-

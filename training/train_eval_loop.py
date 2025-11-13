@@ -10,7 +10,8 @@ from datasets import DatasetDict, Dataset
 from transformers import TrainingArguments, AutoModel
 from typing import Any, Callable
 from tqdm.auto import tqdm
-#from dataset_creation.benchmark import BenchmarkDataset
+
+# from dataset_creation.benchmark import BenchmarkDataset
 from models import ProtoRefiner
 from config import CURRENT_SAVE_PATH
 
@@ -146,7 +147,7 @@ def evaluate_model(
 
     #     # Write metrics to TensorBoard
     #     for metric, value in eval_dict.items():
-    #         writer.add_scalar(metric, value, step) 
+    #         writer.add_scalar(metric, value, step)
 
     model.train()
     logger.warning("Back to training ...")

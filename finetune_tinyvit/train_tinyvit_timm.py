@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Fine-tune TinyViT (timm) on the prepared country-labeled dataset.
 
@@ -13,6 +11,7 @@ Run:
   python -m finetune_tinyvit.train_tinyvit_timm --train_csv finetune_tinyvit/manifests/train.csv --val_csv finetune_tinyvit/manifests/val.csv --out_dir finetune_tinyvit/outputs
 """
 
+from __future__ import annotations
 import argparse
 import os
 from dataclasses import dataclass
@@ -31,7 +30,12 @@ from PIL import Image
 
 
 class ImageCSVDataset(Dataset):
-    def __init__(self, csv_path: str, class_map: Dict[str, int] | None = None, img_size: int = 224):
+    def __init__(
+        self,
+        csv_path: str,
+        class_map: Dict[str, int] | None = None,
+        img_size: int = 224,
+    ):
         self.df = pd.read_csv(csv_path)
         self.img_size = img_size
 
@@ -49,8 +53,8 @@ class ImageCSVDataset(Dataset):
             is_training=True,
             mean=(0.485, 0.456, 0.406),
             std=(0.229, 0.224, 0.225),
-            auto_augment='rand-m9-mstd0.5-inc1',
-            interpolation='bicubic',
+            auto_augment="rand-m9-mstd0.5-inc1",
+            interpolation="bicubic",
         )
 
         self.eval_transform = create_transform(
@@ -58,7 +62,7 @@ class ImageCSVDataset(Dataset):
             is_training=False,
             mean=(0.485, 0.456, 0.406),
             std=(0.229, 0.224, 0.225),
-            interpolation='bicubic',
+            interpolation="bicubic",
         )
 
     def __len__(self):
@@ -102,29 +106,51 @@ class CollateWithTransform:
         return {"pixel_values": images, "labels": labels, "metas": metas}
 
 
-def build_dataloaders(train_csv: str, val_csv: str, img_size: int, batch_size: int, num_workers: int):
+def build_dataloaders(
+    train_csv: str, val_csv: str, img_size: int, batch_size: int, num_workers: int
+):
     train_ds = ImageCSVDataset(train_csv, img_size=img_size)
     # share class map with val
     val_ds = ImageCSVDataset(val_csv, class_map=train_ds.class_to_id, img_size=img_size)
 
-    collate_train = CollateWithTransform(train_ds.transform, train_ds.eval_transform, is_train=True)
-    collate_val = CollateWithTransform(train_ds.transform, train_ds.eval_transform, is_train=False)
+    collate_train = CollateWithTransform(
+        train_ds.transform, train_ds.eval_transform, is_train=True
+    )
+    collate_val = CollateWithTransform(
+        train_ds.transform, train_ds.eval_transform, is_train=False
+    )
 
     train_loader = DataLoader(
-        train_ds, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, collate_fn=collate_train
+        train_ds,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=True,
+        collate_fn=collate_train,
     )
     val_loader = DataLoader(
-        val_ds, batch_size=batch_size, shuffle=False, num_workers=num_workers, pin_memory=True, collate_fn=collate_val
+        val_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+        pin_memory=True,
+        collate_fn=collate_val,
     )
     return train_loader, val_loader, train_ds
 
 
-def create_model(num_classes: int, model_name: str = "tiny_vit_5m_224", pretrained: bool = True):
-    model = timm.create_model(model_name, pretrained=pretrained, num_classes=num_classes)
+def create_model(
+    num_classes: int, model_name: str = "tiny_vit_5m_224", pretrained: bool = True
+):
+    model = timm.create_model(
+        model_name, pretrained=pretrained, num_classes=num_classes
+    )
     return model
 
 
-def evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> Dict[str, float]:
+def evaluate(
+    model: nn.Module, loader: DataLoader, device: torch.device
+) -> Dict[str, float]:
     model.eval()
     top1_meter = 0.0
     top5_meter = 0.0
@@ -164,9 +190,13 @@ def train():
         args.train_csv, args.val_csv, args.img_size, args.batch_size, args.num_workers
     )
     num_classes = len(train_ds.class_to_id)
-    model = create_model(num_classes, args.model_name, pretrained=args.pretrained).to(device)
+    model = create_model(num_classes, args.model_name, pretrained=args.pretrained).to(
+        device
+    )
 
-    optimizer = optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+    optimizer = optim.AdamW(
+        model.parameters(), lr=args.lr, weight_decay=args.weight_decay
+    )
     # Cosine schedule
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=args.epochs)
     scaler = torch.cuda.amp.GradScaler(enabled=torch.cuda.is_available())
@@ -202,11 +232,14 @@ def train():
 
         if metrics["val_top1"] > best_top1:
             best_top1 = metrics["val_top1"]
-            torch.save({
-                "model": model.state_dict(),
-                "class_to_id": train_ds.class_to_id,
-                "args": vars(args),
-            }, best_ckpt)
+            torch.save(
+                {
+                    "model": model.state_dict(),
+                    "class_to_id": train_ds.class_to_id,
+                    "args": vars(args),
+                },
+                best_ckpt,
+            )
             print(f"Saved best checkpoint to {best_ckpt}")
 
 

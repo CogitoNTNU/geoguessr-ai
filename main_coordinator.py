@@ -47,9 +47,6 @@ def main(config):
     train_dataloader = DataLoader(
         train_dataset, batch_size=32, num_workers=4, pin_memory=True
     )
-    test_dataloader = DataLoader(
-        test_dataset, batch_size=32, num_workers=4, pin_memory=True
-    )
     val_dataloader = DataLoader(
         val_dataset, batch_size=32, num_workers=4, pin_memory=True
     )
@@ -57,6 +54,7 @@ def main(config):
     # Initialize model and set it to train
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
+    logger.info(f"Number of geocells: {num_geocells}")
 
     embeddingModelUsed = "CLIP"  # Possible values are "CLIP" or "TINYVIT"
 
@@ -181,7 +179,7 @@ def train(
             logger.error(f"Failed to resume from '{config.resume_path}': {e}")
 
     for epoch in range(start_epoch, config.epochs):
-    # for epoch in range(3):
+        # for epoch in range(3):
         model.train()
         running_loss, running_top1, running_topk = 0.0, 0.0, 0.0
         num_batches = 0
@@ -359,25 +357,43 @@ def train(
                 should_save = True
             else:
                 # Determine worst among current kept set
-                worst_value = max(v for _, v in existing) if is_min_mode else min(v for _, v in existing)
-                should_save = (current_value < worst_value) if is_min_mode else (current_value > worst_value)
+                worst_value = (
+                    max(v for _, v in existing)
+                    if is_min_mode
+                    else min(v for _, v in existing)
+                )
+                should_save = (
+                    (current_value < worst_value)
+                    if is_min_mode
+                    else (current_value > worst_value)
+                )
 
             if should_save:
                 # Encode metric in filename for efficient pruning/sorting
-                epoch_path = os.path.join(checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt")
+                epoch_path = os.path.join(
+                    checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt"
+                )
                 try:
                     torch.save(state, epoch_path)
                     # Upload to Weights & Biases Artifacts
                     try:
                         if getattr(wandb, "run", None) is not None:
                             artifact_name = f"{wandb.run.id}-epoch-{epoch:04d}"
-                            artifact = wandb.Artifact(name=artifact_name, type="model", metadata={
-                                "epoch": epoch,
-                                "monitored_value": current_value,
-                                "monitor_mode": "min" if is_min_mode else "max",
-                            })
-                            artifact.add_file(epoch_path, name=os.path.basename(epoch_path))
-                            wandb.log_artifact(artifact, aliases=[f"epoch-{epoch:04d}", "topk"])
+                            artifact = wandb.Artifact(
+                                name=artifact_name,
+                                type="model",
+                                metadata={
+                                    "epoch": epoch,
+                                    "monitored_value": current_value,
+                                    "monitor_mode": "min" if is_min_mode else "max",
+                                },
+                            )
+                            artifact.add_file(
+                                epoch_path, name=os.path.basename(epoch_path)
+                            )
+                            wandb.log_artifact(
+                                artifact, aliases=[f"epoch-{epoch:04d}", "topk"]
+                            )
                     except Exception as e:
                         logger.warning(f"Failed to upload epoch artifact to W&B: {e}")
                 except Exception as e:
@@ -405,7 +421,11 @@ def train(
                         logger.warning(f"Failed to remove old checkpoint '{f}': {e}")
 
         # Save best checkpoint
-        improved = (current_value < best_value) if is_min_mode else (current_value > best_value)
+        improved = (
+            (current_value < best_value)
+            if is_min_mode
+            else (current_value > best_value)
+        )
         if improved:
             best_value = current_value
             best_path = os.path.join(checkpoint_dir, "best.pt")
