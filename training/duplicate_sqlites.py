@@ -47,24 +47,33 @@ def duplicate_files(src_dir: str) -> List[Tuple[str, str, str]]:
     """
     results: List[Tuple[str, str, str]] = []
     candidates = find_sqlite_files(src_dir)
+    total = len(candidates)
 
-    for name in candidates:
+    for idx, name in enumerate(candidates, start=1):
         src_path = os.path.join(src_dir, name)
         dst_name = make_target_name(name)
         if dst_name == name:
-            results.append((src_path, src_path, "skipped_already_suffixed"))
+            status = "skipped_already_suffixed"
+            print(f"[{idx}/{total}] {name} : {status}")
+            results.append((src_path, src_path, status))
             continue
 
         dst_path = os.path.join(src_dir, dst_name)
         if not os.path.exists(src_path):
-            results.append((src_path, dst_path, "missing"))
+            status = "missing"
+            print(f"[{idx}/{total}] {name} -> {dst_name} : {status}")
+            results.append((src_path, dst_path, status))
             continue
         if os.path.exists(dst_path):
-            results.append((src_path, dst_path, "skipped_exists"))
+            status = "skipped_exists"
+            print(f"[{idx}/{total}] {name} -> {dst_name} : {status}")
+            results.append((src_path, dst_path, status))
             continue
 
         shutil.copyfile(src_path, dst_path)
-        results.append((src_path, dst_path, "copied"))
+        status = "copied"
+        print(f"[{idx}/{total}] {name} -> {dst_name} : {status}")
+        results.append((src_path, dst_path, status))
 
     return results
 
@@ -74,10 +83,14 @@ def main():
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
 
-    ops = duplicate_files(parent_dir)
-    if not ops:
+    print(f"Scanning for SQLite files in: {parent_dir}")
+    candidates = find_sqlite_files(parent_dir)
+    print(f"Found {len(candidates)} candidate file(s).")
+    if not candidates:
         print(f"No matching SQLite files found in: {parent_dir}")
         return
+
+    ops = duplicate_files(parent_dir)
 
     for src, dst, status in ops:
         if status == "copied":
