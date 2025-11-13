@@ -333,7 +333,7 @@ def train(
                     .item()
                 )
 
-            # Log per batch
+            # Log per batch (training)
             wandb.log(
                 {
                     "train/loss": loss.item(),
@@ -368,7 +368,90 @@ def train(
         epoch_top1 = running_top1 / num_batches
         epoch_topk = running_topk / num_batches
 
-        # Log validation metrics
+        # Validation loop: compute and log validation loss per batch
+        if validation_dataloader is not None:
+            model.eval()
+            with torch.no_grad():
+                for val_batch_idx, (images, targets) in enumerate(validation_dataloader):
+                    # Resize images to match embedding model input resolution (CLIP or Tiny-ViT)
+                    if target_dimensions is not None:
+                        if images.dim() == 5:  # (B, V, C, H, W) panorama batches
+                            b, v, c, h, w = images.shape
+                            images = images.view(b * v, c, h, w)
+                            images = F.interpolate(
+                                images,
+                                size=target_dimensions,
+                                mode="bilinear",
+                                align_corners=False,
+                            )
+                            images = images.view(
+                                b, v, c, target_dimensions[0], target_dimensions[1]
+                            )
+                        elif images.dim() == 4:  # (B, C, H, W)
+                            images = F.interpolate(
+                                images,
+                                size=target_dimensions,
+                                mode="bilinear",
+                                align_corners=False,
+                            )
+
+                    images = images.to(device, non_blocking=True)
+
+                    # Normalize input
+                    if images.dtype == torch.uint8:
+                        images = images.float().div_(255.0)
+                    # Normalize per embedding model if provided
+                    if norm_mean is not None and norm_std is not None:
+                        if images.dim() == 5:
+                            mean_t = torch.tensor(norm_mean, device=images.device).view(
+                                1, 1, 3, 1, 1
+                            )
+                            std_t = torch.tensor(norm_std, device=images.device).view(
+                                1, 1, 3, 1, 1
+                            )
+                        else:
+                            mean_t = torch.tensor(norm_mean, device=images.device).view(
+                                1, 3, 1, 1
+                            )
+                            std_t = torch.tensor(norm_std, device=images.device).view(
+                                1, 3, 1, 1
+                            )
+                        images = (images - mean_t) / std_t
+
+                    # Build coordinate labels and derive class indices by nearest centroid (proto_df ordering)
+                    lat = targets["lat"]
+                    lon = targets["lon"]
+                    lat_t = torch.as_tensor(lat, dtype=torch.float32, device=device)
+                    lon_t = torch.as_tensor(lon, dtype=torch.float32, device=device)
+                    coord_labels = torch.stack(
+                        [lon_t, lat_t], dim=1
+                    )  # (B, 2) in (lng, lat)
+                    distances = haversine_matrix(
+                        coord_labels, centroids.t()
+                    )  # (B, num_cells)
+                    targets_idx = torch.argmin(distances, dim=-1).to(
+                        device, dtype=torch.long
+                    )
+
+                    output = model(
+                        pixel_values=images,
+                        labels_clf=targets_idx,
+                        labels=coord_labels,
+                    )
+                    val_loss = output.loss
+
+                    # Log per batch (validation)
+                    wandb.log(
+                        {
+                            "val/loss": val_loss.item(),
+                            "epoch": epoch,
+                        },
+                        step=global_step,
+                    )
+
+            model.train()
+
+        # Log training metrics per epoch
         wandb.log(
             {
                 "epoch": epoch,

@@ -640,20 +640,20 @@ def create_and_upload_sqlite_from_latest_snapshot(
         finally:
             conn.close()
 
-        # Upload SQLite file
-        s3.upload_file(
-            db_path,
-            BUCKET,
-            sqlite_key,
-            ExtraArgs={"ContentType": "application/octet-stream"},
-        )
+        # Upload SQLite file (disabled: no S3 upload)
+        # s3.upload_file(
+        #     db_path,
+        #     BUCKET,
+        #     sqlite_key,
+        #     ExtraArgs={"ContentType": "application/octet-stream"},
+        # )
 
-    # Write/update pointer
-    put_json(
-        {"s3": f"s3://{BUCKET}/{DATASET_SQLITE_PREFIX}/{run_id}/"},
-        BUCKET,
-        f"{DATASET_SQLITE_PREFIX}/_latest.json",
-    )
+    # Write/update pointer (disabled: no S3 write)
+    # put_json(
+    #     {"s3": f"s3://{BUCKET}/{DATASET_SQLITE_PREFIX}/{run_id}/"},
+    #     BUCKET,
+    #     f"{DATASET_SQLITE_PREFIX}/_latest.json",
+    # )
 
     # Also write a local copy beside the repository directory
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -674,8 +674,8 @@ def create_and_upload_sqlite_from_latest_snapshot(
     bucket_key = sqlite_key
     with tempfile.TemporaryDirectory() as td2:
         tmp_local = os.path.join(td2, "dataset.sqlite")
-        s3.download_file(BUCKET, bucket_key, tmp_local)
-        shutil.copyfile(tmp_local, local_sqlite_path)
+        # s3.download_file(BUCKET, bucket_key, tmp_local)  # disabled: depends on S3 upload
+        # shutil.copyfile(tmp_local, local_sqlite_path)
 
     # Final W&B summary
     try:
@@ -964,18 +964,18 @@ def create_and_upload_sqlite_clip_embeddings_from_latest_snapshot(
         finally:
             conn.close()
 
-        s3.upload_file(
-            db_path,
-            BUCKET,
-            sqlite_key,
-            ExtraArgs={"ContentType": "application/octet-stream"},
-        )
+        # s3.upload_file(
+        #     db_path,
+        #     BUCKET,
+        #     sqlite_key,
+        #     ExtraArgs={"ContentType": "application/octet-stream"},
+        # )
 
-    put_json(
-        {"s3": f"s3://{BUCKET}/{DATASET_SQLITE_CLIP_PREFIX}/{run_id}/"},
-        BUCKET,
-        f"{DATASET_SQLITE_CLIP_PREFIX}/_latest.json",
-    )
+    # put_json(
+    #     {"s3": f"s3://{BUCKET}/{DATASET_SQLITE_CLIP_PREFIX}/{run_id}/"},
+    #     BUCKET,
+    #     f"{DATASET_SQLITE_CLIP_PREFIX}/_latest.json",
+    # )
 
     # Also write a local copy beside the repository directory
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -986,8 +986,8 @@ def create_and_upload_sqlite_clip_embeddings_from_latest_snapshot(
     )
     with tempfile.TemporaryDirectory() as td2:
         tmp_local = os.path.join(td2, "dataset.sqlite")
-        s3.download_file(BUCKET, sqlite_key, tmp_local)
-        shutil.copyfile(tmp_local, local_sqlite_path)
+        # s3.download_file(BUCKET, sqlite_key, tmp_local)  # disabled: depends on S3 upload
+        # shutil.copyfile(tmp_local, local_sqlite_path)
 
     # Final W&B summary
     try:
@@ -1271,18 +1271,18 @@ def create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot(
         finally:
             conn.close()
 
-        s3.upload_file(
-            db_path,
-            BUCKET,
-            sqlite_key,
-            ExtraArgs={"ContentType": "application/octet-stream"},
-        )
+        # s3.upload_file(
+        #     db_path,
+        #     BUCKET,
+        #     sqlite_key,
+        #     ExtraArgs={"ContentType": "application/octet-stream"},
+        # )
 
-    put_json(
-        {"s3": f"s3://{BUCKET}/{DATASET_SQLITE_TINYVIT_PREFIX}/{run_id}/"},
-        BUCKET,
-        f"{DATASET_SQLITE_TINYVIT_PREFIX}/_latest.json",
-    )
+    # put_json(
+    #     {"s3": f"s3://{BUCKET}/{DATASET_SQLITE_TINYVIT_PREFIX}/{run_id}/"},
+    #     BUCKET,
+    #     f"{DATASET_SQLITE_TINYVIT_PREFIX}/_latest.json",
+    # )
 
     # Also write a local copy beside the repository directory
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -1293,8 +1293,8 @@ def create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot(
     )
     with tempfile.TemporaryDirectory() as td2:
         tmp_local = os.path.join(td2, "dataset.sqlite")
-        s3.download_file(BUCKET, sqlite_key, tmp_local)
-        shutil.copyfile(tmp_local, local_sqlite_path)
+        # s3.download_file(BUCKET, sqlite_key, tmp_local)  # disabled: depends on S3 upload
+        # shutil.copyfile(tmp_local, local_sqlite_path)
 
     # Final W&B summary
     try:
