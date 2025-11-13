@@ -74,7 +74,7 @@ def main(config):
     candidates = []
     for name in os.listdir(repo_parent_dir):
         if (
-            name.startswith("dataset_sqlite_")
+            name.startswith("dataset_sqlite_2")
             and name.endswith(".sqlite")
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
@@ -94,7 +94,7 @@ def main(config):
     sqlite_path = candidates[0][0]
     logger.info(f"Using local SQLite dataset: {sqlite_path}")
 
-    df = load_sqlite_dataset()
+    df = load_sqlite_dataset(sqlite_path)
 
     train_test_split = 0.9
     num_training_samples = int(len(df) * train_test_split)
