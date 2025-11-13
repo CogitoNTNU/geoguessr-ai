@@ -6,6 +6,33 @@ import tempfile
 import datetime
 import struct
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sqlite3
+import shutil
+import time
+try:
+    from tqdm import tqdm  # type: ignore
+except Exception:  # pragma: no cover
+    class _TqdmNoop:
+        def __init__(self, total=None, desc=None):
+            self.total = total
+            self.desc = desc
+        def update(self, n=1):
+            return None
+        def close(self):
+            return None
+    def tqdm(*args, **kwargs):  # type: ignore
+        return _TqdmNoop(kwargs.get("total"), kwargs.get("desc"))
+
+# Optional Weights & Biases lightweight logging
+try:
+    import wandb  # type: ignore
+    def _wandb_log(data: dict, step: int | None = None):
+        run = getattr(wandb, "run", None)
+        if run is not None:
+            wandb.log(data, step=step)
+except Exception:  # pragma: no cover
+    def _wandb_log(data: dict, step: int | None = None):
+        return None
 
 import boto3
 import pandas as pd
@@ -21,6 +48,9 @@ MANIFEST_PREFIX = f"{VERSION}/manifest"
 SNAPSHOT_PREFIX = f"{VERSION}/snapshot"
 HOLDOUT_PREFIX = "holdout_dataset"
 HOLDOUT_SNAPSHOT_PREFIX = f"{HOLDOUT_PREFIX}/snapshot"
+DATASET_SQLITE_PREFIX = "dataset_sqlite"
+DATASET_SQLITE_CLIP_PREFIX = "dataset_sqlite_clip_embeddings"
+DATASET_SQLITE_TINYVIT_PREFIX = "dataset_sqlite_tinyvit_embeddings"
 HEADINGS_DEFAULT = (0, 90, 180, 270)
 STREETVIEW_RE = re.compile(
     r"^streetview_([-+]?\d+(?:\.\d+)?)_([-+]?\d+(?:\.\d+)?)_heading_(\d{1,3})\.jpg$",
@@ -31,9 +61,10 @@ _Q = 10_000_000  # 1e-7° grid (~1.1 cm)
 s3 = boto3.client(
     "s3",
     region_name=REGION,
+    endpoint_url=os.getenv("AWS_ENDPOINT_URL") or os.getenv("S3_ENDPOINT_URL"),
     config=Config(
         retries={"max_attempts": 10, "mode": "adaptive"},
-        max_pool_connections=50,
+        max_pool_connections=256,
         read_timeout=120,
         connect_timeout=10,
     ),
@@ -359,8 +390,10 @@ def download_latest_images(
     dest_dir: str,
     overwrite: bool = False,
     max_workers: int = 16,
-    df=load_latest_snapshot_df(),
+    df=None,
 ):
+    if df is None:
+        df = load_latest_snapshot_df()
     os.makedirs(dest_dir, exist_ok=True)
     results = []
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
@@ -415,3 +448,783 @@ def get_snapshot_metadata():
 # points = load_points()
 # print(f"Total points saved in S3: {len(points)}")
 # points.to_csv("./test.csv")
+
+
+def create_and_upload_sqlite_from_latest_snapshot(
+    max_rows: int | None = None,
+    commit_interval: int = 1000,
+    num_workers: int = 64,
+    writer_batch_size: int = 1000,
+    fetch_window_size: int = 10000,
+):
+    """
+    Builds a SQLite DB from the latest v1 snapshot and uploads it to S3 at
+    dataset_sqlite/run_ts=.../dataset.sqlite. The table has the same columns
+    as the parquet (including 'image_path'), but in the SQLite table the bytes
+    are stored under the column 'image' (BLOB) instead of an s3:// URL.
+    """
+    df = load_latest_snapshot_df()
+    if max_rows is not None:
+        df = df.head(max_rows)
+
+    # Ensure expected columns exist (treat optional ones as present with NULLs)
+    expected_cols = [
+        "location_id",
+        "lat",
+        "lon",
+        "heading",
+        "capture_date",
+        "pano_id",
+        "batch_date",
+        "image_path",  # will be BLOB in SQLite
+    ]
+    for c in expected_cols:
+        if c not in df.columns:
+            df[c] = None
+
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H%M%SZ")
+    sqlite_key = f"{DATASET_SQLITE_PREFIX}/{run_id}/dataset.sqlite"
+
+    with tempfile.TemporaryDirectory() as td:
+        db_path = os.path.join(td, "dataset.sqlite")
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.cursor()
+            start_ts = time.time()
+            # Pragmas for reasonable write performance and durability trade-offs
+            cur.execute("PRAGMA journal_mode=WAL;")
+            cur.execute("PRAGMA synchronous=NORMAL;")
+            cur.execute("PRAGMA temp_store=MEMORY;")
+            cur.execute("PRAGMA mmap_size=268435456;")  # 256MB
+
+            # Schema: mirror snapshot columns, but 'image_path' is a BLOB
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS samples (
+                  location_id TEXT NOT NULL,
+                  lat REAL NOT NULL,
+                  lon REAL NOT NULL,
+                  heading INTEGER NOT NULL,
+                  capture_date TEXT,
+                  pano_id TEXT,
+                  batch_date TEXT,
+                  image BLOB NOT NULL,
+                  PRIMARY KEY (location_id, heading)
+                ) WITHOUT ROWID;
+                """
+            )
+            conn.commit()
+
+            def _get_image_bytes(path: str) -> bytes:
+                if not path or not isinstance(path, str):
+                    raise ValueError("image_path missing")
+                if not path.startswith("s3://"):
+                    # Fallback: if local path (unexpected in latest snapshot), read from disk
+                    with open(path, "rb") as f:
+                        return f.read()
+                bucket, key = path[5:].split("/", 1)
+                obj = s3.get_object(Bucket=bucket, Key=key)
+                return obj["Body"].read()
+
+            # Concurrent downloads in bounded windows, single-writer batched inserts
+            cols = ["location_id", "lat", "lon", "heading", "capture_date", "pano_id", "batch_date", "image_path"]
+
+            def fetch(rec):
+                b = _get_image_bytes(rec.get("image_path"))
+                return (
+                    rec.get("location_id"),
+                    float(rec.get("lat")) if rec.get("lat") is not None else None,
+                    float(rec.get("lon")) if rec.get("lon") is not None else None,
+                    int(rec.get("heading")) if rec.get("heading") is not None else None,
+                    rec.get("capture_date"),
+                    rec.get("pano_id"),
+                    rec.get("batch_date"),
+                    sqlite3.Binary(b),
+                )
+
+            total_rows = int(len(df))
+            rows_since_commit = 0
+            processed_total = 0
+            pbar = tqdm(total=total_rows, desc="Building SQLite (JPEG bytes)")
+            cur.execute("BEGIN;")
+            for start in range(0, total_rows, fetch_window_size):
+                end = min(start + fetch_window_size, total_rows)
+                rows_chunk = df.iloc[start:end][cols].to_dict("records")
+                batch = []
+                # New executor per window keeps memory bounded
+                with ThreadPoolExecutor(max_workers=num_workers) as ex:
+                    futs = [ex.submit(fetch, r) for r in rows_chunk]
+                    for fut in as_completed(futs):
+                        batch.append(fut.result())
+                        pbar.update(1)
+                        if len(batch) >= writer_batch_size:
+                            cur.executemany(
+                                """
+                                INSERT OR REPLACE INTO samples
+                                  (location_id, lat, lon, heading, capture_date, pano_id, batch_date, image)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                batch,
+                            )
+                            inserted = len(batch)
+                            rows_since_commit += inserted
+                            processed_total += inserted
+                            _wandb_log(
+                                {
+                                    "mode": "jpeg",
+                                    "processed": processed_total,
+                                    "total": total_rows,
+                                    "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                                    "phase": "inserting",
+                                },
+                                step=processed_total,
+                            )
+                            batch.clear()
+                            if rows_since_commit >= commit_interval:
+                                conn.commit()
+                                cur.execute("BEGIN;")
+                                rows_since_commit = 0
+                # Flush remainder of this window
+                if batch:
+                    cur.executemany(
+                        """
+                        INSERT OR REPLACE INTO samples
+                          (location_id, lat, lon, heading, capture_date, pano_id, batch_date, image)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        batch,
+                    )
+                    inserted = len(batch)
+                    rows_since_commit += inserted
+                    processed_total += inserted
+                    _wandb_log(
+                        {
+                            "mode": "jpeg",
+                            "processed": processed_total,
+                            "total": total_rows,
+                            "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                            "phase": "inserting",
+                        },
+                        step=processed_total,
+                    )
+                    batch.clear()
+                # Commit at end of window to keep WAL small
+                conn.commit()
+                cur.execute("BEGIN;")
+                rows_since_commit = 0
+            # Final commit and close bar
+            conn.commit()
+            pbar.close()
+        finally:
+            conn.close()
+
+        # Upload SQLite file
+        s3.upload_file(
+            db_path,
+            BUCKET,
+            sqlite_key,
+            ExtraArgs={"ContentType": "application/octet-stream"},
+        )
+
+    # Write/update pointer
+    put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_PREFIX}/_latest.json")
+
+    # Also write a local copy beside the repository directory
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
+    os.makedirs(repo_parent_dir, exist_ok=True)
+    local_sqlite_path = os.path.join(repo_parent_dir, f"dataset_sqlite_{run_id}.sqlite")
+    # Recreate the DB to copy from S3-uploaded temp path
+    # Note: db_path no longer exists outside the with block; create file again by downloading is costly.
+    # Instead, regenerate inside a new temp block for copy consistency.
+    # Simpler: move creation before temp cleanup. As we are outside, reuse last built path by creating again.
+    # Rebuild locally by downloading from S3 would cost network; better generate inside the previous block.
+    # Since temp dir is gone, copy must occur before it. Adjusted: regenerate is not feasible here.
+    # Fallback: we already have sqlite_key in S3; download and save locally.
+    bucket_key = sqlite_key
+    with tempfile.TemporaryDirectory() as td2:
+        tmp_local = os.path.join(td2, "dataset.sqlite")
+        s3.download_file(BUCKET, bucket_key, tmp_local)
+        shutil.copyfile(tmp_local, local_sqlite_path)
+
+    # Final W&B summary
+    try:
+        sz = os.path.getsize(local_sqlite_path)
+    except Exception:
+        sz = None
+    elapsed = time.time() - start_ts
+    _wandb_log(
+        {
+            "mode": "jpeg",
+            "duration_s": elapsed,
+            "avg_throughput_img_per_s": int(len(df)) / max(elapsed, 1e-6),
+            "sqlite_size_bytes": sz,
+            "phase": "done",
+        }
+    )
+
+    return {
+        "sqlite_key": sqlite_key,
+        "local_sqlite_path": local_sqlite_path,
+        "rows": int(len(df)),
+        "run_id": run_id,
+    }
+
+
+def create_and_upload_sqlite_clip_embeddings_from_latest_snapshot(
+    max_rows: int | None = None,
+    commit_interval: int = 1000,
+    device: str | None = None,
+    num_workers: int = 64,
+    embed_batch_size: int = 256,
+    fetch_window_size: int = 10000,
+):
+    """
+    Builds a SQLite DB from the latest v1 snapshot where each row stores a CLIP
+    embedding (float32 blob) instead of the raw JPEG. Uploads to:
+      dataset_sqlite_clip_embeddings/run_ts=.../dataset.sqlite
+    Also writes dataset_sqlite_clip_embeddings/_latest.json pointer.
+    """
+    df = load_latest_snapshot_df()
+    if max_rows is not None:
+        df = df.head(max_rows)
+
+    expected_cols = [
+        "location_id",
+        "lat",
+        "lon",
+        "heading",
+        "capture_date",
+        "pano_id",
+        "batch_date",
+        "image_path",
+    ]
+    for c in expected_cols:
+        if c not in df.columns:
+            df[c] = None
+
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H%M%SZ")
+    sqlite_key = f"{DATASET_SQLITE_CLIP_PREFIX}/{run_id}/dataset.sqlite"
+
+    # Lazy imports to avoid heavy deps at module import time
+    import io
+    from PIL import Image
+    import torch
+    from pretrain.clip_embedder import CLIPEmbedding
+
+    dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    clip_model = CLIPEmbedding(model_name="", device=dev, load_checkpoint=False, panorama=False)
+    clip_model.eval()
+
+    with tempfile.TemporaryDirectory() as td:
+        db_path = os.path.join(td, "dataset.sqlite")
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.cursor()
+            start_ts = time.time()
+            cur.execute("PRAGMA journal_mode=WAL;")
+            cur.execute("PRAGMA synchronous=NORMAL;")
+            cur.execute("PRAGMA temp_store=MEMORY;")
+            cur.execute("PRAGMA mmap_size=268435456;")
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS samples (
+                  location_id TEXT NOT NULL,
+                  lat REAL NOT NULL,
+                  lon REAL NOT NULL,
+                  heading INTEGER NOT NULL,
+                  capture_date TEXT,
+                  pano_id TEXT,
+                  batch_date TEXT,
+                  embedding BLOB NOT NULL,
+                  embedding_dim INTEGER NOT NULL,
+                  PRIMARY KEY (location_id, heading)
+                ) WITHOUT ROWID;
+                """
+            )
+            conn.commit()
+
+            def _get_image_bytes(path: str) -> bytes:
+                if not path or not isinstance(path, str):
+                    raise ValueError("image_path missing")
+                if not path.startswith("s3://"):
+                    with open(path, "rb") as f:
+                        return f.read()
+                bucket, key = path[5:].split("/", 1)
+                obj = s3.get_object(Bucket=bucket, Key=key)
+                return obj["Body"].read()
+
+            # Concurrent downloads in bounded windows + GPU batched embedding + single-writer inserts
+            cols = ["location_id", "lat", "lon", "heading", "capture_date", "pano_id", "batch_date", "image_path"]
+
+            def fetch_to_pil(rec):
+                b = _get_image_bytes(rec.get("image_path"))
+                pil = Image.open(io.BytesIO(b)).convert("RGB")
+                return rec, pil
+
+            rows_since_commit = 0
+            observed_dim = None
+            cur.execute("BEGIN;")
+            total_rows = int(len(df))
+            pbar = tqdm(total=total_rows, desc="Building SQLite (CLIP embeddings)")
+            processed_total = 0
+            for start in range(0, total_rows, fetch_window_size):
+                end = min(start + fetch_window_size, total_rows)
+                rows_chunk = df.iloc[start:end][cols].to_dict("records")
+                buffer_recs = []
+                buffer_imgs = []
+                with ThreadPoolExecutor(max_workers=num_workers) as ex:
+                    futs = [ex.submit(fetch_to_pil, r) for r in rows_chunk]
+                    for fut in as_completed(futs):
+                        rec, pil = fut.result()
+                        buffer_recs.append(rec)
+                        buffer_imgs.append(pil)
+                        pbar.update(1)
+                        if len(buffer_imgs) >= embed_batch_size:
+                            with torch.no_grad():
+                                inputs = clip_model.processor(images=buffer_imgs, return_tensors="pt")
+                                pixel_values = inputs["pixel_values"]
+                                if isinstance(clip_model.device, str):
+                                    pixel_values = pixel_values.to(clip_model.device)
+                                else:
+                                    pixel_values = pixel_values.cuda(clip_model.device)
+                                outputs = clip_model.clip_model.base_model(pixel_values=pixel_values)
+                                embs = outputs.last_hidden_state.mean(dim=1).to(torch.float32).cpu()
+                            dim = int(embs.shape[-1])
+                            observed_dim = observed_dim or dim
+                            batch_rows = []
+                            for rec_i, emb in zip(buffer_recs, embs):
+                                batch_rows.append(
+                                    (
+                                        rec_i.get("location_id"),
+                                        float(rec_i.get("lat")) if rec_i.get("lat") is not None else None,
+                                        float(rec_i.get("lon")) if rec_i.get("lon") is not None else None,
+                                        int(rec_i.get("heading")) if rec_i.get("heading") is not None else None,
+                                        rec_i.get("capture_date"),
+                                        rec_i.get("pano_id"),
+                                        rec_i.get("batch_date"),
+                                        sqlite3.Binary(emb.numpy().tobytes()),
+                                        dim,
+                                    )
+                                )
+                            cur.executemany(
+                                """
+                                INSERT OR REPLACE INTO samples
+                                  (location_id, lat, lon, heading, capture_date, pano_id, batch_date, embedding, embedding_dim)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                batch_rows,
+                            )
+                            rows_since_commit += len(batch_rows)
+                            processed_total += len(batch_rows)
+                            _wandb_log(
+                                {
+                                    "mode": "clip",
+                                    "processed": processed_total,
+                                    "total": total_rows,
+                                    "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                                    "phase": "embedding_inserting",
+                                },
+                                step=processed_total,
+                            )
+                            buffer_recs.clear()
+                            buffer_imgs.clear()
+                            if rows_since_commit >= commit_interval:
+                                conn.commit()
+                                cur.execute("BEGIN;")
+                                rows_since_commit = 0
+                # Flush leftovers in this window
+                if buffer_imgs:
+                    with torch.no_grad():
+                        inputs = clip_model.processor(images=buffer_imgs, return_tensors="pt")
+                        pixel_values = inputs["pixel_values"]
+                        if isinstance(clip_model.device, str):
+                            pixel_values = pixel_values.to(clip_model.device)
+                        else:
+                            pixel_values = pixel_values.cuda(clip_model.device)
+                        outputs = clip_model.clip_model.base_model(pixel_values=pixel_values)
+                        embs = outputs.last_hidden_state.mean(dim=1).to(torch.float32).cpu()
+                    dim = int(embs.shape[-1])
+                    observed_dim = observed_dim or dim
+                    batch_rows = []
+                    for rec_i, emb in zip(buffer_recs, embs):
+                        batch_rows.append(
+                            (
+                                rec_i.get("location_id"),
+                                float(rec_i.get("lat")) if rec_i.get("lat") is not None else None,
+                                float(rec_i.get("lon")) if rec_i.get("lon") is not None else None,
+                                int(rec_i.get("heading")) if rec_i.get("heading") is not None else None,
+                                rec_i.get("capture_date"),
+                                rec_i.get("pano_id"),
+                                rec_i.get("batch_date"),
+                                sqlite3.Binary(emb.numpy().tobytes()),
+                                dim,
+                            )
+                        )
+                    cur.executemany(
+                        """
+                        INSERT OR REPLACE INTO samples
+                          (location_id, lat, lon, heading, capture_date, pano_id, batch_date, embedding, embedding_dim)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        batch_rows,
+                    )
+                    rows_since_commit += len(batch_rows)
+                    processed_total += len(batch_rows)
+                    _wandb_log(
+                        {
+                            "mode": "clip",
+                            "processed": processed_total,
+                            "total": total_rows,
+                            "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                            "phase": "embedding_inserting",
+                        },
+                        step=processed_total,
+                    )
+                # Commit per window
+                conn.commit()
+                cur.execute("BEGIN;")
+                rows_since_commit = 0
+            conn.commit()
+            pbar.close()
+        finally:
+            conn.close()
+
+        s3.upload_file(
+            db_path,
+            BUCKET,
+            sqlite_key,
+            ExtraArgs={"ContentType": "application/octet-stream"},
+        )
+
+    put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_CLIP_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_CLIP_PREFIX}/_latest.json")
+
+    # Also write a local copy beside the repository directory
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
+    os.makedirs(repo_parent_dir, exist_ok=True)
+    local_sqlite_path = os.path.join(repo_parent_dir, f"dataset_sqlite_clip_embeddings_{run_id}.sqlite")
+    with tempfile.TemporaryDirectory() as td2:
+        tmp_local = os.path.join(td2, "dataset.sqlite")
+        s3.download_file(BUCKET, sqlite_key, tmp_local)
+        shutil.copyfile(tmp_local, local_sqlite_path)
+
+    # Final W&B summary
+    try:
+        sz = os.path.getsize(local_sqlite_path)
+    except Exception:
+        sz = None
+    elapsed = time.time() - start_ts
+    _wandb_log(
+        {
+            "mode": "clip",
+            "duration_s": elapsed,
+            "avg_throughput_img_per_s": int(len(df)) / max(elapsed, 1e-6),
+            "sqlite_size_bytes": sz,
+            "embedding_dim": observed_dim,
+            "phase": "done",
+        }
+    )
+
+    return {
+        "sqlite_key": sqlite_key,
+        "local_sqlite_path": local_sqlite_path,
+        "rows": int(len(df)),
+        "run_id": run_id,
+        "device": dev,
+        "embedding_dim": observed_dim,
+    }
+
+
+def create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot(
+    max_rows: int | None = None,
+    commit_interval: int = 1000,
+    device: str | None = None,
+    model_name: str = "tiny_vit_21m_512.dist_in22k_ft_in1k",
+    num_workers: int = 64,
+    embed_batch_size: int = 256,
+    fetch_window_size: int = 10000,
+):
+    """
+    Builds a SQLite DB from the latest v1 snapshot where each row stores a TinyViT
+    embedding (float32 blob) instead of the raw JPEG. Uploads to:
+      dataset_sqlite_tinyvit_embeddings/run_ts=.../dataset.sqlite
+    Also writes dataset_sqlite_tinyvit_embeddings/_latest.json pointer.
+    """
+    df = load_latest_snapshot_df()
+    if max_rows is not None:
+        df = df.head(max_rows)
+
+    expected_cols = [
+        "location_id",
+        "lat",
+        "lon",
+        "heading",
+        "capture_date",
+        "pano_id",
+        "batch_date",
+        "image_path",
+    ]
+    for c in expected_cols:
+        if c not in df.columns:
+            df[c] = None
+
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H%M%SZ")
+    sqlite_key = f"{DATASET_SQLITE_TINYVIT_PREFIX}/{run_id}/dataset.sqlite"
+
+    # Lazy imports
+    import io
+    from PIL import Image
+    import torch
+    from pretrain.tinyvit_embedder import TinyViTEmbedding
+
+    dev = device or ("cuda" if torch.cuda.is_available() else "cpu")
+    tinyvit = TinyViTEmbedding(model_name=model_name, device=dev, load_checkpoint=False, panorama=False)
+    tinyvit.eval()
+
+    with tempfile.TemporaryDirectory() as td:
+        db_path = os.path.join(td, "dataset.sqlite")
+        conn = sqlite3.connect(db_path)
+        try:
+            cur = conn.cursor()
+            start_ts = time.time()
+            cur.execute("PRAGMA journal_mode=WAL;")
+            cur.execute("PRAGMA synchronous=NORMAL;")
+            cur.execute("PRAGMA temp_store=MEMORY;")
+            cur.execute("PRAGMA mmap_size=268435456;")
+
+            cur.execute(
+                """
+                CREATE TABLE IF NOT EXISTS samples (
+                  location_id TEXT NOT NULL,
+                  lat REAL NOT NULL,
+                  lon REAL NOT NULL,
+                  heading INTEGER NOT NULL,
+                  capture_date TEXT,
+                  pano_id TEXT,
+                  batch_date TEXT,
+                  embedding BLOB NOT NULL,
+                  embedding_dim INTEGER NOT NULL,
+                  PRIMARY KEY (location_id, heading)
+                ) WITHOUT ROWID;
+                """
+            )
+            conn.commit()
+
+            def _get_image_bytes(path: str) -> bytes:
+                if not path or not isinstance(path, str):
+                    raise ValueError("image_path missing")
+                if not path.startswith("s3://"):
+                    with open(path, "rb") as f:
+                        return f.read()
+                bucket, key = path[5:].split("/", 1)
+                obj = s3.get_object(Bucket=bucket, Key=key)
+                return obj["Body"].read()
+
+            # Concurrent downloads in bounded windows + GPU batched embedding + single-writer inserts
+            cols = ["location_id", "lat", "lon", "heading", "capture_date", "pano_id", "batch_date", "image_path"]
+
+            def fetch_to_pil(rec):
+                b = _get_image_bytes(rec.get("image_path"))
+                pil = Image.open(io.BytesIO(b)).convert("RGB")
+                return rec, pil
+
+            rows_since_commit = 0
+            observed_dim = None
+            cur.execute("BEGIN;")
+            total_rows = int(len(df))
+            pbar = tqdm(total=total_rows, desc="Building SQLite (TinyViT embeddings)")
+            processed_total = 0
+            for start in range(0, total_rows, fetch_window_size):
+                end = min(start + fetch_window_size, total_rows)
+                rows_chunk = df.iloc[start:end][cols].to_dict("records")
+                buffer_recs = []
+                buffer_imgs = []
+                with ThreadPoolExecutor(max_workers=num_workers) as ex:
+                    futs = [ex.submit(fetch_to_pil, r) for r in rows_chunk]
+                    for fut in as_completed(futs):
+                        rec, pil = fut.result()
+                        buffer_recs.append(rec)
+                        buffer_imgs.append(pil)
+                        pbar.update(1)
+                        if len(buffer_imgs) >= embed_batch_size:
+                            with torch.no_grad():
+                                batch_tensor = torch.stack([tinyvit.transforms(img) for img in buffer_imgs], dim=0)
+                                if isinstance(tinyvit.device, str):
+                                    batch_tensor = batch_tensor.to(tinyvit.device)
+                                else:
+                                    batch_tensor = batch_tensor.cuda(tinyvit.device)
+                                embs = tinyvit.tinyvit_model(batch_tensor).to(torch.float32).cpu()
+                            dim = int(embs.shape[-1])
+                            observed_dim = observed_dim or dim
+                            batch_rows = []
+                            for rec_i, emb in zip(buffer_recs, embs):
+                                batch_rows.append(
+                                    (
+                                        rec_i.get("location_id"),
+                                        float(rec_i.get("lat")) if rec_i.get("lat") is not None else None,
+                                        float(rec_i.get("lon")) if rec_i.get("lon") is not None else None,
+                                        int(rec_i.get("heading")) if rec_i.get("heading") is not None else None,
+                                        rec_i.get("capture_date"),
+                                        rec_i.get("pano_id"),
+                                        rec_i.get("batch_date"),
+                                        sqlite3.Binary(emb.numpy().tobytes()),
+                                        dim,
+                                    )
+                                )
+                            cur.executemany(
+                                """
+                                INSERT OR REPLACE INTO samples
+                                  (location_id, lat, lon, heading, capture_date, pano_id, batch_date, embedding, embedding_dim)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                batch_rows,
+                            )
+                            rows_since_commit += len(batch_rows)
+                            processed_total += len(batch_rows)
+                            _wandb_log(
+                                {
+                                    "mode": "tinyvit",
+                                    "processed": processed_total,
+                                    "total": total_rows,
+                                    "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                                    "phase": "embedding_inserting",
+                                },
+                                step=processed_total,
+                            )
+                            buffer_recs.clear()
+                            buffer_imgs.clear()
+                            if rows_since_commit >= commit_interval:
+                                conn.commit()
+                                cur.execute("BEGIN;")
+                                rows_since_commit = 0
+                # Flush leftovers in this window
+                if buffer_imgs:
+                    with torch.no_grad():
+                        batch_tensor = torch.stack([tinyvit.transforms(img) for img in buffer_imgs], dim=0)
+                        if isinstance(tinyvit.device, str):
+                            batch_tensor = batch_tensor.to(tinyvit.device)
+                        else:
+                            batch_tensor = batch_tensor.cuda(tinyvit.device)
+                        embs = tinyvit.tinyvit_model(batch_tensor).to(torch.float32).cpu()
+                    dim = int(embs.shape[-1])
+                    observed_dim = observed_dim or dim
+                    batch_rows = []
+                    for rec_i, emb in zip(buffer_recs, embs):
+                        batch_rows.append(
+                            (
+                                rec_i.get("location_id"),
+                                float(rec_i.get("lat")) if rec_i.get("lat") is not None else None,
+                                float(rec_i.get("lon")) if rec_i.get("lon") is not None else None,
+                                int(rec_i.get("heading")) if rec_i.get("heading") is not None else None,
+                                rec_i.get("capture_date"),
+                                rec_i.get("pano_id"),
+                                rec_i.get("batch_date"),
+                                sqlite3.Binary(emb.numpy().tobytes()),
+                                dim,
+                            )
+                        )
+                    cur.executemany(
+                        """
+                        INSERT OR REPLACE INTO samples
+                          (location_id, lat, lon, heading, capture_date, pano_id, batch_date, embedding, embedding_dim)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                        batch_rows,
+                    )
+                    rows_since_commit += len(batch_rows)
+                    processed_total += len(batch_rows)
+                    _wandb_log(
+                        {
+                            "mode": "tinyvit",
+                            "processed": processed_total,
+                            "total": total_rows,
+                            "throughput_img_per_s": processed_total / max(time.time() - start_ts, 1e-6),
+                            "phase": "embedding_inserting",
+                        },
+                        step=processed_total,
+                    )
+                # Commit per window
+                conn.commit()
+                cur.execute("BEGIN;")
+                rows_since_commit = 0
+            conn.commit()
+            pbar.close()
+        finally:
+            conn.close()
+
+        s3.upload_file(
+            db_path,
+            BUCKET,
+            sqlite_key,
+            ExtraArgs={"ContentType": "application/octet-stream"},
+        )
+
+    put_json({"s3": f"s3://{BUCKET}/{DATASET_SQLITE_TINYVIT_PREFIX}/{run_id}/"}, BUCKET, f"{DATASET_SQLITE_TINYVIT_PREFIX}/_latest.json")
+
+    # Also write a local copy beside the repository directory
+    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
+    os.makedirs(repo_parent_dir, exist_ok=True)
+    local_sqlite_path = os.path.join(repo_parent_dir, f"dataset_sqlite_tinyvit_embeddings_{run_id}.sqlite")
+    with tempfile.TemporaryDirectory() as td2:
+        tmp_local = os.path.join(td2, "dataset.sqlite")
+        s3.download_file(BUCKET, sqlite_key, tmp_local)
+        shutil.copyfile(tmp_local, local_sqlite_path)
+
+    # Final W&B summary
+    try:
+        sz = os.path.getsize(local_sqlite_path)
+    except Exception:
+        sz = None
+    elapsed = time.time() - start_ts
+    _wandb_log(
+        {
+            "mode": "tinyvit",
+            "duration_s": elapsed,
+            "avg_throughput_img_per_s": int(len(df)) / max(elapsed, 1e-6),
+            "sqlite_size_bytes": sz,
+            "embedding_dim": observed_dim,
+            "phase": "done",
+        }
+    )
+
+    return {
+        "sqlite_key": sqlite_key,
+        "local_sqlite_path": local_sqlite_path,
+        "rows": int(len(df)),
+        "run_id": run_id,
+        "device": dev,
+        "embedding_dim": observed_dim,
+        "model_name": model_name,
+    }
+
+
+def main():
+    """
+    Convenience entrypoint: builds SQLite with JPEG bytes from latest snapshot
+    and uploads it to S3 under dataset_sqlite/. Prints the resulting manifest.
+    """
+    # Initialize Weights & Biases if available and not already initialized
+    try:
+        import wandb  # local import to ensure availability
+        if getattr(wandb, "run", None) is None:
+            wandb.init(
+                project="geoguessr-ai",
+                job_type="sqlite_build",
+                config={
+                    "mode": "jpeg",
+                    "num_workers": 64,
+                    "writer_batch_size": 1000,
+                },
+            )
+    except Exception:
+        pass
+    # result = create_and_upload_sqlite_from_latest_snapshot()
+    result = create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot()
+    print(json.dumps(result, indent=2))
+
+
+if __name__ == "__main__":
+    main()

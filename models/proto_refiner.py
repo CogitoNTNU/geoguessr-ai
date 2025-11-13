@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import json
 import pandas as pd
 import torch
 from torch import nn, Tensor
@@ -8,12 +7,13 @@ from typing import Dict, List, Tuple
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datasets import (
-    DatasetDict,
     Dataset,
     enable_progress_bar,
     disable_progress_bar,
 )
 from preprocessing.geo_utils import haversine
+from models.utils import ProtoDataManager
+from data.sql.sql_dataset_adapter import DualSQLiteEmbeddingDataset
 
 # Cluster refinement model
 
@@ -30,9 +30,10 @@ class ProtoRefiner(nn.Module):
         max_refinement: int = 1000,
         temperature: float = 1.6,
         proto_path: str = PROTO_PATH,
-        dataset_path: str = DATASET_PATH,
         protos: List[Dataset] = None,
         verbose: bool = False,
+        clip_db_path: str = "data/sqlite/clip/dataset.sqlite",  # correct?
+        tinyvit_db_path: str = "data/sqlite/tinyvit/dataset.sqlite",  # correct?
     ):
         """Proto-Net refinement model
 
@@ -59,18 +60,23 @@ class ProtoRefiner(nn.Module):
         self.max_refinement = max_refinement
         self.verbose = verbose
 
-        # Load dataset with embeddings and prototypes
-        self.dataset = DatasetDict.load_from_disk(dataset_path) #Kanskje ikke kan bruke denne metoden. 
+        # TODO: get the needed data from the dataset through sql querying
+        # Check all the places where self.dataset is used
+        self.dataset = {
+            "train": DualSQLiteEmbeddingDataset(clip_db_path, tinyvit_db_path)
+        }
 
         # Load prototypes
         self.proto_df = pd.read_csv(proto_path)
+        self.proto_manager = ProtoDataManager(self.proto_df)
 
         # Load prototype index dataframe
         self.proto_df["geocell_id"] = self.proto_df["geocell_id"].astype(int)
         self.num_geocells = self.proto_df["geocell_id"].max() + 1
-        self.proto_df = self.proto_df.set_index("geocell_id")
+        # self.proto_df = self.proto_df.set_index("geocell_id") The geocell_id is not unique and the file contains all the clusters for every geocell
 
         # Generate prototypes for every geocells
+        # TODO: See what we need to load here
         if protos is None:
             self.load_prototypes()
         else:
@@ -79,25 +85,6 @@ class ProtoRefiner(nn.Module):
         # Learnable parameters
         self.temperature = Parameter(torch.tensor(temperature), requires_grad=False)
         self.geo_scaling = Parameter(torch.tensor(20.0), requires_grad=False)
-
-    def _load_indices(self, index_json: str, add_index: int = None):
-        """Loads protonet cluster assignments.
-
-        Args:
-            index_json (str): string of indices of samples belonging to cluster.
-        """
-        try:
-            result = json.loads(index_json)
-            if add_index is not None:
-                result = [x + add_index for x in result]
-
-            return result
-
-        except TypeError:
-            if self.verbose:
-                print("Couldn't load a geocell.")
-
-            return []
 
     def __str__(self):
         rep = "ProtoRefiner(\n"
@@ -111,22 +98,18 @@ class ProtoRefiner(nn.Module):
     def forward(
         self,
         embedding: Tensor = None,
-        geo_tensor: Tensor = None, #not used
         initial_preds: Tensor = None,
         candidate_cells: Tensor = None,
         candidate_probs: Tensor = None,
-        cluster: Tensor = None, #not used
     ):
         """Forward function for proto refinement model.
 
         Args:
             embedding (Tensor): CLIP embeddings of images.
-            geo_tensor (Tensor): tensor containing multi-task regression predictions.
             initial_preds (Tensor): initial predictions.
             candidate_cells (Tensor): tensor of candidate geocell predictions.
             candidate_probs (Tensor): tensor of probabilities assigned to
                 each candidate geocell. Defaults to None.
-            cluster (Tensor): cluster label for training
         """
         assert self.topk <= candidate_cells.size(1), (
             '"topk" parameter must be smaller or equal to the number of geocell candidates \
@@ -158,13 +141,15 @@ class ProtoRefiner(nn.Module):
             for cell in candidates[: self.topk]:
                 # Embedding distance
                 cell_id = cell.item()
-                if cell_id in [121, 650, 1859]:  # TODO: fix
-                    cell_id = 1436
+                # if cell_id in [121, 650, 1859]:  # TODO: fix
+                #     cell_id = 1436
 
-                cell_emb = self.protos[cell.item()]
+                cell_emb = self.protos[
+                    cell_id
+                ]  # TODO:cell_emb: Tensor of shape (num_protos, dim_embedding), or None. dim_embedding:emb of pictures in that geocell
                 if cell_emb is None:
                     if self.verbose:
-                        print(f"Proto dataset for geocell {cell.item()} is None.")
+                        print(f"Proto dataset for geocell {cell_id} is None.")
 
                     top_distances.append(torch.tensor(-100000, device="cuda"))
                     top_preds.append([0.0, 0.0])
@@ -175,8 +160,12 @@ class ProtoRefiner(nn.Module):
 
                 # Get top cluster and corresponding coordinates
                 top_distances.append(torch.max(logits).item())
-                pred_id = torch.argmax(logits, dim=-1)
-                entry = self.protos[cell.item()][pred_id.item()]
+                pred_cluster_id = torch.argmax(logits, dim=-1)
+                entry = self.protos[
+                    cell_id
+                ][
+                    pred_cluster_id.item()
+                ]  # TODO: dont think this will work. Need a way to get the data for the cluster. Change this to use self.proto_df
                 lng, lat = self._within_cluster_refinement(emb, entry)
                 top_preds.append([lng, lat])
 
@@ -198,7 +187,7 @@ class ProtoRefiner(nn.Module):
             distance = haversine(initial_LLH, refined_LLH)[0]
             if distance > self.max_refinement:
                 final_probs = c_probs[: self.topk]
-                if self.verbose:  
+                if self.verbose:
                     print("\t\tCancelled refinement: distance too far.")
 
             final_pred_id = torch.argmax(final_probs).item()
@@ -227,17 +216,24 @@ class ProtoRefiner(nn.Module):
         Returns:
             Tuple[float, float]: (lng, lat)
         """
-        if cluster["count"] == 1:
-            return cluster["lng"].item(), cluster["lat"].item()
+        if cluster["count"] == 0:
+            return cluster["centroid_lng"].item(), cluster["centroid_lat"].item()
 
-        points = self.dataset["train"][cluster["indices"]]
-        embeddings = points["embedding"].to("cuda")
-        if embeddings.size(1) == 4:
+        points = self.dataset["train"][
+            cluster["indices"]
+        ]  # TODO: query the database for these indices directly
+        embeddings = points["emb_clip"].to("cuda")  # or points["emb_tiny_vit"]
+        # if embeddings.dim() == 3 and embeddings.size(1) == 4:
+        if (
+            embeddings.dim() == 3 and embeddings.size(1) == 4
+        ):  # TODO:check this later with data
             embeddings = embeddings.mean(dim=1)
 
         distances = self._euclidean_distance(embeddings, emb)
         max_index = torch.argmax(distances).item()
-        max_point = points["labels"][max_index]
+        max_point = points["labels"][
+            max_index
+        ]  # TODO: get the lng and lat by the cluster directly?
         return max_point[0].item(), max_point[1].item()
 
     def load_prototypes(self) -> List[Dataset]:
@@ -286,7 +282,9 @@ class ProtoRefiner(nn.Module):
             Dataset: dataset including prototypes
         """
         try:
-            cell_df = self.proto_df.loc[cell]
+            cell_df = self.proto_manager.get_indices_for_cell(
+                cell
+            )  # TODO: test my method
 
         # Some geocells might overlap with others, causing no data points to be in the cell
         except KeyError:
@@ -298,10 +296,14 @@ class ProtoRefiner(nn.Module):
         if len(cell_df.iloc[0]["indices"]) == 0:
             return None
 
+        if type(cell_df) is list:
+            cell_df = pd.DataFrame(cell_df)  # TODO: check if this is needed
+
         data = Dataset.from_pandas(cell_df)
+        # Data is a list of all the indices in that geocell
         data = data.map(self._compute_protos_for_cell)
         data.set_format("torch")
-        return data
+        return data  # This becomes a dataset with all the prototypes for that geocell. {"embedding": proto_emb}. proto_emb is a tensor of shape (dim_embedding,number of protos)
 
     def _cosine_similarity(self, matrix: Tensor, vector: Tensor) -> Tensor:
         """Computes the cosine similarity between all vectors in matrix and vector.
@@ -347,26 +349,27 @@ class ProtoRefiner(nn.Module):
         sum = torch.sum(ex, axis=0)
         return ex / sum
 
-    def _compute_protos_for_cell(self, example: Dict, geo: bool = False) -> Dict:
+    def _compute_protos_for_cell(self, indices: List[int]) -> Dict:
         """Computes embedding and geo prototypes.
 
         Args:
-            example (Dict): data sample
+            indices (List): data sample
             geo (bool, optional): whether geo tensor should be included.
                 Defaults to False.
 
         Returns:
             Dict: modified data sample
         """
-        indices = example["indices"]
+
+        # TODO: Get the embeddings for the indices in that geocell through sql querying
         entries = self.dataset["train"][indices]
-        embeddings = entries["embedding"]
+        # TODO: here we can just get the embeddings directly from by querying the database for the indices
+        embeddings = entries[
+            "emb_clip"
+        ]  # or "emb_tiny_vit" TODO: get clip or tinyvit from a global setting
         if embeddings.dim() == 3:
             embeddings = embeddings.mean(dim=1)
-
         proto_emb = embeddings.mean(dim=0)
-        if geo is False:
-            return {"embedding": proto_emb}
+        # If you also need mean geos:
 
-        proto_geo = entries["labels_multi_task"].mean(dim=0)
-        return {"embedding": proto_emb, "geo_tensor": proto_geo}
+        return {"embedding": proto_emb}

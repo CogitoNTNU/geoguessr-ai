@@ -4,9 +4,10 @@ from urllib.parse import urlencode
 import random
 from dotenv import load_dotenv
 import numpy as np
-from backend.s3bucket import upload_dataset_from_folder
+from backend.s3bucket import upload_dataset_from_folder, load_latest_snapshot_df
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+from tqdm import tqdm
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), "../../.env"))
 GOOGLE_KEY = os.getenv("GOOGLE_MAPS_KEY")  # required
@@ -189,10 +190,10 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
             return (lat, lon, False)
 
     # Process in batches of 25 to preserve your upload/cleanup cadence
-    for batch_start in range(0, total_points, 25):
+    for batch_start in tqdm(range(0, total_points, 25), desc="Collecting points"):
         batch_points = points_to_collect[batch_start : batch_start + 25]
         print(
-            f"\nCollecting batch {batch_start + 1}-{batch_start + len(batch_points)} / {total_points}"
+            f"\nCollecting batch {(batch_start + 1) * 4}-{(batch_start + len(batch_points)) * 4} / {total_points * 4} images"
         )
 
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
@@ -229,7 +230,10 @@ def get_points(points_to_collect: np.ndarray[(float, float)], max_workers: int =
 if __name__ == "__main__":
     print("Starting data collection...")
     pictures_per_point = 4
-    amount_of_pictures = int(9900 / pictures_per_point)
+    print(
+        f"Points already collected: {int(len(load_latest_snapshot_df()) / pictures_per_point)}"
+    )
+    amount_of_pictures = int(4 / pictures_per_point)
     extra_credits_result = input(
         "Do you have enabled the extra credits in google cloud? (y/n): "
     )
