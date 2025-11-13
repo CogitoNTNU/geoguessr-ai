@@ -73,7 +73,12 @@ def main(config):
     repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
     candidates = []
     for name in os.listdir(repo_parent_dir):
-        if name.startswith("dataset_sqlite_") and name.endswith(".sqlite"):
+        if (
+            name.startswith("dataset_sqlite_")
+            and name.endswith(".sqlite")
+            and "clip_embeddings" not in name
+            and "tinyvit_embeddings" not in name
+        ):
             full = os.path.join(repo_parent_dir, name)
             try:
                 mtime = os.path.getmtime(full)
@@ -89,7 +94,7 @@ def main(config):
     sqlite_path = candidates[0][0]
     logger.info(f"Using local SQLite dataset: {sqlite_path}")
 
-    df = load_sqlite_dataset(sqlite_path)
+    df = load_sqlite_dataset()
 
     train_test_split = 0.9
     num_training_samples = int(len(df) * train_test_split)
@@ -121,7 +126,7 @@ def main(config):
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
 
-    embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
+    embeddingModelUsed = "TINYIT"  # Possible values are "CLIP" or "TINYVIT"
 
     embedding_model = 0
     if embeddingModelUsed == "CLIP":
@@ -171,7 +176,7 @@ class Configuration:
     betas: tuple[float] = (0.9, 0.999)
     lr: float = 5e-5
     weight_decay: float = 0.01
-    epochs: int = 5000
+    epochs: int = 3
     # Early stopping (defaults approximate common built-ins)
     early_stopping_patience: int = 2
     # Scheduler
