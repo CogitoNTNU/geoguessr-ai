@@ -662,7 +662,7 @@ def create_and_upload_sqlite_from_latest_snapshot(
     # Save a local copy with an explicit `_2` suffix in the filename so it can
     # be used alongside the original without collisions (e.g. parallel runs).
     local_sqlite_path = os.path.join(
-        repo_parent_dir, f"dataset_sqlite_3_{run_id}.sqlite"
+        repo_parent_dir, f"dataset_sqlite_4_{run_id}.sqlite"
     )
     # Recreate the DB to copy from S3-uploaded temp path
     # Note: db_path no longer exists outside the with block; create file again by downloading is costly.
