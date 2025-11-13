@@ -11,7 +11,7 @@ from config import (
     CLIP_MODEL,
     IMAGE_PATH,
     PRETRAIN_METADATA_PATH,
-    PRETAIN_ARGS,
+    PRETRAIN_ARGS,
 )
 
 # Initialize CLIP image processor
@@ -309,7 +309,7 @@ def collate_fn(examples):
 def pretrain(
     model: str,
     dataset: PretrainDataset,
-    train_args: TrainingArguments = PRETAIN_ARGS,
+    train_args: TrainingArguments = PRETRAIN_ARGS,
     resume: bool = False,
 ) -> CLIPModel:
     """Pretrains a CLIP model on the given dataset.
@@ -317,7 +317,7 @@ def pretrain(
     Args:
         model (str): Name of Huggingface model or trainable object.
         dataset (PretrainDataset): Dataset to be used for contrasrive pretraining.
-        train_args (TrainingArguments, optional): Pretraining arguments. Defaults to PRETAIN_ARGS.
+        train_args (TrainingArguments, optional): Pretraining arguments. Defaults to PRETRAIN_ARGS.
         resume (bool, optional): Whether to resume model training from checkpoint.
 
     Returns:
