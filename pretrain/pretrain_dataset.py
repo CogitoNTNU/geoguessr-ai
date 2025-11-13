@@ -205,20 +205,6 @@ class PretrainDataset(torch.utils.data.Dataset):
         else:
             driving_right_caption = ""
 
-        # Compass direction
-        if self._is_valid(s.heading) and random.random() > 0.7:
-            compass_direction = (s.heading + heading_offset) % 360
-            if compass_direction <= 45 or compass_direction > 315:
-                compass_caption = " This photo is facing north."
-            elif compass_direction > 45 and compass_direction <= 135:
-                compass_caption = " This photo is facing east."
-            elif compass_direction > 135 and compass_direction <= 225:
-                compass_caption = " This photo is facing south."
-            elif compass_direction > 225 and compass_direction <= 315:
-                compass_caption = " This photo is facing west."
-        else:
-            compass_caption = ""
-
         # Month (because of seasons)
         if self._is_valid(s.month) and random.random() > 0.7:
             month_caption = f" The photo was taken in {MONTHS[s.month]}."
@@ -228,7 +214,6 @@ class PretrainDataset(torch.utils.data.Dataset):
         other_components = [
             climate_caption,
             driving_right_caption,
-            compass_caption,
             month_caption,
         ]
         shuffle(other_components)
