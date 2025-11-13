@@ -252,7 +252,7 @@ def train_model(
 
             # Evaluation
             eval_loss = evaluate_model(
-                model, dataset["val"], metrics, train_args, refiner, writer, epoch
+                model, dataset["val"], metrics, train_args, writer=writer, epoch=epoch
             )
 
             # Save model if geolocation prediction is best
