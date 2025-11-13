@@ -246,7 +246,11 @@ def train(
         run_id = getattr(getattr(wandb, "run", None), "id", None)
         run_suffix = run_id if run_id else "default"
         checkpoint_dir = os.path.join(config.checkpoint_dir, run_suffix)
-    os.makedirs(checkpoint_dir, exist_ok=True)
+    # Ensure checkpoint directory exists before any file operations
+    try:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+    except Exception as e:
+        logger.error(f"Failed to create checkpoint directory '{checkpoint_dir}': {e}")
 
     optimizer = AdamW(
         model.parameters(),
