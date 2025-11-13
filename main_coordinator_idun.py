@@ -21,6 +21,7 @@ from transformers import CLIPVisionModel
 from config import CLIP_MODEL, TINYVIT_MODEL
 from models.utils import haversine_matrix
 from typing import Optional
+from accelerate import Accelerator
 
 
 class LocalGeoMapDataset(torch.utils.data.Dataset):
@@ -29,7 +30,9 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
     Ensures a consistent spatial size to allow DataLoader collation.
     """
 
-    def __init__(self, df, required_size: int = 336, transform: Optional[torch.nn.Module] = None):
+    def __init__(
+        self, df, required_size: int = 336, transform: Optional[torch.nn.Module] = None
+    ):
         super().__init__()
         self.df = df.reset_index(drop=True)
         self.required_size = required_size
@@ -44,7 +47,7 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.df)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx) -> tuple[torch.Tensor, dict]:
         row = self.df.iloc[idx]
         img_bytes = row["image"]
         if img_bytes is None:
@@ -63,9 +66,41 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
         return tensor, target
 
 
-def main(config):
-    # Overall-modus for å velge mellom training og inference
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def main(config: "Configuration"):
+    # Initialize accelerator as early as possible
+    accelerator = Accelerator()
+
+    # W&B: only initialize on main process
+    if accelerator.is_main_process:
+        # Prefer explicit API key if provided, otherwise rely on prior `wandb login` (CLI) credentials.
+        api_key = os.getenv("WANDB_API_KEY")
+        try:
+            if api_key:
+                wandb.login(key=api_key)
+            else:
+                # Uses stored credentials from `wandb login` in the CLI (e.g. ~/.netrc or wandb config)
+                wandb.login()
+        except Exception as e:
+            logger.warning(f"W&B login failed, proceeding with W&B disabled: {e}")
+
+        # Try to run online; if that fails, fall back to disabled mode so training still works.
+        try:
+            wandb.init(
+                project="geoguessr-ai",  # Your project name
+                # entity="cogito-geoguessr-ai",  # Your team name
+                config=asdict(config),
+                mode="online",
+            )
+        except Exception as e:
+            logger.warning(f"W&B init failed, falling back to disabled mode: {e}")
+            wandb.init(
+                project="geoguessr-ai",
+                config=asdict(config),
+                mode="disabled",
+            )
+
+    # Make sure all processes wait for W&B setup
+    accelerator.wait_for_everyone()
 
     # Fetch dataset from local SQLite (via training.load_sqlite_dataset)
     # Hardcoded: find the latest dataset_sqlite_*.sqlite next to project root (parent of geoguessr-ai)
@@ -79,7 +114,7 @@ def main(config):
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
         ):
-            full = os.path.join(repo_parent_dir, name)
+            full = os.path.join(repo_parent_dair, name)
             try:
                 mtime = os.path.getmtime(full)
             except Exception:
@@ -148,21 +183,26 @@ def main(config):
         norm_mean = None
         norm_std = None
 
-    # Instantiate SuperGuessr with CLIP embedding model
+    # Instantiate SuperGuessr with CLIP/TinyViT embedding model
+    # Do NOT .to(device); Accelerate will handle device placement.
     model = SuperGuessr(
         base_model=embedding_model,
         panorama=False,
         serving=False,
         should_smooth_labels=True,
-    ).to(device)
-    wandb.watch(model, log="all")
+    )
+
+    # Only watch with W&B on main process
+    if accelerator.is_main_process and getattr(wandb, "run", None) is not None:
+        wandb.watch(model, log="all")
+
     model.train()
 
     train(
         model,
         train_dataloader,
         val_dataloader,
-        device,
+        accelerator,
         config,
         target_dimensions=target_dimensions,
         norm_mean=norm_mean,
@@ -173,7 +213,7 @@ def main(config):
 @dataclass
 class Configuration:
     # Optimizer
-    betas: tuple[float] = (0.9, 0.999)
+    betas: tuple[float, float] = (0.9, 0.999)
     lr: float = 5e-5
     weight_decay: float = 0.01
     epochs: int = 3
@@ -182,7 +222,7 @@ class Configuration:
     # Scheduler
     T_0: int = 10
     T_mult: int = 2
-    eta_min: int = 1e-6
+    eta_min: float = 1e-6
     # Checkpointing
     checkpoint_dir: str = "checkpoints"
     save_every_epochs: int = 1
@@ -195,13 +235,15 @@ def train(
     model: Module,
     train_dataloader: DataLoader,
     validation_dataloader: DataLoader,
-    device,
+    accelerator: Accelerator,
     config: Configuration,
     target_dimensions=None,
     norm_mean=None,
     norm_std=None,
     checkpoint_dir: Optional[str] = None,
 ):
+    device = accelerator.device
+
     # Prepare checkpoint directory
     if checkpoint_dir is None:
         run_id = getattr(getattr(wandb, "run", None), "id", None)
@@ -219,21 +261,18 @@ def train(
         optimizer, config.T_0, config.T_mult, config.eta_min
     )
 
-    # Prepare geocell centroids from model (ordered by proto_df geocell_index)
-    centroids = model.geocell_centroid_coords.to(device)  # (num_cells, 2) in (lng, lat)
-
     is_min_mode = (config.monitor_mode or "min").lower() == "min"
     best_value = float("inf") if is_min_mode else float("-inf")
 
-    # Resume if provided
+    # Resume if provided (load BEFORE accelerator.prepare)
     start_epoch = 0
     global_step = 0
-    # Early stopping state
     patience_counter = 0
     patience = getattr(config, "early_stopping_patience", None)
+
     if config.resume_path:
         try:
-            checkpoint = torch.load(config.resume_path, map_location=device)
+            checkpoint = torch.load(config.resume_path, map_location="cpu")
             model.load_state_dict(checkpoint["model_state_dict"])
             optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
             # Scheduler state may not always be present (older checkpoints)
@@ -248,15 +287,31 @@ def train(
         except Exception as e:
             logger.error(f"Failed to resume from '{config.resume_path}': {e}")
 
+    # Prepare objects for distributed / multi-GPU training
+    model, optimizer, train_dataloader, validation_dataloader, scheduler = (
+        accelerator.prepare(
+            model, optimizer, train_dataloader, validation_dataloader, scheduler
+        )
+    )
+
+    # Prepare geocell centroids from model (ordered by proto_df geocell_index)
+    # (num_cells, 2) in (lng, lat)
+    centroids = model.geocell_centroid_coords.to(device)
+
     for epoch in range(start_epoch, config.epochs):
-    # for epoch in range(3):
         model.train()
         running_loss, running_top1, running_topk = 0.0, 0.0, 0.0
         num_batches = 0
 
-        for batch_idx, (images, targets) in enumerate(
-            tqdm(train_dataloader, desc=f"Epoch {epoch + 1}/{config.epochs}")
-        ):
+        # Progress bar only on main process
+        if accelerator.is_main_process:
+            train_iter = tqdm(
+                train_dataloader, desc=f"Epoch {epoch + 1}/{config.epochs}"
+            )
+        else:
+            train_iter = train_dataloader
+
+        for batch_idx, (images, targets) in enumerate(train_iter):
             # Resize images to match embedding model input resolution (CLIP or Tiny-ViT)
             if target_dimensions is not None:
                 if images.dim() == 5:  # (B, V, C, H, W) panorama batches
@@ -279,6 +334,8 @@ def train(
                         align_corners=False,
                     )
 
+            # Accelerator will usually already place tensors on the right device,
+            # but using accelerator.device is safe if not.
             images = images.to(device, non_blocking=True)
 
             # Normalize input
@@ -310,39 +367,44 @@ def train(
             coord_labels = torch.stack([lon_t, lat_t], dim=1)  # (B, 2) in (lng, lat)
             # distances: (B, num_cells), centroids.t(): (2, num_cells)
             distances = haversine_matrix(coord_labels, centroids.t())
-            targets = torch.argmin(distances, dim=-1).to(device, dtype=torch.long)
+            targets_tensor = torch.argmin(distances, dim=-1).to(
+                device, dtype=torch.long
+            )
 
             optimizer.zero_grad()
-            output = model(pixel_values=images, labels_clf=targets, labels=coord_labels)
+            output = model(
+                pixel_values=images, labels_clf=targets_tensor, labels=coord_labels
+            )
             loss = output.loss
             geocell_topk = output.top5_geocells
 
             # Compute metrics
             with torch.no_grad():
                 top1_pred = geocell_topk.indices[:, 0]
-                top1_acc = (top1_pred == targets).float().mean().item()
+                top1_acc = (top1_pred == targets_tensor).float().mean().item()
                 topk_acc = (
-                    (geocell_topk.indices == targets.unsqueeze(1))
+                    (geocell_topk.indices == targets_tensor.unsqueeze(1))
                     .any(dim=1)
                     .float()
                     .mean()
                     .item()
                 )
 
-            # Log per batch
-            wandb.log(
-                {
-                    "train/loss": loss.item(),
-                    "train/top1_acc": top1_acc,
-                    "train/top5_acc": topk_acc,
-                    "train/lr": optimizer.param_groups[0]["lr"],
-                    "epoch": epoch,
-                },
-                step=global_step,
-            )
+            # Log per batch (main process only)
+            if accelerator.is_main_process and getattr(wandb, "run", None) is not None:
+                wandb.log(
+                    {
+                        "train/loss": loss.item(),
+                        "train/top1_acc": top1_acc,
+                        "train/top5_acc": topk_acc,
+                        "train/lr": optimizer.param_groups[0]["lr"],
+                        "epoch": epoch,
+                    },
+                    step=global_step,
+                )
 
             # Backward + optimize
-            loss.backward()
+            accelerator.backward(loss)
             optimizer.step()
 
             running_loss += loss.item()
@@ -351,152 +413,204 @@ def train(
             num_batches += 1
             global_step += 1
 
-            tqdm.write(
-                f"[Epoch {epoch + 1} | Batch {batch_idx}] Loss={loss.item():.4f} "
-                f"Top1={top1_acc:.3f} Top5={topk_acc:.3f}"
-            )
+            if accelerator.is_main_process:
+                tqdm.write(
+                    f"[Epoch {epoch + 1} | Batch {batch_idx}] Loss={loss.item():.4f} "
+                    f"Top1={top1_acc:.3f} Top5={topk_acc:.3f}"
+                )
 
         # Scheduler step at the end of each epoch
         scheduler.step(epoch)
 
-        # Aggregate training metrics per epoch
+        # Aggregate training metrics per epoch (first locally)
         epoch_loss = running_loss / num_batches
         epoch_top1 = running_top1 / num_batches
         epoch_topk = running_topk / num_batches
 
-        # Log validation metrics
-        wandb.log(
-            {
+        # Sync metrics across all processes so early stopping/checkpoints are consistent
+        epoch_loss_t = torch.tensor(epoch_loss, device=device)
+        epoch_top1_t = torch.tensor(epoch_top1, device=device)
+        epoch_topk_t = torch.tensor(epoch_topk, device=device)
+
+        all_epoch_loss = accelerator.gather(epoch_loss_t)
+        all_epoch_top1 = accelerator.gather(epoch_top1_t)
+        all_epoch_topk = accelerator.gather(epoch_topk_t)
+
+        epoch_loss = all_epoch_loss.mean().item()
+        epoch_top1 = all_epoch_top1.mean().item()
+        epoch_topk = all_epoch_topk.mean().item()
+
+        # Checkpointing, logging, and early stopping only on main process
+        if accelerator.is_main_process:
+            # Log aggregated epoch metrics
+            if getattr(wandb, "run", None) is not None:
+                wandb.log(
+                    {
+                        "epoch": epoch,
+                        "train/epoch_loss": epoch_loss,
+                        "train/epoch_top1": epoch_top1,
+                        "train/epoch_top5": epoch_topk,
+                    },
+                    step=global_step,
+                )
+
+            current_value = epoch_loss if is_min_mode else epoch_top1
+
+            # Prepare state dict (unwrap model to avoid DDP prefixes)
+            unwrapped_model = accelerator.unwrap_model(model)
+            state = {
                 "epoch": epoch,
-                "train/epoch_loss": epoch_loss,
-                "train/epoch_top1": epoch_top1,
-                "train/epoch_top5": epoch_topk,
-            },
-            step=global_step,
-        )
+                "global_step": global_step,
+                "model_state_dict": unwrapped_model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "scheduler_state_dict": scheduler.state_dict(),
+                "best_value": best_value,
+                "monitored_value": current_value,
+                "config": asdict(config),
+            }
 
-        # Checkpoint saving
-        current_value = epoch_loss if is_min_mode else epoch_top1
-        state = {
-            "epoch": epoch,
-            "global_step": global_step,
-            "model_state_dict": model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict(),
-            "scheduler_state_dict": scheduler.state_dict(),
-            "best_value": best_value,
-            "monitored_value": current_value,
-            "config": asdict(config),
-        }
+            # Always update 'last' checkpoint
+            last_path = os.path.join(checkpoint_dir, "last.pt")
+            try:
+                accelerator.save(state, last_path)
+            except Exception as e:
+                logger.error(f"Failed to save last checkpoint: {e}")
 
-        # Always update 'last' checkpoint
-        last_path = os.path.join(checkpoint_dir, "last.pt")
-        try:
-            torch.save(state, last_path)
-        except Exception as e:
-            logger.error(f"Failed to save last checkpoint: {e}")
-
-        # Save per-epoch checkpoints only if among top-K best
-        if (epoch + 1) % max(1, int(config.save_every_epochs)) == 0:
-            # Helper to parse value from filename "epoch_XXXX_VALUE.pt"
-            def parse_value_from_filename(filename: str) -> Optional[float]:
-                try:
-                    stem = filename[:-3]  # remove '.pt'
-                    parts = stem.split("_")
-                    # last token should be numeric value if present
-                    value_str = parts[-1]
-                    return float(value_str)
-                except Exception:
-                    return None
-
-            # Gather existing epoch checkpoints with values
-            existing: list[tuple[str, float]] = []
-            for f in os.listdir(checkpoint_dir):
-                if not (f.startswith("epoch_") and f.endswith(".pt")):
-                    continue
-                value = parse_value_from_filename(f)
-                if value is None:
-                    # Unknown value; push to worst side so it gets pruned first
-                    value = float("inf") if is_min_mode else float("-inf")
-                existing.append((f, value))
-
-            k = max(0, int(config.keep_last_n))
-            should_save = False
-            if k == 0:
-                should_save = False
-            elif len(existing) < k:
-                should_save = True
-            else:
-                # Determine worst among current kept set
-                worst_value = max(v for _, v in existing) if is_min_mode else min(v for _, v in existing)
-                should_save = (current_value < worst_value) if is_min_mode else (current_value > worst_value)
-
-            if should_save:
-                # Encode metric in filename for efficient pruning/sorting
-                epoch_path = os.path.join(checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt")
-                try:
-                    torch.save(state, epoch_path)
-                    # Upload to Weights & Biases Artifacts
+            # Save per-epoch checkpoints only if among top-K best
+            if (epoch + 1) % max(1, int(config.save_every_epochs)) == 0:
+                # Helper to parse value from filename "epoch_XXXX_VALUE.pt"
+                def parse_value_from_filename(filename: str) -> Optional[float]:
                     try:
-                        if getattr(wandb, "run", None) is not None:
-                            artifact_name = f"{wandb.run.id}-epoch-{epoch:04d}"
-                            artifact = wandb.Artifact(name=artifact_name, type="model", metadata={
-                                "epoch": epoch,
-                                "monitored_value": current_value,
-                                "monitor_mode": "min" if is_min_mode else "max",
-                            })
-                            artifact.add_file(epoch_path, name=os.path.basename(epoch_path))
-                            wandb.log_artifact(artifact, aliases=[f"epoch-{epoch:04d}", "topk"])
-                    except Exception as e:
-                        logger.warning(f"Failed to upload epoch artifact to W&B: {e}")
-                except Exception as e:
-                    logger.error(f"Failed to save epoch checkpoint: {e}")
+                        stem = filename[:-3]  # remove '.pt'
+                        parts = stem.split("_")
+                        value_str = parts[-1]
+                        return float(value_str)
+                    except Exception:
+                        return None
 
-                # Recompute including the newly saved file
-                existing = []
+                # Gather existing epoch checkpoints with values
+                existing: list[tuple[str, float]] = []
                 for f in os.listdir(checkpoint_dir):
                     if not (f.startswith("epoch_") and f.endswith(".pt")):
                         continue
                     value = parse_value_from_filename(f)
                     if value is None:
+                        # Unknown value; push to worst side so it gets pruned first
                         value = float("inf") if is_min_mode else float("-inf")
                     existing.append((f, value))
 
-                # Sort by best first
-                existing.sort(key=lambda t: t[1], reverse=not is_min_mode)
-                # Keep top-k, remove the rest
-                for f, _ in existing[k:]:
-                    try:
-                        os.remove(os.path.join(checkpoint_dir, f))
-                    except FileNotFoundError:
-                        pass
-                    except Exception as e:
-                        logger.warning(f"Failed to remove old checkpoint '{f}': {e}")
-
-        # Save best checkpoint
-        improved = (current_value < best_value) if is_min_mode else (current_value > best_value)
-        if improved:
-            best_value = current_value
-            best_path = os.path.join(checkpoint_dir, "best.pt")
-            try:
-                state["best_value"] = best_value
-                torch.save(state, best_path)
-                wandb.summary["best_value"] = best_value
-            except Exception as e:
-                logger.error(f"Failed to save best checkpoint: {e}")
-
-        # Early stopping check (uses monitored metric according to monitor_mode)
-        if patience is not None and patience > 0:
-            if improved:
-                patience_counter = 0
-            else:
-                patience_counter += 1
-                if patience_counter >= patience:
-                    logger.warning(
-                        f"Early stopping triggered after {epoch + 1} epochs "
-                        f"with patience={patience} on metric "
-                        f"{'epoch_loss' if is_min_mode else 'epoch_top1'}."
+                k = max(0, int(config.keep_last_n))
+                should_save = False
+                if k == 0:
+                    should_save = False
+                elif len(existing) < k:
+                    should_save = True
+                else:
+                    # Determine worst among current kept set
+                    worst_value = (
+                        max(v for _, v in existing)
+                        if is_min_mode
+                        else min(v for _, v in existing)
                     )
-                    break
+                    should_save = (
+                        current_value < worst_value
+                        if is_min_mode
+                        else current_value > worst_value
+                    )
+
+                if should_save:
+                    # Encode metric in filename for efficient pruning/sorting
+                    epoch_path = os.path.join(
+                        checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt"
+                    )
+                    try:
+                        accelerator.save(state, epoch_path)
+                        # Upload to Weights & Biases Artifacts
+                        try:
+                            if getattr(wandb, "run", None) is not None:
+                                artifact_name = f"{wandb.run.id}-epoch-{epoch:04d}"
+                                artifact = wandb.Artifact(
+                                    name=artifact_name,
+                                    type="model",
+                                    metadata={
+                                        "epoch": epoch,
+                                        "monitored_value": current_value,
+                                        "monitor_mode": "min" if is_min_mode else "max",
+                                    },
+                                )
+                                artifact.add_file(
+                                    epoch_path, name=os.path.basename(epoch_path)
+                                )
+                                wandb.log_artifact(
+                                    artifact,
+                                    aliases=[f"epoch-{epoch:04d}", "topk"],
+                                )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to upload epoch artifact to W&B: {e}"
+                            )
+                    except Exception as e:
+                        logger.error(f"Failed to save epoch checkpoint: {e}")
+
+                    # Recompute including the newly saved file
+                    existing = []
+                    for f in os.listdir(checkpoint_dir):
+                        if not (f.startswith("epoch_") and f.endswith(".pt")):
+                            continue
+                        value = parse_value_from_filename(f)
+                        if value is None:
+                            value = float("inf") if is_min_mode else float("-inf")
+                        existing.append((f, value))
+
+                    # Sort by best first
+                    existing.sort(key=lambda t: t[1], reverse=not is_min_mode)
+                    # Keep top-k, remove the rest
+                    for f, _ in existing[k:]:
+                        try:
+                            os.remove(os.path.join(checkpoint_dir, f))
+                        except FileNotFoundError:
+                            pass
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to remove old checkpoint '{f}': {e}"
+                            )
+
+            # Save best checkpoint
+            improved = (
+                current_value < best_value
+                if is_min_mode
+                else current_value > best_value
+            )
+            if improved:
+                best_value = current_value
+                best_path = os.path.join(checkpoint_dir, "best.pt")
+                try:
+                    state["best_value"] = best_value
+                    accelerator.save(state, best_path)
+                    if getattr(wandb, "run", None) is not None:
+                        wandb.summary["best_value"] = best_value
+                except Exception as e:
+                    logger.error(f"Failed to save best checkpoint: {e}")
+
+            # Early stopping check (uses monitored metric according to monitor_mode)
+            if patience is not None and patience > 0:
+                if improved:
+                    patience_counter = 0
+                else:
+                    patience_counter += 1
+                    if patience_counter >= patience:
+                        logger.warning(
+                            f"Early stopping triggered after {epoch + 1} epochs "
+                            f"with patience={patience} on metric "
+                            f"{'epoch_loss' if is_min_mode else 'epoch_top1'}."
+                        )
+                        # Tell all processes to stop at the same time
+                        accelerator.set_trigger()
+
+        # Ensure all processes see the early-stopping trigger
+        accelerator.wait_for_everyone()
+        if accelerator.check_trigger():
+            break
 
         """
         * Hente 4 bilder av gangen
@@ -516,32 +630,4 @@ def train(
 if __name__ == "__main__":
     load_dotenv()
     config = Configuration()
-
-    # Prefer explicit API key if provided, otherwise rely on prior `wandb login` (CLI) credentials.
-    api_key = os.getenv("WANDB_API_KEY")
-    try:
-        if api_key:
-            wandb.login(key=api_key)
-        else:
-            # Uses stored credentials from `wandb login` in the CLI (e.g. ~/.netrc or wandb config)
-            wandb.login()
-    except Exception as e:
-        logger.warning(f"W&B login failed, proceeding with W&B disabled: {e}")
-
-    # Try to run online; if that fails, fall back to disabled mode so training still works.
-    try:
-        wandb.init(
-            project="geoguessr-ai",  # Your project name
-            # entity="cogito-geoguessr-ai",  # Your team name
-            config=asdict(config),
-            mode="online",
-        )
-    except Exception as e:
-        logger.warning(f"W&B init failed, falling back to disabled mode: {e}")
-        wandb.init(
-            project="geoguessr-ai",
-            config=asdict(config),
-            mode="disabled",
-        )
-
     main(config)
