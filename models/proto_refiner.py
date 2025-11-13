@@ -60,7 +60,7 @@ class ProtoRefiner(nn.Module):
         self.verbose = verbose
 
         # Load dataset with embeddings and prototypes
-        self.dataset = DatasetDict.load_from_disk(dataset_path)
+        self.dataset = DatasetDict.load_from_disk(dataset_path) #Kanskje ikke kan bruke denne metoden. 
 
         # Load prototypes
         self.proto_df = pd.read_csv(proto_path)
