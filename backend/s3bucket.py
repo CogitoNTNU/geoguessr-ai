@@ -659,7 +659,11 @@ def create_and_upload_sqlite_from_latest_snapshot(
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
     repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
     os.makedirs(repo_parent_dir, exist_ok=True)
-    local_sqlite_path = os.path.join(repo_parent_dir, f"dataset_sqlite_{run_id}.sqlite")
+    # Save a local copy with an explicit `_2` suffix in the filename so it can
+    # be used alongside the original without collisions (e.g. parallel runs).
+    local_sqlite_path = os.path.join(
+        repo_parent_dir, f"dataset_sqlite_2_{run_id}.sqlite"
+    )
     # Recreate the DB to copy from S3-uploaded temp path
     # Note: db_path no longer exists outside the with block; create file again by downloading is costly.
     # Instead, regenerate inside a new temp block for copy consistency.
@@ -1349,8 +1353,7 @@ def main():
             )
     except Exception:
         pass
-    # result = create_and_upload_sqlite_from_latest_snapshot()
-    result = create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot()
+    result = create_and_upload_sqlite_from_latest_snapshot()
     print(json.dumps(result, indent=2))
 
 
