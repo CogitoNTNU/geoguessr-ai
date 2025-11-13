@@ -14,6 +14,7 @@ from datasets import (
 from preprocessing.geo_utils import haversine
 from models.utils import ProtoDataManager
 from data.sql.sql_dataset_adapter import DualSQLiteEmbeddingDataset
+import sqlite3
 
 # Cluster refinement model
 
@@ -65,6 +66,75 @@ class ProtoRefiner(nn.Module):
         self.dataset = {
             "train": DualSQLiteEmbeddingDataset(clip_db_path, tinyvit_db_path)
         }
+
+        def read_sqlite_table(db_path: str, query: str) -> pd.DataFrame:
+            """
+            Opens a SQLite DB at `db_path`, runs `query`, returns a pandas DataFrame.
+            """
+            con = sqlite3.connect(db_path)
+            try:
+                df = pd.read_sql_query(query, con)
+            finally:
+                con.close()
+            return df
+
+        def load_pictures_clip_tinyvit_dfs(
+            pics_db_path: str,
+            clip_db_path: str,
+            tinyvit_db_path: str,
+        ):
+            """
+            Loads only the columns needed from three SQLite databases.
+
+            - Pictures / metadata DB (from create_and_upload_sqlite_from_latest_snapshot):
+                location_id, lat, lon, pano_id
+
+            - CLIP DB (from create_and_upload_sqlite_clip_embeddings_from_latest_snapshot):
+                location_id, heading, embedding, embedding_dim
+
+            - TinyViT DB (from create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot):
+                location_id, heading, embedding, embedding_dim
+
+            Returns:
+                (df_pics, df_clip, df_tiny)
+            """
+
+            # Pictures / metadata DB
+            df_pics = read_sqlite_table(
+                pics_db_path,
+                """
+                SELECT
+                    location_id,
+                    lat,
+                    lon,
+                    pano_id
+                FROM samples
+                """,
+            )
+
+            # CLIP embeddings DB
+            df_clip = read_sqlite_table(
+                clip_db_path,
+                """
+                SELECT
+                    embedding,
+                    embedding_dim
+                FROM samples
+                """,
+            )
+
+            # TinyViT embeddings DB
+            df_tiny = read_sqlite_table(
+                tinyvit_db_path,
+                """
+                SELECT
+                    embedding,
+                    embedding_dim
+                FROM samples
+                """,
+            )
+
+            return df_pics, df_clip, df_tiny
 
         # Load prototypes
         self.proto_df = pd.read_csv(proto_path)
