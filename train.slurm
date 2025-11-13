@@ -3,7 +3,7 @@
 #SBATCH --job-name="geoguessr-ai"
 #SBATCH --time=05-00:00:00
 #SBATCH --partition=GPUQ
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:2
 #SBATCH --mem=128GB
 #SBATCH --nodes=1
 #SBATCH --constraint="(a100|h100|h200)&(gpu40g|gpu80g)"
