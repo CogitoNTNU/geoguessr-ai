@@ -4,6 +4,7 @@ import tempfile
 from typing import Dict, Iterator, Optional
 
 import pandas as pd
+from pathlib import Path
 
 # Reuse S3 client and helpers from backend.s3bucket
 from backend.s3bucket import (
@@ -43,6 +44,16 @@ def _resolve_sqlite_local_path(sqlite_path: Optional[str] = None) -> str:
     return local_path
 
 
+def _connect_readonly(local_db_path: str) -> sqlite3.Connection:
+    """
+    Open the SQLite database strictly read-only to avoid creating -wal/-shm files.
+    """
+    ro_uri = f"{Path(local_db_path).resolve().as_uri()}?mode=ro"
+    conn = sqlite3.connect(ro_uri, uri=True)
+    conn.execute("PRAGMA query_only = 1")
+    return conn
+
+
 def load_sqlite_dataset(
     sqlite_path: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -58,7 +69,7 @@ def load_sqlite_dataset(
     """
     local_db_path = _resolve_sqlite_local_path(sqlite_path)
 
-    conn = sqlite3.connect(local_db_path)
+    conn = _connect_readonly(local_db_path)
     try:
         df = pd.read_sql_query(
             """
