@@ -73,7 +73,12 @@ def main(config):
     repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
     candidates = []
     for name in os.listdir(repo_parent_dir):
-        if name.startswith("dataset_sqlite_") and name.endswith(".sqlite"):
+        if (
+            name.startswith("dataset_sqlite_")
+            and name.endswith(".sqlite")
+            and "clip_embeddings" not in name
+            and "tinyvit_embeddings" not in name
+        ):
             full = os.path.join(repo_parent_dir, name)
             try:
                 mtime = os.path.getmtime(full)
