@@ -126,7 +126,7 @@ def main(config):
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
 
-    embeddingModelUsed = "CLIP"  # Possible values are "CLIP" or "TINYVIT"
+    embeddingModelUsed = "TINYIT"  # Possible values are "CLIP" or "TINYVIT"
 
     embedding_model = 0
     if embeddingModelUsed == "CLIP":
