@@ -40,26 +40,6 @@ CLIMATE_DICT = {  # Köppen-Geiger Climate Zones
 }
 
 
-def kg_to_bucket(kg_str, lat):
-    if not isinstance(kg_str, str) or len(kg_str) == 0:
-        return None
-    head = kg_str[0].upper()
-    a = abs(lat)
-    if head == "A":
-        return "tropic"
-    if head == "E":
-        return "polar"
-    if head == "D":
-        return "temperate"
-    if head == "C":
-        # warm-temperate; treat low-lat C as subtropic
-        return "subtropic" if a < 40 else "temperate"
-    if head == "B":
-        # arid spans wide latitudes; split by latitude
-        return "subtropic" if a < 40 else "temperate"
-    return None
-
-
 def sample_koppen(df, raster_path, legend_map=None):
     """
     legend_map: dict mapping raster numeric codes -> 'Af','BWh','Csa', etc.
