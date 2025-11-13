@@ -7,7 +7,6 @@ from PIL import Image
 from typing import Tuple, Any
 from datasets import DatasetDict
 from transformers import Trainer, TrainingArguments, CLIPModel, CLIPProcessor
-from torchvision.transforms import RandomCrop, CenterCrop
 from config import (
     CLIP_MODEL,
     IMAGE_PATH,
@@ -17,10 +16,6 @@ from config import (
 
 # Initialize CLIP image processor
 clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL)
-
-# Initialize Cropper for second batch of streetview images
-l_cropper = CenterCrop(192.53436408909982 * 2)
-v_cropper = CenterCrop(596)
 
 MONTHS = {
     0: "January",
@@ -205,20 +200,6 @@ class PretrainDataset(torch.utils.data.Dataset):
         else:
             driving_right_caption = ""
 
-        # Compass direction
-        if self._is_valid(s.heading) and random.random() > 0.7:
-            compass_direction = (s.heading + heading_offset) % 360
-            if compass_direction <= 45 or compass_direction > 315:
-                compass_caption = " This photo is facing north."
-            elif compass_direction > 45 and compass_direction <= 135:
-                compass_caption = " This photo is facing east."
-            elif compass_direction > 135 and compass_direction <= 225:
-                compass_caption = " This photo is facing south."
-            elif compass_direction > 225 and compass_direction <= 315:
-                compass_caption = " This photo is facing west."
-        else:
-            compass_caption = ""
-
         # Month (because of seasons)
         if self._is_valid(s.month) and random.random() > 0.7:
             month_caption = f" The photo was taken in {MONTHS[s.month]}."
@@ -228,27 +209,12 @@ class PretrainDataset(torch.utils.data.Dataset):
         other_components = [
             climate_caption,
             driving_right_caption,
-            compass_caption,
             month_caption,
         ]
         shuffle(other_components)
         components = [location_caption] + other_components
         caption = "".join(components).strip()
         return caption
-
-    def _random_transform(self, image: Image) -> Image:
-        """Randomly transforms the image on data load.
-
-        Args:
-            image (Image): image.
-
-        Returns:
-            Image: transformed image.
-        """
-        side_length, _ = image.size
-        cropped_length = random.uniform(0.8, 1) * side_length
-        cropper = RandomCrop(cropped_length)
-        return cropper(image)
 
     def __getitem__(self, index: int) -> Tuple:
         """Retrieves item in dataset for given index.
@@ -328,10 +294,6 @@ class PretrainDataset(torch.utils.data.Dataset):
 
         acc = sum(accs) / trials
         return acc
-
-
-# Initialize CLIP image processor
-clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL)
 
 
 def collate_fn(examples):

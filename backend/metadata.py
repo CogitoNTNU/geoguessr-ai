@@ -4,6 +4,7 @@ from data.geocells.geocell_manager import GeocellManager
 from pyproj import Transformer
 from rasterio.transform import rowcol
 from backend.s3bucket import load_latest_snapshot_df
+from pretrain.leftdrive_countries import left_list
 
 CLIMATE_DICT = {  # Köppen-Geiger Climate Zones
     1: ("a tropical rainforest climate"),
@@ -37,26 +38,6 @@ CLIMATE_DICT = {  # Köppen-Geiger Climate Zones
     29: ("a polar tundra climate"),
     30: ("a polar ice cap climate"),
 }
-
-
-def kg_to_bucket(kg_str, lat):
-    if not isinstance(kg_str, str) or len(kg_str) == 0:
-        return None
-    head = kg_str[0].upper()
-    a = abs(lat)
-    if head == "A":
-        return "tropic"
-    if head == "E":
-        return "polar"
-    if head == "D":
-        return "temperate"
-    if head == "C":
-        # warm-temperate; treat low-lat C as subtropic
-        return "subtropic" if a < 40 else "temperate"
-    if head == "B":
-        # arid spans wide latitudes; split by latitude
-        return "subtropic" if a < 40 else "temperate"
-    return None
 
 
 def sample_koppen(df, raster_path, legend_map=None):
@@ -116,4 +97,7 @@ if __name__ == "__main__":
     out = df.apply(lambda r: geocell_mgr.get_geocell_id(r), axis=1)
     df[["cell", "country", "region"]] = pd.DataFrame(out.tolist(), index=df.index)
     df = sample_koppen(df, raster_path, CLIMATE_DICT)
+    df["drive_right"] = df["country"].apply(
+        lambda c: (pd.notna(c)) and (c not in left_list)
+    )
     df.to_csv("pretrain_dataset.csv")
