@@ -94,7 +94,7 @@ def main(config):
     sqlite_path = candidates[0][0]
     logger.info(f"Using local SQLite dataset: {sqlite_path}")
 
-    df = load_sqlite_dataset(sqlite_path)
+    df = load_sqlite_dataset()
 
     train_test_split = 0.9
     num_training_samples = int(len(df) * train_test_split)
@@ -176,7 +176,7 @@ class Configuration:
     betas: tuple[float] = (0.9, 0.999)
     lr: float = 5e-5
     weight_decay: float = 0.01
-    epochs: int = 5000
+    epochs: int = 3
     # Early stopping (defaults approximate common built-ins)
     early_stopping_patience: int = 2
     # Scheduler
