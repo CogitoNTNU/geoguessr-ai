@@ -15,7 +15,6 @@ import random
 import argparse
 
 
-
 def main(args):
     print(f"Mode {args.mode} selected")
     if args.mode == 0:
@@ -56,7 +55,7 @@ def main(args):
 
         print(cells[0][1])
     elif args.mode == 7:
-        geocells = geocell_visualizer.GenerateGeocells(["France"])
+        geocells = geocell_visualizer.GenerateGeocells(["Norway"])
 
     elif args.mode == 8:
         points = [{"lng": random.random(), "lat": random.random()} for i in range(100)]
@@ -77,6 +76,18 @@ def main(args):
 
         for i in trange(len(countries)):
             generate_geocells.GenerateGeocells([countries[i]])
+    elif args.mode == 10:
+        sql = sqlite3.connect(
+            "data/GADM_data/gadm_world_all_levels.filtered_noadm345.gpkg"
+        )
+        countries = pd.read_sql_query("SELECT * FROM ADM_2 WHERE NAME_2 IS 'NA'", sql)[
+            "NAME_1"
+        ]
+
+        sql.close()
+
+        for cel in countries:
+            print(cel)
 
     else:
         print("Not a valid mode!")
@@ -96,7 +107,8 @@ if __name__ == "__main__":
                          6: test_geocells\n
                          7: Kjør geocells\n
                          8: Test clustering\n
-                         9: Lagre geocells fra alle land""",
+                         9: Lagre geocells fra alle land\n
+                         10: Test database""",
         type=int,
     )
     args = parser.parse_args()

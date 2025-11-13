@@ -6,6 +6,7 @@ import pickle
 import sqlite3
 from shapely import wkb as shapely_wkb
 import struct
+import uuid
 
 
 FILEPATHS = [
@@ -171,6 +172,16 @@ class GenerateGeocells:
             admin_1 = name
             country = self.admin_1.iloc[i]["COUNTRY"]
 
+            if country == "United Kingdom" and admin_1 == "NA":
+                admin_1 = "England"
+                name = "England"
+            if country == "Ireland" and admin_1 == "NA":
+                admin_1 = "Cork"
+                name = "Cork"
+            if country == "Netherlands" and admin_1 == "NA":
+                admin_1 = "Zuid-Holland"
+                name = "Zuid-Holland"
+
             if country in self.country_cells:
                 polygons = [j for j in self.admin_1.iloc[i]["geom"].geoms]
                 cell = Cell(name, [], polygons, country, admin_1)
@@ -178,9 +189,12 @@ class GenerateGeocells:
                 self.country_cells[country][admin_1] = [cell]
 
         for i in trange(len(self.admin_2), desc="Celler av admin 2"):
-            name = self.admin_2.iloc[i]["NAME_2"]
+            name = self.admin_2.iloc[i]["NAME_2"] + str(uuid.uuid1())
             admin_1 = self.admin_2.iloc[i]["NAME_1"]
             country = self.admin_2.iloc[i]["COUNTRY"]
+
+            if country == "United Kingdom" and admin_1 == "NA":
+                admin_1 = "England"
 
             if country in self.country_cells:
                 polygons = [j for j in self.admin_2.iloc[i]["geom"].geoms]
