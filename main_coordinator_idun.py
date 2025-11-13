@@ -515,15 +515,33 @@ def train(
 
 if __name__ == "__main__":
     load_dotenv()
-    api_key = os.getenv("WANDB_API_KEY")
     config = Configuration()
 
-    wandb.login(key=api_key)
-    wandb.init(
-        project="geoguessr-ai",  # Your project name
-        # entity="cogito-geoguessr-ai",  # Your team name
-        config=asdict(config),
-        mode="online" if api_key else "disabled",
-    )
+    # Prefer explicit API key if provided, otherwise rely on prior `wandb login` (CLI) credentials.
+    api_key = os.getenv("WANDB_API_KEY")
+    try:
+        if api_key:
+            wandb.login(key=api_key)
+        else:
+            # Uses stored credentials from `wandb login` in the CLI (e.g. ~/.netrc or wandb config)
+            wandb.login()
+    except Exception as e:
+        logger.warning(f"W&B login failed, proceeding with W&B disabled: {e}")
+
+    # Try to run online; if that fails, fall back to disabled mode so training still works.
+    try:
+        wandb.init(
+            project="geoguessr-ai",  # Your project name
+            # entity="cogito-geoguessr-ai",  # Your team name
+            config=asdict(config),
+            mode="online",
+        )
+    except Exception as e:
+        logger.warning(f"W&B init failed, falling back to disabled mode: {e}")
+        wandb.init(
+            project="geoguessr-ai",
+            config=asdict(config),
+            mode="disabled",
+        )
 
     main(config)
