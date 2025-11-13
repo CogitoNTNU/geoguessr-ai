@@ -221,20 +221,6 @@ class PretrainDataset(torch.utils.data.Dataset):
         caption = "".join(components).strip()
         return caption
 
-    def _random_transform(self, image: Image) -> Image:
-        """Randomly transforms the image on data load.
-
-        Args:
-            image (Image): image.
-
-        Returns:
-            Image: transformed image.
-        """
-        side_length, _ = image.size
-        cropped_length = random.uniform(0.8, 1) * side_length
-        cropper = RandomCrop(cropped_length)
-        return cropper(image)
-
     def __getitem__(self, index: int) -> Tuple:
         """Retrieves item in dataset for given index.
 
