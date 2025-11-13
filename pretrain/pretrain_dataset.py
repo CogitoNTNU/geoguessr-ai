@@ -7,7 +7,6 @@ from PIL import Image
 from typing import Tuple, Any
 from datasets import DatasetDict
 from transformers import Trainer, TrainingArguments, CLIPModel, CLIPProcessor
-from torchvision.transforms import RandomCrop, CenterCrop
 from config import (
     CLIP_MODEL,
     IMAGE_PATH,
@@ -17,10 +16,6 @@ from config import (
 
 # Initialize CLIP image processor
 clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL)
-
-# Initialize Cropper for second batch of streetview images
-l_cropper = CenterCrop(192.53436408909982 * 2)
-v_cropper = CenterCrop(596)
 
 MONTHS = {
     0: "January",
