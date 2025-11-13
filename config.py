@@ -102,7 +102,7 @@ TRAIN_ARGS = TrainingArguments(
 
 
 # Pretrain arguments for PIGEON --> RUN ON 4 A100 GPUs
-PRETAIN_ARGS = TrainingArguments(
+PRETRAIN_ARGS = TrainingArguments(
     output_dir="saved_models/pretrained",
     overwrite_output_dir=True,
     do_train=True,

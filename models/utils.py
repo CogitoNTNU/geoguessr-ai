@@ -50,7 +50,9 @@ def haversine_matrix(x: Tensor, y: Tensor) -> Tensor:
     p = torch.cos(x_rad[:, 1]).unsqueeze(1) * torch.cos(y_rad[1, :]).unsqueeze(0)
     a = torch.sin(delta[:, 1, :] / 2) ** 2 + p * torch.sin(delta[:, 0, :] / 2) ** 2
     c = 2 * torch.arcsin(torch.sqrt(a))
-    km = (rad_torch * c) / 1000
+    # ensure radius constant matches tensor device and dtype
+    rad = torch.tensor(6378137.0, dtype=c.dtype, device=c.device)
+    km = (rad * c) / 1000
     return km
 
 

@@ -7,35 +7,18 @@ from PIL import Image
 from typing import Tuple, Any
 from datasets import DatasetDict
 from transformers import Trainer, TrainingArguments, CLIPModel, CLIPProcessor
-from torchvision.transforms import RandomCrop, CenterCrop
+from torchvision.transforms import RandomCrop
 from config import (
     CLIP_MODEL,
-    IMAGE_PATH,
     PRETRAIN_METADATA_PATH,
     PRETAIN_ARGS,
 )
+from backend.s3bucket import load_climate_file, load_latest_snapshot_df
+from backend.metadata import sample_koppen, CLIMATE_DICT, geocell_mgr, MONTHS
+from pretrain.leftdrive_countries import left_list
 
 # Initialize CLIP image processor
 clip_processor = CLIPProcessor.from_pretrained(CLIP_MODEL)
-
-# Initialize Cropper for second batch of streetview images
-l_cropper = CenterCrop(192.53436408909982 * 2)
-v_cropper = CenterCrop(596)
-
-MONTHS = {
-    0: "January",
-    1: "February",
-    2: "March",
-    3: "April",
-    4: "May",
-    5: "June",
-    6: "July",
-    7: "August",
-    8: "September",
-    9: "October",
-    10: "November",
-    11: "December",
-}
 
 THE_LIST = [
     "Bahamas",
@@ -66,9 +49,7 @@ THE_LIST = [
 class PretrainDataset(torch.utils.data.Dataset):
     """Dataset used for pretraining CLIP with geolocalization data."""
 
-    def __init__(
-        self, split: str, metadata: str = PRETRAIN_METADATA_PATH, auxiliary: bool = True
-    ):
+    def __init__(self, split: str, df: pd.DataFrame):
         """Initializes a PretrainDataset used for pretraining CLIP.
 
         Args:
@@ -79,66 +60,21 @@ class PretrainDataset(torch.utils.data.Dataset):
                 Defaults to True.
         """
         assert split in ["train", "val", "test"]
-        self.df = pd.read_csv(metadata).query(f"selection == '{split}'")
+        self.df = self.get_metadata(df)
         self.df = self.df.reset_index(drop=True)
-        self.auxiliary = auxiliary
 
-        no_str = "no" if not auxiliary else ""
-        print(f"Initialized {split} dataset with {no_str} auxiliary data.")
-
-    def _convert_to_row_index(self, index: int) -> Tuple:
-        """Converts the dataset index to the row index in the dataframe
-
-        Args:
-            index (int): dataset index
-
-        Returns:
-            Tuple: (row index, image index)
-        """
-        if index < self.cutoff_1:
-            row_index = int(index / 4)
-            image_col = index % 4
-
-        elif index < self.cutoff_2:
-            row_index = int(self.cutoff_1 / 4) + (index - self.cutoff_1)
-            image_col = 0
-
-        else:
-            row_index = (
-                int(self.cutoff_1 / 4)
-                + (self.cutoff_2 - self.cutoff_1)
-                + int((index - self.cutoff_2) / 5)
-            )
-            image_col = (index - self.cutoff_2) % 5
-
-        return row_index, image_col
-
-    def _select_image(self, index: int, image_col_idx: int) -> Tuple:
-        """Selects one random image for the given sample.
-
-        Args:
-            index (int): row index to retrieve.
-            image_col_idx (int): number of image to retrieve.
-
-        Returns:
-            Tuple: (Image, heading offset)
-        """
-        s = self.df.iloc[index]
-        if s:
-            # Select the correct of the four images for the given datapoint
-            image_col = [x for x in self.df.columns if "image" in x][image_col_idx]
-            image_filename = s[image_col]
-
-            # Load the image
-            image = Image.open(IMAGE_PATH + "/" + image_filename)
-
-            # Calculate the heading offset
-            angle_offset = image_col_idx * 90
-
-        else:
-            raise Exception(f"Invalid image source: {s.source}")
-
-        return image, angle_offset
+    def get_metadata(df):
+        raster_path = load_climate_file()
+        df = load_latest_snapshot_df()
+        df["month"] = df["batch_date"].str[5:7]
+        df["latitude"] = df["lat"]
+        df["longitude"] = df["lon"]
+        out = df.apply(lambda r: geocell_mgr.get_geocell_id(r), axis=1)
+        df[["cell", "country", "region"]] = pd.DataFrame(out.tolist(), index=df.index)
+        df = sample_koppen(df, raster_path, CLIMATE_DICT)
+        df["drive_right"] = df["country"].apply(
+            lambda c: (pd.notna(c)) and (c not in left_list)
+        )
 
     def _is_valid(self, value: Any):
         """Checks whether the provided value is valid.
