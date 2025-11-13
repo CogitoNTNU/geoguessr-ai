@@ -114,7 +114,7 @@ def main(config: "Configuration"):
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
         ):
-            full = os.path.join(repo_parent_dair, name)
+            full = os.path.join(repo_parent_dir, name)
             try:
                 mtime = os.path.getmtime(full)
             except Exception:
