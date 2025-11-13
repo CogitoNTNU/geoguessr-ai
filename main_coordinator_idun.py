@@ -150,9 +150,6 @@ def main(config: "Configuration"):
     train_dataloader = DataLoader(
         train_dataset, batch_size=32, num_workers=4, pin_memory=True
     )
-    test_dataloader = DataLoader(
-        test_dataset, batch_size=32, num_workers=4, pin_memory=True
-    )
     val_dataloader = DataLoader(
         val_dataset, batch_size=32, num_workers=4, pin_memory=True
     )
@@ -160,10 +157,11 @@ def main(config: "Configuration"):
     # Initialize model and set it to train
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
+    logger.info(f"Number of geocells: {num_geocells}")
 
-    embeddingModelUsed = "TINYIT"  # Possible values are "CLIP" or "TINYVIT"
+    embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
 
-    embedding_model = 0
+    embedding_model = None
     if embeddingModelUsed == "CLIP":
         embedding_model = CLIPVisionModel.from_pretrained(CLIP_MODEL)
     elif embeddingModelUsed == "TINYVIT":
