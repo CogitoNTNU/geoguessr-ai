@@ -30,4 +30,7 @@ left_list = [
     "Uganda",
     "United Kingdom",
     "United States Virgin Islands",
+    "England",
+    "Wales",
+    "Scotland",
 ]
