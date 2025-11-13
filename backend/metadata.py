@@ -4,6 +4,7 @@ from data.geocells.geocell_manager import GeocellManager
 from pyproj import Transformer
 from rasterio.transform import rowcol
 from backend.s3bucket import load_latest_snapshot_df
+from pretrain.leftdrive_countries import left_list
 
 CLIMATE_DICT = {  # Köppen-Geiger Climate Zones
     1: ("a tropical rainforest climate"),
@@ -116,4 +117,7 @@ if __name__ == "__main__":
     out = df.apply(lambda r: geocell_mgr.get_geocell_id(r), axis=1)
     df[["cell", "country", "region"]] = pd.DataFrame(out.tolist(), index=df.index)
     df = sample_koppen(df, raster_path, CLIMATE_DICT)
+    df["drive_right"] = df["country"].apply(
+        lambda c: (pd.notna(c)) and (c not in left_list)
+    )
     df.to_csv("pretrain_dataset.csv")
