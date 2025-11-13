@@ -207,7 +207,11 @@ def train(
         run_id = getattr(getattr(wandb, "run", None), "id", None)
         run_suffix = run_id if run_id else "default"
         checkpoint_dir = os.path.join(config.checkpoint_dir, run_suffix)
-    os.makedirs(checkpoint_dir, exist_ok=True)
+    # Ensure checkpoint directory exists before any file operations
+    try:
+        os.makedirs(checkpoint_dir, exist_ok=True)
+    except Exception as e:
+        logger.error(f"Failed to create checkpoint directory '{checkpoint_dir}': {e}")
 
     optimizer = AdamW(
         model.parameters(),
@@ -391,6 +395,8 @@ def train(
         # Always update 'last' checkpoint
         last_path = os.path.join(checkpoint_dir, "last.pt")
         try:
+            # Re-create directory defensively in case it was removed mid-run
+            os.makedirs(checkpoint_dir, exist_ok=True)
             torch.save(state, last_path)
         except Exception as e:
             logger.error(f"Failed to save last checkpoint: {e}")
@@ -410,14 +416,21 @@ def train(
 
             # Gather existing epoch checkpoints with values
             existing: list[tuple[str, float]] = []
-            for f in os.listdir(checkpoint_dir):
-                if not (f.startswith("epoch_") and f.endswith(".pt")):
-                    continue
-                value = parse_value_from_filename(f)
-                if value is None:
-                    # Unknown value; push to worst side so it gets pruned first
-                    value = float("inf") if is_min_mode else float("-inf")
-                existing.append((f, value))
+            try:
+                for f in os.listdir(checkpoint_dir):
+                    if not (f.startswith("epoch_") and f.endswith(".pt")):
+                        continue
+                    value = parse_value_from_filename(f)
+                    if value is None:
+                        # Unknown value; push to worst side so it gets pruned first
+                        value = float("inf") if is_min_mode else float("-inf")
+                    existing.append((f, value))
+            except FileNotFoundError:
+                # Directory vanished between epochs; recreate it and continue
+                try:
+                    os.makedirs(checkpoint_dir, exist_ok=True)
+                except Exception as e:
+                    logger.error(f"Failed to recreate checkpoint directory '{checkpoint_dir}': {e}")
 
             k = max(0, int(config.keep_last_n))
             should_save = False
@@ -434,6 +447,8 @@ def train(
                 # Encode metric in filename for efficient pruning/sorting
                 epoch_path = os.path.join(checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt")
                 try:
+                    # Ensure checkpoint directory exists before saving
+                    os.makedirs(checkpoint_dir, exist_ok=True)
                     torch.save(state, epoch_path)
                     # Upload to Weights & Biases Artifacts
                     try:
@@ -453,13 +468,20 @@ def train(
 
                 # Recompute including the newly saved file
                 existing = []
-                for f in os.listdir(checkpoint_dir):
-                    if not (f.startswith("epoch_") and f.endswith(".pt")):
-                        continue
-                    value = parse_value_from_filename(f)
-                    if value is None:
-                        value = float("inf") if is_min_mode else float("-inf")
-                    existing.append((f, value))
+                try:
+                    for f in os.listdir(checkpoint_dir):
+                        if not (f.startswith("epoch_") and f.endswith(".pt")):
+                            continue
+                        value = parse_value_from_filename(f)
+                        if value is None:
+                            value = float("inf") if is_min_mode else float("-inf")
+                        existing.append((f, value))
+                except FileNotFoundError:
+                    # If directory was removed, rebuild it and treat as no existing checkpoints
+                    try:
+                        os.makedirs(checkpoint_dir, exist_ok=True)
+                    except Exception as e:
+                        logger.error(f"Failed to recreate checkpoint directory '{checkpoint_dir}' during cleanup: {e}")
 
                 # Sort by best first
                 existing.sort(key=lambda t: t[1], reverse=not is_min_mode)
