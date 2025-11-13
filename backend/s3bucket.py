@@ -1322,6 +1322,8 @@ def create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot(
 
 def download_climate_file(path="koppen_geiger_climatezones_1991_2020_1km.tif"):
     key = f"{VERSION}/climate/koppen_geiger_climatezones_1991_2020_1km.tif"
+    if os.path.isfile(path) and os.path.getsize(path) > 0:
+        return path
     s3.download_file(BUCKET, key, path)
     return path
 
