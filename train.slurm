@@ -7,8 +7,8 @@
 #SBATCH --mem=128GB
 #SBATCH --nodes=1
 #SBATCH --constraint="(a100|h100|h200)&(gpu80g)"
-#SBATCH --output=slurm_outputs/output_geo-guessr-ai-clip-panorama.txt
-#SBATCH --error=slurm_outputs/output_geo-guessr-ai-clip-panorama.err
+#SBATCH --output=slurm_outputs/output_geo-guessr-ai-tinyvit-panorama.txt
+#SBATCH --error=slurm_outputs/output_geo-guessr-ai-tinyvit-panorama.err
 #SBATCH --mail-user=danielnh@stud.ntnu.no,jens.m.n.berget@stud.ntnu.no
 #SBATCH --mail-type=ALL
 

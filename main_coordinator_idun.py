@@ -104,7 +104,7 @@ def main(config):
     candidates = []
     for name in os.listdir(repo_parent_dir):
         if (
-            name.startswith("dataset_sqlite_3")
+            name.startswith("dataset_sqlite_run")
             and name.endswith(".sqlite")
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
@@ -158,7 +158,7 @@ def main(config):
     geocell_manager = GeocellManager("data/geocells/finished_geocells")
     num_geocells = geocell_manager.get_num_geocells()
 
-    embeddingModelUsed = "CLIP"  # Possible values are "CLIP" or "TINYVIT"
+    embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
 
     embedding_model = 0
     if embeddingModelUsed == "CLIP":
