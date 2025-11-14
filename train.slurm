@@ -26,4 +26,4 @@ module load Anaconda3/2024.02-1
 pip install uv --user
 
 # Run the Python script
-uv run accelerate launch python main_coordinator_idun.py
+uv run accelerate launch --multi_gpu --num_processes 2 main_coordinator_idun.py
