@@ -154,7 +154,7 @@ class ProtoRefiner(nn.Module):
                 raise ValueError(
                     "Number of loaded prototypes does not match number of geocells."
                 )
-            elif len(protos) is None:
+            elif len(self.protos) is None:
                 raise ValueError("Prototypes could not be loaded.")
 
             for i in range(len(self.protos)):
