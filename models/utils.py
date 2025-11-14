@@ -7,6 +7,7 @@ from collections import namedtuple
 import torch
 from torch import Tensor
 from config import LABEL_SMOOTHING_CONSTANT
+import ast
 
 ModelOutput = namedtuple(
     "ModelOutput",
@@ -117,7 +118,46 @@ class ProtoDataManager:
             cell_id = int(row["geocell_index"])
             if cell_id not in geocell_dict:
                 geocell_dict[cell_id] = []
-            geocell_dict[cell_id].extend([int(x) for x in row["indices"]])
+            indices_val = row.get("indices", [])
+
+            # Robustly parse indices from various possible formats
+            parsed: list[int] = []
+            if isinstance(indices_val, (list, tuple)):
+                candidates = list(indices_val)
+            elif pd.isna(indices_val):
+                candidates = []
+            elif isinstance(indices_val, str):
+                s = indices_val.strip()
+                if s == "":
+                    candidates = []
+                else:
+                    obj = None
+                    # Try Python literal first (handles '[1, 2, 3]' and '(1,2)')
+                    try:
+                        obj = ast.literal_eval(s)
+                    except Exception:
+                        # Fallback: treat as comma-separated values, optionally wrapped in brackets
+                        s_stripped = s.strip("[](){}")
+                        obj = [part for part in s_stripped.split(",") if part != ""]
+
+                    if isinstance(obj, (list, tuple)):
+                        candidates = list(obj)
+                    else:
+                        candidates = [obj]
+            else:
+                candidates = [indices_val]
+
+            for x in candidates:
+                try:
+                    parsed.append(int(x))
+                except Exception:
+                    try:
+                        parsed.append(int(str(x).strip()))
+                    except Exception:
+                        # Skip values that cannot be coerced to int
+                        continue
+
+            geocell_dict[cell_id].extend(parsed)
         return geocell_dict
 
     def get_indices_for_cell(self, cell_id: int) -> list[int]:
