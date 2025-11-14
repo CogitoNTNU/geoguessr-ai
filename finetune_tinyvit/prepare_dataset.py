@@ -9,6 +9,7 @@ Prepare a local classification dataset from the latest S3 snapshot.
 Usage (optional docs; you can run via `python -m finetune_tinyvit.prepare_dataset`):
   - See README in this folder.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -96,9 +97,7 @@ def build_manifest(
     df = df[df["filepath"].apply(os.path.exists)].reset_index(drop=True)
 
     # Label by country using point-in-polygon join
-    countries = load_gadm_countries(
-        "data/GADM_data/GADM_country"
-    )  # EPSG:4326
+    countries = load_gadm_countries("data/GADM_data/GADM_country")  # EPSG:4326
     pts = gpd.GeoDataFrame(
         df[["location_id", "lat", "lon", "filepath"]].copy(),
         geometry=[Point(lon, lat) for lon, lat in zip(df["lon"], df["lat"])],
@@ -113,7 +112,9 @@ def build_manifest(
     return manifest
 
 
-def split_train_val(df: pd.DataFrame, val_frac: float = 0.1, seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def split_train_val(
+    df: pd.DataFrame, val_frac: float = 0.1, seed: int = 42
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     # Stratify by country when possible
     rng = random.Random(seed)
     splits = []
@@ -131,8 +132,15 @@ def split_train_val(df: pd.DataFrame, val_frac: float = 0.1, seed: int = 42) -> 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--out_dir", type=str, default="./out", help="Local image cache root")
-    ap.add_argument("--limit", type=int, default=2000, help="Limit total images for a lightweight run")
+    ap.add_argument(
+        "--out_dir", type=str, default="./out", help="Local image cache root"
+    )
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=2000,
+        help="Limit total images for a lightweight run",
+    )
     ap.add_argument("--val_frac", type=float, default=0.1)
     ap.add_argument("--manifest_dir", type=str, default="finetune_tinyvit/manifests")
     args = ap.parse_args()

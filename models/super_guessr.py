@@ -79,6 +79,7 @@ class SuperGuessr(nn.Module):
         if centroids is None:
             centroids = _build_centroids_from_manager(self._geocell_mgr)
 
+        # (num_cells, 2) in (lng, lat)
         self.geocell_centroid_coords = nn.Parameter(centroids, requires_grad=False)
         self.num_cells = centroids.size(0)
 
@@ -152,59 +153,6 @@ class SuperGuessr(nn.Module):
             elif "tiny" in self.base_model.config._name_or_path and not self.serving:
                 self.base_model.freeze_all_but_last_stage()
 
-    # def load_geocells(self) -> Tensor:
-    #     """Loads geocell centroids and converts them to ECEF format
-
-    # #     Args:
-    # #         path (str, optional): path to geocells. Defaults to GEOCELL_PATH.
-
-    # #     Returns:
-    # #         Tensor: ECEF geocell centroids
-    # #     """
-    #     geo_df = pd.read_csv(path)
-    #     centroid_coords = torch.tensor(geo_df[["lng", "lat"]].values)
-    #     geocell_centroid_coords = nn.parameter.Parameter(
-    #         data=centroid_coords, requires_grad=False
-    #     )
-    #     return geocell_centroid_coords
-
-    def _move_to_cuda(
-        self,
-        pixel_values: Tensor = None,
-        embedding: Tensor = None,
-        labels: Tensor = None,
-        labels_clf: Tensor = None,
-    ):
-        """Moves supplied tensors to device.
-
-        Args:
-            pixel_values (Tensor, optional): preprocessed images pixel values.
-            embedding (Tensor, optional): image embeddings if no pass through
-                a base model is performed.
-            labels (Tensor, optional): coordinates or classification labels.
-            labels_clf (Tensor, optional): index of ground truth geocell.
-        """
-        device = "cuda" if next(self.parameters()).is_cuda else "cpu"
-        if not self.training and device == "cuda":
-            if pixel_values is not None:
-                pixel_values = pixel_values.to(device)
-
-            if embedding is not None:
-                embedding = embedding.to(device)
-
-            if labels is not None:
-                labels = labels.to(device)
-
-            if labels_clf is not None:
-                labels_clf = labels_clf.to(device)
-
-        return (
-            pixel_values,
-            embedding,
-            labels,
-            labels_clf,
-        )
-
     def load_state(self, path: str):
         """Loads weights from path and applies them to the model.
 
@@ -212,8 +160,8 @@ class SuperGuessr(nn.Module):
             path (str): path to model weights
         """
         own_state = self.state_dict()
-        device_str = "cuda" if torch.cuda.is_available() else "cpu"
-        state_dict = torch.load(path, map_location=device_str)
+        # Always load on CPU; let the caller/accelerate move to device
+        state_dict = torch.load(path, map_location="cpu")
         for name, param in state_dict.items():
             if name not in own_state:
                 print(f"Parameter {name} not in model's state.")
@@ -222,7 +170,10 @@ class SuperGuessr(nn.Module):
             if isinstance(param, Parameter):
                 param = param.data
 
-            own_state[name].copy_(param)
+            try:
+                own_state[name].copy_(param)
+            except Exception as e:
+                print(f"Failed loading parameter {name}: {e}")
 
     def _assert_requirements(
         self,
@@ -239,13 +190,12 @@ class SuperGuessr(nn.Module):
 
         if self.base_model is not None:
             assert pixel_values is not None, (
-                'Parameter "pixel_values" must be supplied if model \
-                                              has a base model.'
+                'Parameter "pixel_values" must be supplied if model has a base model.'
             )
         else:
             assert embedding is not None, (
-                'Parameter "embedding" must be supplied if model \
-                                           does not have a base model.'
+                'Parameter "embedding" must be supplied if model '
+                "does not have a base model."
             )
 
     def _to_one_hot(self, tensor: Tensor) -> Tensor:
@@ -253,7 +203,6 @@ class SuperGuessr(nn.Module):
 
         Args:
             tensor (torch.Tensor): The input tensor.
-            num_classes (int): The number of classes for one-hot encoding.
 
         Returns:
             Tensor: The one-hot encoded tensor.
@@ -291,19 +240,6 @@ class SuperGuessr(nn.Module):
             embedding must not be None.
         """
         self._assert_requirements(pixel_values, embedding)
-
-        # Device
-        (
-            pixel_values,
-            embedding,
-            labels,
-            labels_clf,
-        ) = self._move_to_cuda(
-            pixel_values,
-            embedding,
-            labels,
-            labels_clf,
-        )
 
         # If panorama, (N, 4, C, H, W) -> (N * 4, C, H, W)
         if self.panorama and pixel_values is not None:
@@ -359,7 +295,7 @@ class SuperGuessr(nn.Module):
         pred_centroid_coordinate = torch.index_select(
             self.geocell_centroid_coords.data, 0, geocell_preds
         )
-        label_probs = self._to_one_hot(labels_clf)  # labels_clf if normal
+        # label_probs = self._to_one_hot(labels_clf)  # labels_clf if normal
 
         # Get top 'num_candidates' geocell candidates
         geocell_topk = torch.topk(geocell_probs, self.num_candidates, dim=-1)
@@ -374,7 +310,9 @@ class SuperGuessr(nn.Module):
             distances = haversine_matrix(labels, self.geocell_centroid_coords.data.t())
             # unnormalized similarities -> normalize to probability distribution
             soft_targets = smooth_labels(distances)
-            soft_targets = soft_targets / soft_targets.sum(dim=-1, keepdim=True).clamp_min(1e-12)
+            soft_targets = soft_targets / soft_targets.sum(
+                dim=-1, keepdim=True
+            ).clamp_min(1e-12)
             # soft cross-entropy with log-softmax
             log_probs = F.log_softmax(logits, dim=-1)
             loss_clf = -(soft_targets * log_probs).sum(dim=-1).mean()
@@ -451,6 +389,7 @@ def _build_centroids_from_manager(mgr: GeocellManager):
     centroids = torch.tensor(centroids, dtype=torch.float32)
     return centroids
 
+
 def _build_centroids_from_proto_df(csv_path: str):
     """
     Build centroids ordered by geocell_index from proto_df.csv.
@@ -463,7 +402,11 @@ def _build_centroids_from_proto_df(csv_path: str):
         return None
 
     # Support legacy column name fallback
-    idx_col = "geocell_index" if "geocell_index" in df.columns else ("geocell_id" if "geocell_id" in df.columns else None)
+    idx_col = (
+        "geocell_index"
+        if "geocell_index" in df.columns
+        else ("geocell_id" if "geocell_id" in df.columns else None)
+    )
     if idx_col is None:
         return None
 

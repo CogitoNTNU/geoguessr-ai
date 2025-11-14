@@ -8,13 +8,13 @@ This folder provides a minimal pipeline to finetune TinyViT on your S3 Street Vi
 
 ## Steps
 
-1) Prepare the dataset (download + label + split)
+1. Prepare the dataset (download + label + split)
 
 ```bash
 python -m finetune_tinyvit.prepare_dataset --out_dir ./out --limit 2000 --val_frac 0.1 --manifest_dir finetune_tinyvit/manifests
 ```
 
-2) Train TinyViT
+2. Train TinyViT
 
 ```bash
 python -m finetune_tinyvit.train_tinyvit_timm \
@@ -24,7 +24,7 @@ python -m finetune_tinyvit.train_tinyvit_timm \
   --epochs 5 --batch_size 64 --pretrained
 ```
 
-3) Extract embeddings for further processing
+3. Extract embeddings for further processing
 
 ```bash
 python -m finetune_tinyvit.extract_embeddings \
@@ -36,6 +36,7 @@ python -m finetune_tinyvit.extract_embeddings \
 ## What is a collate function?
 
 A collate function tells the DataLoader how to merge a list of samples into one batch. Here we:
+
 - Apply transforms to each image.
 - Stack images into a tensor (B, 3, H, W).
 - Build a labels tensor and keep metadata (location_id, lat/lon) as a list.
@@ -55,6 +56,7 @@ This helps when samples are not simple (image, label) pairs or you need custom p
 ## MMPretrain (optional)
 
 MMPretrain supports TinyViT via timm. If you prefer that framework:
+
 - Export manifests to MMPretrain's JSON annotation format.
 - Use a TinyViT config (backbone=TinyViT-5M, head=LinearClsHead, pretrained timm weights).
 - To get embeddings, call `model.backbone.forward_features(x)` or set head to Identity during inference.

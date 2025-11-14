@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Export CSV manifests to MMPretrain JSON annotation format.
 
@@ -9,13 +7,16 @@ Produces train.json and val.json with entries like:
 Also writes label_map.json mapping class name -> id.
 """
 
+from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
 import pandas as pd
 
 
-def export(csv_path: str, out_json: str, label_map: dict[str, int] | None = None) -> dict[str, int]:
+def export(
+    csv_path: str, out_json: str, label_map: dict[str, int] | None = None
+) -> dict[str, int]:
     df = pd.read_csv(csv_path)
     if label_map is None:
         classes = sorted(df["country"].astype(str).unique())
@@ -24,10 +25,12 @@ def export(csv_path: str, out_json: str, label_map: dict[str, int] | None = None
     records = []
     for _, row in df.iterrows():
         c = str(row["country"])
-        records.append({
-            "img_path": str(Path(row["filepath"]).absolute()),
-            "gt_label": int(label_map[c]),
-        })
+        records.append(
+            {
+                "img_path": str(Path(row["filepath"]).absolute()),
+                "gt_label": int(label_map[c]),
+            }
+        )
     Path(out_json).parent.mkdir(parents=True, exist_ok=True)
     with open(out_json, "w") as f:
         json.dump(records, f)

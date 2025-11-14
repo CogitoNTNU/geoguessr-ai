@@ -24,10 +24,10 @@ def add_file_paths_to_df(
     # --------------------------------------------------------------------------
 
     # --- FIX: Initialize the lists ---
-    local_paths: list[str]
-    images: list[Optional[Image.Image]]
+    local_paths: list[str] = []
+    images: list[Optional[Image.Image]] = []
     # -------------------------------
-    
+
     total_rows = len(df)
     print(f"Starting to process {total_rows} images...")
 
@@ -51,6 +51,7 @@ def add_file_paths_to_df(
 
     print("--- Processing complete! ---")
     return df
+
 
 # You also need to make sure you are calling this function at the end of your script.
 # Add this to the bottom of your load_data_mod.py file if it's not there.

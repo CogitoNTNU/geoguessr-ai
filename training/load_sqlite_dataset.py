@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import tempfile
-from typing import Dict, Iterator, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -80,10 +80,10 @@ def load_sqlite_dataset(
 
     # Normalize potential memoryview in BLOB column to bytes
     if "image" in df.columns:
-        df["image"] = df["image"].apply(lambda x: bytes(x) if isinstance(x, memoryview) else x)
+        df["image"] = df["image"].apply(
+            lambda x: bytes(x) if isinstance(x, memoryview) else x
+        )
     return df
 
 
 __all__ = ["load_sqlite_dataset"]
-
-
