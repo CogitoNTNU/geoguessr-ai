@@ -21,7 +21,7 @@ from transformers import CLIPVisionModel
 from config import CLIP_MODEL, TINYVIT_MODEL
 from models.utils import haversine_matrix
 from typing import Optional
-from accelerate import Accelerator
+from accelerate import Accelerator, DistributedDataParallelKwargs
 
 
 class LocalGeoMapDataset(torch.utils.data.Dataset):
@@ -68,7 +68,9 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
 
 def main(config: "Configuration"):
     # Initialize accelerator as early as possible
-    accelerator = Accelerator()
+    # Enable find_unused_parameters to avoid DDP reduction errors for unused params.
+    ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
+    accelerator = Accelerator(kwargs_handlers=[ddp_kwargs])
 
     # W&B: only initialize on main process
     if accelerator.is_main_process:
