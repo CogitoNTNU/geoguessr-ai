@@ -3,7 +3,7 @@
 #SBATCH --job-name="geoguessr-ai"
 #SBATCH --time=05-00:00:00
 #SBATCH --partition=GPUQ
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:4
 #SBATCH --mem=128GB
 #SBATCH --nodes=1
 #SBATCH --constraint="(a100|h100|h200)&(gpu40g|gpu80g)"
@@ -26,4 +26,4 @@ module load Anaconda3/2024.02-1
 pip install uv --user
 
 # Run the Python script
-uv run accelerate launch --multi_gpu --num_processes 2 main_coordinator_idun.py
+uv run accelerate launch --multi_gpu --num_processes 4 main_coordinator_idun.py
