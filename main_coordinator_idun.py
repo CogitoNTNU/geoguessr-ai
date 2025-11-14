@@ -95,7 +95,6 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
 
 
 def main(config):
-    # Overall-modus for å velge mellom training og inference
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Fetch dataset from local SQLite (via training.load_sqlite_dataset)
@@ -105,7 +104,7 @@ def main(config):
     candidates = []
     for name in os.listdir(repo_parent_dir):
         if (
-            name.startswith("dataset_sqlite")
+            name.startswith("dataset_sqlite_3")
             and name.endswith(".sqlite")
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
@@ -146,13 +145,13 @@ def main(config):
     )
 
     train_dataloader = DataLoader(
-        train_dataset, batch_size=32, num_workers=4, pin_memory=True
+        train_dataset, batch_size=32, num_workers=1, pin_memory=True
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=32, num_workers=4, pin_memory=True
+        test_dataset, batch_size=32, num_workers=1 pin_memory=True
     )
     val_dataloader = DataLoader(
-        val_dataset, batch_size=32, num_workers=4, pin_memory=True
+        val_dataset, batch_size=32, num_workers=1, pin_memory=True
     )
 
     # Initialize model and set it to train
@@ -185,7 +184,7 @@ def main(config):
     model = SuperGuessr(
         base_model=embedding_model,
         panorama=True,  # Enable panorama mode: model expects multiple views per location
-        serving=False,
+        serving=False, # Training mode, set to true for inference
         should_smooth_labels=True,
     ).to(device)
     wandb.watch(model, log="all")
