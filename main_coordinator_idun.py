@@ -295,9 +295,10 @@ def train(
         )
     )
 
-    # Prepare geocell centroids from model (ordered by proto_df geocell_index)
-    # (num_cells, 2) in (lng, lat)
-    centroids = model.geocell_centroid_coords
+    # Prepare geocell centroids from underlying model (ordered by proto_df geocell_index)
+    # (num_cells, 2) in (lng, lat). Use unwrap_model so this works with DDP/FSDP wrappers.
+    base_model = accelerator.unwrap_model(model)
+    centroids = base_model.geocell_centroid_coords.to(device)
 
     for epoch in range(start_epoch, config.epochs):
         model.train()
