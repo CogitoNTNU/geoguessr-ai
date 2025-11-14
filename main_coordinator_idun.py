@@ -297,7 +297,7 @@ def train(
 
     # Prepare geocell centroids from model (ordered by proto_df geocell_index)
     # (num_cells, 2) in (lng, lat)
-    centroids = model.geocell_centroid_coords.to(device)
+    centroids = model.geocell_centroid_coords
 
     for epoch in range(start_epoch, config.epochs):
         model.train()
@@ -337,8 +337,6 @@ def train(
 
             # Accelerator will usually already place tensors on the right device,
             # but using accelerator.device is safe if not.
-            images = images.to(device, non_blocking=True)
-
             # Normalize input
             if images.dtype == torch.uint8:
                 images = images.float().div_(255.0)
@@ -368,9 +366,7 @@ def train(
             coord_labels = torch.stack([lon_t, lat_t], dim=1)  # (B, 2) in (lng, lat)
             # distances: (B, num_cells), centroids.t(): (2, num_cells)
             distances = haversine_matrix(coord_labels, centroids.t())
-            targets_tensor = torch.argmin(distances, dim=-1).to(
-                device, dtype=torch.long
-            )
+            targets_tensor = torch.argmin(distances, dim=-1)
 
             optimizer.zero_grad()
             output = model(
