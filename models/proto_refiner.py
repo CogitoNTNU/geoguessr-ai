@@ -13,7 +13,6 @@ from datasets import (
 )
 from preprocessing.geo_utils import haversine
 from models.utils import ProtoDataManager
-from data.sql.sql_dataset_adapter import DualSQLiteEmbeddingDataset
 import sqlite3
 
 # Cluster refinement model
@@ -31,7 +30,7 @@ class ProtoRefiner(nn.Module):
         max_refinement: int = 1000,
         temperature: float = 1.6,
         proto_path: str = PROTO_PATH,
-        protos: List[Dataset] = None,
+        protos: str = None,
         verbose: bool = False,
         clip_db_path: str = "data/sqlite/clip/dataset.sqlite",  # correct?
         tinyvit_db_path: str = "data/sqlite/tinyvit/dataset.sqlite",  # correct?
@@ -63,9 +62,9 @@ class ProtoRefiner(nn.Module):
 
         # TODO: get the needed data from the dataset through sql querying
         # Check all the places where self.dataset is used
-        self.dataset = {
-            "train": DualSQLiteEmbeddingDataset(clip_db_path, tinyvit_db_path)
-        }
+        # self.dataset = {
+        #     "train": DualSQLiteEmbeddingDataset(clip_db_path, tinyvit_db_path)
+        # }
 
         def read_sqlite_table(db_path: str, query: str) -> pd.DataFrame:
             """
@@ -141,16 +140,38 @@ class ProtoRefiner(nn.Module):
         self.proto_manager = ProtoDataManager(self.proto_df)
 
         # Load prototype index dataframe
-        self.proto_df["geocell_id"] = self.proto_df["geocell_id"].astype(int)
-        self.num_geocells = self.proto_df["geocell_id"].max() + 1
+        self.proto_df["geocell_index"] = self.proto_df["geocell_index"].astype(int)
+        self.num_geocells = self.proto_df["geocell_index"].max() + 1
         # self.proto_df = self.proto_df.set_index("geocell_id") The geocell_id is not unique and the file contains all the clusters for every geocell
 
         # Generate prototypes for every geocells
         # TODO: See what we need to load here
         if protos is None:
             self.load_prototypes()
+            self.protos: List[Dataset]
+
+            if len(self.protos) != self.num_geocells:
+                raise ValueError(
+                    "Number of loaded prototypes does not match number of geocells."
+                )
+            elif len(protos) is None:
+                raise ValueError("Prototypes could not be loaded.")
+
+            for i in range(len(self.protos)):
+                if self.protos[i] is None:
+                    continue
+                self.protos[i].save_to_disk(f"data/geocells/protos/proto_{i}")
         else:
-            self.protos = protos
+            self.protos = [None] * self.num_geocells
+            for i in range(self.num_geocells):
+                try:
+                    self.protos[i] = Dataset.load_from_disk(
+                        f"data/geocells/protos/proto_{i}"
+                    )
+                except FileNotFoundError:
+                    self.protos[i] = None
+            if verbose:
+                print("Loaded prototypes from disk.")
 
         # Learnable parameters
         self.temperature = Parameter(torch.tensor(temperature), requires_grad=False)
@@ -235,7 +256,7 @@ class ProtoRefiner(nn.Module):
                     cell_id
                 ][
                     pred_cluster_id.item()
-                ]  # TODO: dont think this will work. Need a way to get the data for the cluster. Change this to use self.proto_df
+                ]  # TODO: dont think this will work. Need a way to get the data for the cluster. Change this to use self.proto_df. The entry is like a row in proto_df
                 lng, lat = self._within_cluster_refinement(emb, entry)
                 top_preds.append([lng, lat])
 
@@ -292,7 +313,7 @@ class ProtoRefiner(nn.Module):
         points = self.dataset["train"][
             cluster["indices"]
         ]  # TODO: query the database for these indices directly
-        embeddings = points["emb_clip"].to("cuda")  # or points["emb_tiny_vit"]
+        embeddings = points["embedding"].to("cuda")  # or points["emb_tiny_vit"]
         # if embeddings.dim() == 3 and embeddings.size(1) == 4:
         if (
             embeddings.dim() == 3 and embeddings.size(1) == 4
@@ -321,7 +342,7 @@ class ProtoRefiner(nn.Module):
         disable_progress_bar()  # dataset.map progress bar, not tqdm
 
         # Multi-processing for CPU-bound (not I/O bound) prototype generation
-        with ProcessPoolExecutor(max_workers=64) as executor:
+        with ProcessPoolExecutor(max_workers=None) as executor:
             future_to_index = {
                 executor.submit(self._get_prototypes, i): i
                 for i in range(self.num_geocells)
@@ -363,7 +384,7 @@ class ProtoRefiner(nn.Module):
         if type(cell_df) is pd.core.series.Series:
             cell_df = pd.DataFrame([cell_df])
 
-        if len(cell_df.iloc[0]["indices"]) == 0:
+        if len(cell_df["indices"]) == 0:
             return None
 
         if type(cell_df) is list:
@@ -434,12 +455,17 @@ class ProtoRefiner(nn.Module):
         # TODO: Get the embeddings for the indices in that geocell through sql querying
         entries = self.dataset["train"][indices]
         # TODO: here we can just get the embeddings directly from by querying the database for the indices
-        embeddings = entries[
-            "emb_clip"
-        ]  # or "emb_tiny_vit" TODO: get clip or tinyvit from a global setting
+        embeddings = entries["embedding"]
         if embeddings.dim() == 3:
             embeddings = embeddings.mean(dim=1)
         proto_emb = embeddings.mean(dim=0)
         # If you also need mean geos:
 
         return {"embedding": proto_emb}
+
+
+if __name__ == "__main__":
+    print("Initializing ProtoRefiner for generating prototypes...")
+    proto = ProtoRefiner()
+    print("Saving prototypes to disk")
+    print("Exiting...")
