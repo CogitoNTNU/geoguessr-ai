@@ -74,7 +74,7 @@ def main(config):
     candidates = []
     for name in os.listdir(repo_parent_dir):
         if (
-            name.startswith("dataset_sqlite_2")
+            name.startswith("dataset_sqlite")
             and name.endswith(".sqlite")
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
