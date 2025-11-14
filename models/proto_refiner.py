@@ -342,7 +342,7 @@ class ProtoRefiner(nn.Module):
         disable_progress_bar()  # dataset.map progress bar, not tqdm
 
         # Multi-processing for CPU-bound (not I/O bound) prototype generation
-        with ProcessPoolExecutor(max_workers=64) as executor:
+        with ProcessPoolExecutor(max_workers=None) as executor:
             future_to_index = {
                 executor.submit(self._get_prototypes, i): i
                 for i in range(self.num_geocells)
