@@ -148,7 +148,7 @@ def main(config):
         train_dataset, batch_size=32, num_workers=1, pin_memory=True
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=32, num_workers=1 pin_memory=True
+        test_dataset, batch_size=32, num_workers=1, pin_memory=True
     )
     val_dataloader = DataLoader(
         val_dataset, batch_size=32, num_workers=1, pin_memory=True
