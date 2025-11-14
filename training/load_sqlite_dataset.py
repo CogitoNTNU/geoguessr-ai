@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import tempfile
-from typing import Dict, Iterator, Optional
+from typing import Dict, Iterator, Optional, List
 
 import pandas as pd
 from pathlib import Path
@@ -95,6 +95,73 @@ def load_sqlite_dataset(
     return df
 
 
-__all__ = ["load_sqlite_dataset"]
+def _build_panorama_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert a per-image DataFrame into a per-location panorama DataFrame.
+
+    Assumes that each location has up to 4 images with different headings.
+    The resulting DataFrame has one row per location_id and contains:
+      - lat, lon (taken from the first row of the group)
+      - headings: list of headings for this location
+      - images: list[bytes] of images in the same order as headings
+    """
+    required_cols = {"location_id", "lat", "lon", "heading", "image"}
+    if not required_cols.issubset(df.columns):
+        missing = required_cols.difference(df.columns)
+        raise ValueError(
+            f"DataFrame is missing required columns for panorama construction: {missing}"
+        )
+
+    # Ensure deterministic ordering within each group
+    df_sorted = df.sort_values(["location_id", "heading"])
+
+    records: List[Dict] = []
+    for location_id, group in df_sorted.groupby("location_id"):
+        # Drop rows with missing image blobs
+        group_valid = group[group["image"].notna()]
+        if group_valid.empty:
+            continue
+
+        headings = group_valid["heading"].tolist()
+        images = group_valid["image"].tolist()
+
+        # Take shared metadata from the first row in the group
+        first = group_valid.iloc[0]
+        records.append(
+            {
+                "location_id": location_id,
+                "lat": float(first["lat"]),
+                "lon": float(first["lon"]),
+                "headings": headings,
+                "images": images,
+            }
+        )
+
+    if not records:
+        raise ValueError("No panorama-style records could be constructed from the dataset.")
+
+    pano_df = pd.DataFrame.from_records(records)
+    return pano_df
+
+
+def load_sqlite_panorama_dataset(
+    sqlite_path: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Load the SQLite dataset and group rows into panoramas of up to four
+    images per location (one row per location_id).
+
+    The returned DataFrame has at least the following columns:
+      - location_id
+      - lat
+      - lon
+      - headings: list of headings for this location
+      - images: list[bytes] of image blobs ordered like `headings`
+    """
+    base_df = load_sqlite_dataset(sqlite_path)
+    return _build_panorama_dataframe(base_df)
+
+
+__all__ = ["load_sqlite_dataset", "load_sqlite_panorama_dataset"]
 
 

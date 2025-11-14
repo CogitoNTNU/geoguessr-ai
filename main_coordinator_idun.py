@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from PIL import Image
 from torchvision import transforms as T
-from training.load_sqlite_dataset import load_sqlite_dataset
+from training.load_sqlite_dataset import load_sqlite_dataset, load_sqlite_panorama_dataset
 from loguru import logger
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 from data.geocells.geocell_manager import GeocellManager
@@ -46,16 +46,47 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
-        img_bytes = row["image"]
-        if img_bytes is None:
-            # Fallback placeholder to keep batch shape valid
-            c, h, w = 3, self.required_size or 224, self.required_size or 224
-            tensor = torch.zeros(c, h, w)
+
+        # Single-image mode (legacy): one image per row
+        if "image" in row:
+            img_bytes = row["image"]
+            if img_bytes is None:
+                # Fallback placeholder to keep batch shape valid
+                c, h, w = 3, self.required_size or 224, self.required_size or 224
+                tensor = torch.zeros(c, h, w)
+            else:
+                pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                tensor = self.transform(pil) if self.transform else pil
+                if isinstance(tensor, Image.Image):
+                    tensor = T.ToTensor()(tensor)
+
+        # Panorama mode: multiple images (typically 4) per row
+        elif "images" in row:
+            image_list = row["images"] or []
+            tensors = []
+            for img_bytes in image_list:
+                if img_bytes is None:
+                    c, h, w = 3, self.required_size or 224, self.required_size or 224
+                    tensors.append(torch.zeros(c, h, w))
+                else:
+                    pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                    t = self.transform(pil) if self.transform else pil
+                    if isinstance(t, Image.Image):
+                        t = T.ToTensor()(t)
+                    tensors.append(t)
+
+            if not tensors:
+                # No valid images; fall back to a single zero image
+                c, h, w = 3, self.required_size or 224, self.required_size or 224
+                tensor = torch.zeros(1, c, h, w)
+            else:
+                # Stack into (V, C, H, W) for panoramas
+                tensor = torch.stack(tensors, dim=0)
         else:
-            pil = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-            tensor = self.transform(pil) if self.transform else pil
-            if isinstance(tensor, Image.Image):
-                tensor = T.ToTensor()(tensor)
+            raise KeyError(
+                "Row is missing both 'image' and 'images' columns required for dataset."
+            )
+
         target = {
             "lat": float(row["lat"]),
             "lon": float(row["lon"]),
@@ -94,7 +125,9 @@ def main(config):
     sqlite_path = candidates[0][0]
     logger.info(f"Using local SQLite dataset: {sqlite_path}")
 
-    df = load_sqlite_dataset(sqlite_path)
+    # Use panorama-style dataset: each row corresponds to a location with multiple views
+    # df = load_sqlite_dataset(sqlite_path)
+    df = load_sqlite_panorama_dataset(sqlite_path)
 
     train_test_split = 0.9
     num_training_samples = int(len(df) * train_test_split)
@@ -151,7 +184,7 @@ def main(config):
     # Instantiate SuperGuessr with CLIP embedding model
     model = SuperGuessr(
         base_model=embedding_model,
-        panorama=False,
+        panorama=True,  # Enable panorama mode: model expects multiple views per location
         serving=False,
         should_smooth_labels=True,
     ).to(device)
