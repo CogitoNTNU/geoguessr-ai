@@ -384,7 +384,7 @@ class ProtoRefiner(nn.Module):
         if type(cell_df) is pd.core.series.Series:
             cell_df = pd.DataFrame([cell_df])
 
-        if len(cell_df.iloc[0]["indices"]) == 0:
+        if len(cell_df["indices"]) == 0:
             return None
 
         if type(cell_df) is list:
