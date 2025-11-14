@@ -114,7 +114,7 @@ class ProtoDataManager:
         """
         geocell_dict: Dict[int, list[int]] = {}
         for _, row in self.proto_df.iterrows():
-            cell_id = row["geocell_id"]
+            cell_id = row["geocell_index"]
             if cell_id not in geocell_dict:
                 geocell_dict[cell_id] = []
             geocell_dict[cell_id].extend(row["indices"])
