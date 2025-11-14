@@ -14,6 +14,7 @@ from datasets import (
 from preprocessing.geo_utils import haversine
 from models.utils import ProtoDataManager
 import sqlite3
+import sys
 
 # Cluster refinement model
 
@@ -337,7 +338,11 @@ class ProtoRefiner(nn.Module):
 
         # Create progress bar
         progress_bar = tqdm(
-            total=self.num_geocells, desc="Processing", position=0, leave=True
+            total=self.num_geocells,
+            desc="Processing",
+            position=0,
+            leave=True,
+            file=sys.stdout,
         )
         disable_progress_bar()  # dataset.map progress bar, not tqdm
 
@@ -375,20 +380,21 @@ class ProtoRefiner(nn.Module):
         try:
             cell_df = self.proto_manager.get_indices_for_cell(
                 cell
-            )  # TODO: test my method
+            )  # Returns DataFrame with an 'indices' column (list[int]) per row
 
         # Some geocells might overlap with others, causing no data points to be in the cell
         except KeyError:
             return None
 
+        # Normalize to DataFrame with an 'indices' column
+        if isinstance(cell_df, list):
+            # If a raw list of ints is returned, wrap into a single-row DataFrame
+            cell_df = pd.DataFrame({"indices": [cell_df]})
         if type(cell_df) is pd.core.series.Series:
             cell_df = pd.DataFrame([cell_df])
 
         if len(cell_df["indices"]) == 0:
             return None
-
-        if type(cell_df) is list:
-            cell_df = pd.DataFrame(cell_df)  # TODO: check if this is needed
 
         data = Dataset.from_pandas(cell_df)
         # Data is a list of all the indices in that geocell

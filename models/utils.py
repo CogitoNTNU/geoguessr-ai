@@ -7,6 +7,7 @@ from collections import namedtuple
 import torch
 from torch import Tensor
 from config import LABEL_SMOOTHING_CONSTANT
+import ast
 
 ModelOutput = namedtuple(
     "ModelOutput",
@@ -103,29 +104,78 @@ class ProtoDataManager:
         Args:
             proto_data (Datafram): dataset with prototype data.
         """
-        self.proto_df = proto_data
+        # Work on a copy and ensure expected dtypes
+        self.proto_df = proto_data.copy()
+        if "geocell_index" in self.proto_df.columns:
+            self.proto_df["geocell_index"] = self.proto_df["geocell_index"].astype(int)
+
+        # Parse the 'indices' column row-wise into Python lists of ints
+        if "indices" in self.proto_df.columns:
+            self.proto_df["indices"] = self.proto_df["indices"].apply(
+                self._parse_indices_value
+            )
+
+        # Build mapping from geocell -> rows (DataFrame) for that geocell
         self.geocell_indices = self._make_geocell_indices_list()
 
-    def _make_geocell_indices_list(self) -> Dict:
-        """Creates a dict mapping geocell ids to list of data indices in that geocell.
+    @staticmethod
+    def _parse_indices_value(indices_val) -> list[int]:
+        """Parse various formats of indices field into a list[int]."""
+        parsed: list[int] = []
+        if isinstance(indices_val, (list, tuple)):
+            candidates = list(indices_val)
+        elif pd.isna(indices_val):
+            candidates = []
+        elif isinstance(indices_val, str):
+            s = indices_val.strip()
+            if s == "":
+                candidates = []
+            else:
+                obj = None
+                try:
+                    obj = ast.literal_eval(s)
+                except Exception:
+                    s_stripped = s.strip("[](){}")
+                    obj = [part for part in s_stripped.split(",") if part != ""]
+                if isinstance(obj, (list, tuple)):
+                    candidates = list(obj)
+                else:
+                    candidates = [obj]
+        else:
+            candidates = [indices_val]
+
+        for x in candidates:
+            try:
+                parsed.append(int(x))
+            except Exception:
+                try:
+                    parsed.append(int(str(x).strip()))
+                except Exception:
+                    continue
+        return parsed
+
+    def _make_geocell_indices_list(self) -> Dict[int, pd.DataFrame]:
+        """Creates a dict mapping geocell ids to a DataFrame of rows for that geocell.
 
         Returns:
-            Dict: mapping geocell ids to list of data indices.
+            Dict[int, pd.DataFrame]: mapping geocell ids to DataFrame of rows (with 'indices' parsed).
         """
-        geocell_dict: Dict[int, list[int]] = {}
-        for _, row in self.proto_df.iterrows():
-            cell_id = row["geocell_index"]
-            if cell_id not in geocell_dict:
-                geocell_dict[cell_id] = []
-            geocell_dict[cell_id].extend(row["indices"])
+        geocell_dict: Dict[int, pd.DataFrame] = {}
+        if "geocell_index" not in self.proto_df.columns:
+            return geocell_dict
+        for cell_id, group_df in self.proto_df.groupby("geocell_index"):
+            geocell_dict[int(cell_id)] = group_df.reset_index(drop=True)
         return geocell_dict
 
-    def get_indices_for_cell(self, cell_id: int) -> list[int]:
-        """Gets the list of data indices for a given geocell id.
+    def get_indices_for_cell(self, cell_id: int) -> pd.DataFrame:
+        """Gets the proto rows for a given geocell id.
 
         Args:
             cell_id (int): geocell id.
         Returns:
-            list[int]: list of data indices in that geocell.
+            pd.DataFrame: rows for that geocell with 'indices' as list[int]. Empty DataFrame if not found.
         """
-        return self.geocell_indices.get(cell_id, [])
+        df = self.geocell_indices.get(cell_id, None)
+        if df is None:
+            return pd.DataFrame(columns=list(self.proto_df.columns))
+        return df
