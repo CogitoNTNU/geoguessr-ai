@@ -208,7 +208,7 @@ class Configuration:
     betas: tuple[float] = (0.9, 0.999)
     lr: float = 5e-5
     weight_decay: float = 0.01
-    epochs: int = 3
+    epochs: int = 100
     # Early stopping (defaults approximate common built-ins)
     early_stopping_patience: int = 2
     # Scheduler
