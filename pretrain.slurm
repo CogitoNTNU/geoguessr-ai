@@ -26,4 +26,4 @@ module load Anaconda3/2024.02-1
 pip install uv --user
 
 # Run the Python script
-uv run python main_coordinator_idun.py
+uv run python pretrain_idun.py

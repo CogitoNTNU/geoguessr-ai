@@ -14,7 +14,8 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
-
+from dotenv import load_dotenv
+import wandb
 from config import (
     CLIP_MODEL,
     PRETRAIN_ARGS,  # TrainingArguments or kwargs dict
@@ -254,6 +255,21 @@ def pretrain(
     # 2) Freeze backbone, keep head trainable
     freeze_backbone_keep_head(model)
 
+    # 2b) Watch model in W&B
+    if getattr(wandb, "run", None) is not None:
+        wandb.watch(model, log="all")
+
+    # 2c) Ensure TrainingArguments report to W&B
+    # `report_to` can be None, str, or list
+    if train_args.report_to is None:
+        train_args.report_to = ["wandb"]
+    elif isinstance(train_args.report_to, str):
+        if train_args.report_to != "wandb":
+            train_args.report_to = [train_args.report_to, "wandb"]
+    else:
+        if "wandb" not in train_args.report_to:
+            train_args.report_to = list(train_args.report_to) + ["wandb"]
+
     # 3) Trainer
     trainer = Trainer(
         model=model,
@@ -330,11 +346,38 @@ if __name__ == "__main__":
     ds_val = PretrainDataset(df_val)
     dataset_dict = {"train": ds_train, "val": ds_val}
 
-    # PRETRAIN_ARGS may be a ready-made TrainingArguments or kwargs
     if isinstance(PRETRAIN_ARGS, TrainingArguments):
         train_args = PRETRAIN_ARGS
     else:
         train_args = TrainingArguments(**PRETRAIN_ARGS)
+
+        load_dotenv()
+    api_key = os.getenv("WANDB_API_KEY")
+    try:
+        if api_key:
+            wandb.login(key=api_key)
+        else:
+            wandb.login()
+    except Exception as e:
+        logger.warning(f"W&B login failed, proceeding with W&B disabled: {e}")
+
+    try:
+        wandb.init(
+            project="geoguessr-ai",
+            config=train_args.to_dict()
+            if isinstance(train_args, TrainingArguments)
+            else PRETRAIN_ARGS,
+            mode="online",
+        )
+    except Exception as e:
+        logger.warning(f"W&B init failed, falling back to disabled mode: {e}")
+        wandb.init(
+            project="geoguessr-ai",
+            config=train_args.to_dict()
+            if isinstance(train_args, TrainingArguments)
+            else PRETRAIN_ARGS,
+            mode="disabled",
+        )
 
     pretrain(
         model_name=CLIP_MODEL,
