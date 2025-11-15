@@ -38,7 +38,13 @@ def _resolve_sqlite_local_path(sqlite_path: Optional[str] = None) -> str:
         bucket, key = base[5:].split("/", 1)
         key = key + "dataset.sqlite"
 
-    td = tempfile.mkdtemp(prefix="sqlite_ds_")
+    # Place the temporary SQLite directory next to the project root folder
+    # Example: /Users/.../geoguessr-ai-3/sqlite_ds_xxx/dataset.sqlite,
+    # when the repo root is /Users/.../geoguessr-ai-3/geoguessr-ai
+    repo_root = Path(__file__).resolve().parent.parent  # training/ -> repo root
+    repo_parent_dir = repo_root.parent
+
+    td = tempfile.mkdtemp(prefix="sqlite_ds_", dir=str(repo_parent_dir))
     local_path = os.path.join(td, "dataset.sqlite")
     s3.download_file(bucket, key, local_path)
     return local_path
