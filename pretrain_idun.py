@@ -302,6 +302,7 @@ def pretrain(
 
 if __name__ == "__main__":
     set_seed()
+    load_dotenv()
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "."))
     repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
     candidates = []
@@ -351,7 +352,6 @@ if __name__ == "__main__":
     else:
         train_args = TrainingArguments(**PRETRAIN_ARGS)
 
-        load_dotenv()
     api_key = os.getenv("WANDB_API_KEY")
     try:
         if api_key:
