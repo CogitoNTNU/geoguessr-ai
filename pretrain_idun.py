@@ -20,7 +20,7 @@ from config import (
     CLIP_MODEL,
     PRETRAIN_ARGS,  # TrainingArguments or kwargs dict
 )
-from backend.s3bucket import load_climate_file
+from backend.s3bucket import download_climate_file
 from backend.metadata import sample_koppen, CLIMATE_DICT, geocell_mgr, MONTHS
 from pretrain.leftdrive_countries import left_list
 from training.load_sqlite_dataset import load_sqlite_dataset
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     logger.info(f"Using local SQLite dataset: {sqlite_path}")
 
     df = load_sqlite_dataset(sqlite_path)
-    raster_path = load_climate_file()
+    raster_path = download_climate_file()
     df["month_code"] = df["batch_date"].str[5:7]  # "01", "02", ...
     df["month"] = df["month_code"].map(MONTHS)  # "January", ...
     df["latitude"] = df["lat"]
