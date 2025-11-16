@@ -7,8 +7,8 @@
 #SBATCH --mem=128GB
 #SBATCH --nodes=1
 #SBATCH --constraint="(a100|h100|h200)&(gpu80g)"
-#SBATCH --output=slurm_outputs/output_geo-guessr-ai-tinyvit-panorama-s3test.txt
-#SBATCH --error=slurm_outputs/output_geo-guessr-ai-tinyvit-panorama-s3test.err
+#SBATCH --output=slurm_outputs/output_geo-guessr-ai-clip-panorama-s3.txt
+#SBATCH --error=slurm_outputs/output_geo-guessr-ai-clip-panorama-s3.err
 #SBATCH --mail-user=magnuvbr@stud.ntnu.no,danielnh@stud.ntnu.no,jens.m.n.berget@stud.ntnu.no
 #SBATCH --mail-type=ALL
 
