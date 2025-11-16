@@ -40,6 +40,7 @@ class ProtoRefiner(nn.Module):
         verbose: bool = False,
         clip_db_path: str = "data/sqlite/clip/dataset.sqlite",  # correct?
         tinyvit_db_path: str = "data/sqlite/tinyvit/dataset.sqlite",  # correct?
+        backend: str = "clip",  # 'clip' or 'tinyvit'
     ):
         """Proto-Net refinement model
 
@@ -66,7 +67,7 @@ class ProtoRefiner(nn.Module):
         self.max_refinement = max_refinement
         self.verbose = verbose
         print("Initializing embedder...")
-        self.embedder = Embeddings()
+        self.embedder = Embeddings(backend=backend)
 
         # TODO: get the needed data from the dataset through sql querying
         # Check all the places where self.dataset is used
@@ -398,31 +399,37 @@ class ProtoRefiner(nn.Module):
         Returns:
             Dict: modified data sample
         """
-
         emb = self.embedder.generate_embeddings(indices)
         # Ensure CPU tensors are returned to avoid CUDA IPC across processes
-        clip_cpu = emb["clip"].detach().to("cpu")
-        tiny_cpu = emb["tinyvit"].detach().to("cpu")
+        emb_cpu = emb.detach().to("cpu")
         # Standardize key used downstream in forward(): self.protos[cell_id]["embedding"]
-        return {"embedding": clip_cpu, "tiny_vit": tiny_cpu}
+        return {"embedding": emb_cpu}
 
 
 class Embeddings:
-    def __init__(self):
+    def __init__(self, backend: str = "clip"):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        backend = (backend or "clip").lower()
+        if backend not in ("clip", "tinyvit"):
+            raise ValueError("backend must be 'clip' or 'tinyvit'")
+        self.backend = backend
         df = load_sqlite_panorama_dataset(None)
         self.data = LocalGeoMapDataset(df)
 
         print("Loading embedder models...")
-        self.model_clip = CLIPEmbedding(
-            model_name="", device=self.device, load_checkpoint=False, panorama=False
-        )
-        self.model_tiny = TinyViTEmbedding(
-            model_name="tiny_vit_21m_512.dist_in22k_ft_in1k",
-            device=self.device,
-            load_checkpoint=False,
-            panorama=False,
-        )
+        self.model_clip = None
+        self.model_tiny = None
+        if self.backend == "clip":
+            self.model_clip = CLIPEmbedding(
+                model_name="", device=self.device, load_checkpoint=False, panorama=False
+            )
+        else:
+            self.model_tiny = TinyViTEmbedding(
+                model_name="tiny_vit_21m_512.dist_in22k_ft_in1k",
+                device=self.device,
+                load_checkpoint=False,
+                panorama=False,
+            )
         # Robustly load lat/lon mapping; tolerate whitespace and skip malformed lines
         try:
             df_latlon = pd.read_csv(
@@ -452,9 +459,8 @@ class Embeddings:
         print("Embedder models loaded.")
 
     def generate_embeddings(self, indices: List[int]):
-        # Compute running means to avoid stacking large tensors in memory.
-        sum_clip_cpu: torch.Tensor | None = None
-        sum_tiny_cpu: torch.Tensor | None = None
+        # Compute running mean to avoid stacking large tensors in memory.
+        sum_cpu: torch.Tensor | None = None
         count = 0
 
         with torch.no_grad():
@@ -468,31 +474,25 @@ class Embeddings:
                 d = {"lat": float(lat), "lon": float(lon)}
                 pictures = self.data.get_tensor_of_panorama_images_from_point(d)
 
-                clip = self.model_clip._get_embedding(pictures)
-                tiny = self.model_tiny._get_embedding(pictures)
+                if self.backend == "clip":
+                    vec = self.model_clip._get_embedding(pictures)
+                else:
+                    vec = self.model_tiny._get_embedding(pictures)
 
                 # If model returns (V, D), average across views to get (D,)
-                if clip.dim() == 2:
-                    clip = clip.mean(dim=0)
-                if tiny.dim() == 2:
-                    tiny = tiny.mean(dim=0)
+                if vec.dim() == 2:
+                    vec = vec.mean(dim=0)
+                # If returns (V, D, ...), collapse to (D,)
+                if vec.dim() > 2:
+                    vec = vec.flatten(start_dim=0).mean(dim=0)
 
-                # If model returns (D,), keep as is. If returns (V, D, ...), collapse to (D,)
-                if clip.dim() > 2:
-                    clip = clip.flatten(start_dim=0).mean(dim=0)
-                if tiny.dim() > 2:
-                    tiny = tiny.flatten(start_dim=0).mean(dim=0)
+                # Move single vector to CPU to minimize GPU memory residency across loop
+                vec_cpu = vec.detach().to("cpu")
 
-                # Move single vectors to CPU to minimize GPU memory residency across loop
-                clip_cpu = clip.detach().to("cpu")
-                tiny_cpu = tiny.detach().to("cpu")
-
-                if sum_clip_cpu is None:
-                    sum_clip_cpu = clip_cpu.clone()
-                    sum_tiny_cpu = tiny_cpu.clone()
+                if sum_cpu is None:
+                    sum_cpu = vec_cpu.clone()
                 else:
-                    sum_clip_cpu.add_(clip_cpu)
-                    sum_tiny_cpu.add_(tiny_cpu)
+                    sum_cpu.add_(vec_cpu)
                 count += 1
 
                 # Proactively free GPU caches in long loops
@@ -500,28 +500,21 @@ class Embeddings:
                     torch.cuda.empty_cache()
 
         if count == 0:
-            # Return zero vectors if nothing valid was processed
-            # Try to infer dims with a tiny dummy forward
+            # Return zero vector if nothing valid was processed
             with torch.no_grad():
                 dummy = torch.zeros((4, 3, 224, 224), device=self.device)
-                c = self.model_clip._get_embedding(dummy)
-                if c.dim() == 2:
-                    c = c.mean(dim=0)
-                if c.dim() > 1:
-                    c = c.flatten(start_dim=0).mean(dim=0)
-                t = self.model_tiny._get_embedding(dummy)
-                if t.dim() == 2:
-                    t = t.mean(dim=0)
-                if t.dim() > 1:
-                    t = t.flatten(start_dim=0).mean(dim=0)
-                return {
-                    "tinyvit": t.detach().to("cpu") * 0,
-                    "clip": c.detach().to("cpu") * 0,
-                }
+                if self.backend == "clip":
+                    v = self.model_clip._get_embedding(dummy)
+                else:
+                    v = self.model_tiny._get_embedding(dummy)
+                if v.dim() == 2:
+                    v = v.mean(dim=0)
+                if v.dim() > 1:
+                    v = v.flatten(start_dim=0).mean(dim=0)
+                return v.detach().to("cpu") * 0
 
-        mean_clip = (sum_clip_cpu / count).contiguous()
-        mean_tiny = (sum_tiny_cpu / count).contiguous()
-        return {"tinyvit": mean_tiny, "clip": mean_clip}
+        mean_vec = (sum_cpu / count).contiguous()
+        return mean_vec
 
 
 if __name__ == "__main__":
