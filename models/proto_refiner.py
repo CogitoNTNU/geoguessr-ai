@@ -417,14 +417,9 @@ class Embeddings:
             panorama=False,
         )
         # Robustly load lat/lon mapping; tolerate ragged/malformed lines
-        self.lat_lon_by_index = np.genfromtxt(
-            "data/out/sv_points_all_latlong.txt",
-            delimiter=",",
-            usecols=(0, 1),
-            dtype=float,
-            filling_values=np.nan,
-            autostrip=True,
-        )  # shape approx (N, 2); rows with missing values filled with NaN
+        points = np.loadtxt("data/out/sv_points_all_latlong.txt", delimiter=",")
+
+        self.lat_lon_by_index = points
         print("Embedder models loaded.")
 
     def generate_embeddings(self, indices: List[int]):
