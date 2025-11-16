@@ -14,12 +14,13 @@ from transformers import (
     Trainer,
     TrainingArguments,
 )
-
+from dotenv import load_dotenv
+import wandb
 from config import (
     CLIP_MODEL,
     PRETRAIN_ARGS,  # TrainingArguments or kwargs dict
 )
-from backend.s3bucket import load_climate_file
+from backend.s3bucket import download_climate_file
 from backend.metadata import sample_koppen, CLIMATE_DICT, geocell_mgr, MONTHS
 from pretrain.leftdrive_countries import left_list
 from training.load_sqlite_dataset import load_sqlite_dataset
@@ -254,6 +255,21 @@ def pretrain(
     # 2) Freeze backbone, keep head trainable
     freeze_backbone_keep_head(model)
 
+    # 2b) Watch model in W&B
+    if getattr(wandb, "run", None) is not None:
+        wandb.watch(model, log="all")
+
+    # 2c) Ensure TrainingArguments report to W&B
+    # `report_to` can be None, str, or list
+    if train_args.report_to is None:
+        train_args.report_to = ["wandb"]
+    elif isinstance(train_args.report_to, str):
+        if train_args.report_to != "wandb":
+            train_args.report_to = [train_args.report_to, "wandb"]
+    else:
+        if "wandb" not in train_args.report_to:
+            train_args.report_to = list(train_args.report_to) + ["wandb"]
+
     # 3) Trainer
     trainer = Trainer(
         model=model,
@@ -286,6 +302,7 @@ def pretrain(
 
 if __name__ == "__main__":
     set_seed()
+    load_dotenv()
     repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "."))
     repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
     candidates = []
@@ -308,7 +325,7 @@ if __name__ == "__main__":
     logger.info(f"Using local SQLite dataset: {sqlite_path}")
 
     df = load_sqlite_dataset(sqlite_path)
-    raster_path = load_climate_file()
+    raster_path = download_climate_file()
     df["month_code"] = df["batch_date"].str[5:7]  # "01", "02", ...
     df["month"] = df["month_code"].map(MONTHS)  # "January", ...
     df["latitude"] = df["lat"]
@@ -330,11 +347,37 @@ if __name__ == "__main__":
     ds_val = PretrainDataset(df_val)
     dataset_dict = {"train": ds_train, "val": ds_val}
 
-    # PRETRAIN_ARGS may be a ready-made TrainingArguments or kwargs
     if isinstance(PRETRAIN_ARGS, TrainingArguments):
         train_args = PRETRAIN_ARGS
     else:
         train_args = TrainingArguments(**PRETRAIN_ARGS)
+
+    api_key = os.getenv("WANDB_API_KEY")
+    try:
+        if api_key:
+            wandb.login(key=api_key)
+        else:
+            wandb.login()
+    except Exception as e:
+        logger.warning(f"W&B login failed, proceeding with W&B disabled: {e}")
+
+    try:
+        wandb.init(
+            project="geoguessr-ai",
+            config=train_args.to_dict()
+            if isinstance(train_args, TrainingArguments)
+            else PRETRAIN_ARGS,
+            mode="online",
+        )
+    except Exception as e:
+        logger.warning(f"W&B init failed, falling back to disabled mode: {e}")
+        wandb.init(
+            project="geoguessr-ai",
+            config=train_args.to_dict()
+            if isinstance(train_args, TrainingArguments)
+            else PRETRAIN_ARGS,
+            mode="disabled",
+        )
 
     pretrain(
         model_name=CLIP_MODEL,

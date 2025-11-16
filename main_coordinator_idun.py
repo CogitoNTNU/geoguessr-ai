@@ -9,10 +9,9 @@ import torch.nn.functional as F
 from tqdm import tqdm
 from PIL import Image
 from torchvision import transforms as T
-from training.load_sqlite_dataset import load_sqlite_dataset, load_sqlite_panorama_dataset
+from training.load_sqlite_dataset import load_sqlite_panorama_dataset
 from loguru import logger
 from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
-from data.geocells.geocell_manager import GeocellManager
 from dotenv import load_dotenv
 import wandb
 from models.super_guessr import SuperGuessr
@@ -29,7 +28,9 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
     Ensures a consistent spatial size to allow DataLoader collation.
     """
 
-    def __init__(self, df, required_size: int = 336, transform: Optional[torch.nn.Module] = None):
+    def __init__(
+        self, df, required_size: int = 336, transform: Optional[torch.nn.Module] = None
+    ):
         super().__init__()
         self.df = df.reset_index(drop=True)
         self.required_size = required_size
@@ -104,7 +105,7 @@ def main(config):
     candidates = []
     for name in os.listdir(repo_parent_dir):
         if (
-            name.startswith("dataset_sqlite_3")
+            name.startswith("dataset_sqlite_4")
             and name.endswith(".sqlite")
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
@@ -147,18 +148,14 @@ def main(config):
     train_dataloader = DataLoader(
         train_dataset, batch_size=8, num_workers=1, pin_memory=True
     )
-    test_dataloader = DataLoader(
-        test_dataset, batch_size=8, num_workers=1, pin_memory=True
-    )
+    # test_dataloader = DataLoader(
+    #    test_dataset, batch_size=8, num_workers=1, pin_memory=True
+    # )
     val_dataloader = DataLoader(
         val_dataset, batch_size=8, num_workers=1, pin_memory=True
     )
 
-    # Initialize model and set it to train
-    geocell_manager = GeocellManager("data/geocells/finished_geocells")
-    num_geocells = geocell_manager.get_num_geocells()
-
-    embeddingModelUsed = "CLIP"  # Possible values are "CLIP" or "TINYVIT"
+    embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
 
     embedding_model = 0
     if embeddingModelUsed == "CLIP":
@@ -184,7 +181,7 @@ def main(config):
     model = SuperGuessr(
         base_model=embedding_model,
         panorama=True,  # Enable panorama mode: model expects multiple views per location
-        serving=False, # Training mode, set to true for inference
+        serving=False,  # Training mode, set to true for inference
         should_smooth_labels=True,
     ).to(device)
     wandb.watch(model, log="all")
@@ -208,7 +205,7 @@ class Configuration:
     betas: tuple[float] = (0.9, 0.999)
     lr: float = 5e-5
     weight_decay: float = 0.01
-    epochs: int = 3
+    epochs: int = 100
     # Early stopping (defaults approximate common built-ins)
     early_stopping_patience: int = 2
     # Scheduler
@@ -285,7 +282,7 @@ def train(
             logger.error(f"Failed to resume from '{config.resume_path}': {e}")
 
     for epoch in range(start_epoch, config.epochs):
-    # for epoch in range(3):
+        # for epoch in range(3):
         model.train()
         running_loss, running_top1, running_topk = 0.0, 0.0, 0.0
         num_batches = 0
@@ -404,7 +401,9 @@ def train(
         if validation_dataloader is not None:
             model.eval()
             with torch.no_grad():
-                for val_batch_idx, (images, targets) in enumerate(validation_dataloader):
+                for val_batch_idx, (images, targets) in enumerate(
+                    validation_dataloader
+                ):
                     # Resize images to match embedding model input resolution (CLIP or Tiny-ViT)
                     if target_dimensions is not None:
                         if images.dim() == 5:  # (B, V, C, H, W) panorama batches
@@ -545,7 +544,9 @@ def train(
                 try:
                     os.makedirs(checkpoint_dir, exist_ok=True)
                 except Exception as e:
-                    logger.error(f"Failed to recreate checkpoint directory '{checkpoint_dir}': {e}")
+                    logger.error(
+                        f"Failed to recreate checkpoint directory '{checkpoint_dir}': {e}"
+                    )
 
             k = max(0, int(config.keep_last_n))
             should_save = False
@@ -555,12 +556,22 @@ def train(
                 should_save = True
             else:
                 # Determine worst among current kept set
-                worst_value = max(v for _, v in existing) if is_min_mode else min(v for _, v in existing)
-                should_save = (current_value < worst_value) if is_min_mode else (current_value > worst_value)
+                worst_value = (
+                    max(v for _, v in existing)
+                    if is_min_mode
+                    else min(v for _, v in existing)
+                )
+                should_save = (
+                    (current_value < worst_value)
+                    if is_min_mode
+                    else (current_value > worst_value)
+                )
 
             if should_save:
                 # Encode metric in filename for efficient pruning/sorting
-                epoch_path = os.path.join(checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt")
+                epoch_path = os.path.join(
+                    checkpoint_dir, f"epoch_{epoch:04d}_{current_value:.6f}.pt"
+                )
                 try:
                     # Ensure checkpoint directory exists before saving
                     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -569,13 +580,21 @@ def train(
                     try:
                         if getattr(wandb, "run", None) is not None:
                             artifact_name = f"{wandb.run.id}-epoch-{epoch:04d}"
-                            artifact = wandb.Artifact(name=artifact_name, type="model", metadata={
-                                "epoch": epoch,
-                                "monitored_value": current_value,
-                                "monitor_mode": "min" if is_min_mode else "max",
-                            })
-                            artifact.add_file(epoch_path, name=os.path.basename(epoch_path))
-                            wandb.log_artifact(artifact, aliases=[f"epoch-{epoch:04d}", "topk"])
+                            artifact = wandb.Artifact(
+                                name=artifact_name,
+                                type="model",
+                                metadata={
+                                    "epoch": epoch,
+                                    "monitored_value": current_value,
+                                    "monitor_mode": "min" if is_min_mode else "max",
+                                },
+                            )
+                            artifact.add_file(
+                                epoch_path, name=os.path.basename(epoch_path)
+                            )
+                            wandb.log_artifact(
+                                artifact, aliases=[f"epoch-{epoch:04d}", "topk"]
+                            )
                     except Exception as e:
                         logger.warning(f"Failed to upload epoch artifact to W&B: {e}")
                 except Exception as e:
@@ -596,7 +615,9 @@ def train(
                     try:
                         os.makedirs(checkpoint_dir, exist_ok=True)
                     except Exception as e:
-                        logger.error(f"Failed to recreate checkpoint directory '{checkpoint_dir}' during cleanup: {e}")
+                        logger.error(
+                            f"Failed to recreate checkpoint directory '{checkpoint_dir}' during cleanup: {e}"
+                        )
 
                 # Sort by best first
                 existing.sort(key=lambda t: t[1], reverse=not is_min_mode)
@@ -610,7 +631,11 @@ def train(
                         logger.warning(f"Failed to remove old checkpoint '{f}': {e}")
 
         # Save best checkpoint
-        improved = (current_value < best_value) if is_min_mode else (current_value > best_value)
+        improved = (
+            (current_value < best_value)
+            if is_min_mode
+            else (current_value > best_value)
+        )
         if improved:
             best_value = current_value
             best_path = os.path.join(checkpoint_dir, "best.pt")
