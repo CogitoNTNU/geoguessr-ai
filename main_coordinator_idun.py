@@ -105,7 +105,7 @@ def main(config):
     candidates = []
     for name in os.listdir(repo_parent_dir):
         if (
-            name.startswith("dataset_sqlite_4")
+            name.startswith("dataset_sqlite_run")
             and name.endswith(".sqlite")
             and "clip_embeddings" not in name
             and "tinyvit_embeddings" not in name
@@ -146,13 +146,13 @@ def main(config):
     )
 
     train_dataloader = DataLoader(
-        train_dataset, batch_size=8, num_workers=1, pin_memory=True
+        train_dataset, batch_size=32, num_workers=1, pin_memory=True
     )
     # test_dataloader = DataLoader(
     #    test_dataset, batch_size=8, num_workers=1, pin_memory=True
     # )
     val_dataloader = DataLoader(
-        val_dataset, batch_size=8, num_workers=1, pin_memory=True
+        val_dataset, batch_size=32, num_workers=1, pin_memory=True
     )
 
     embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
