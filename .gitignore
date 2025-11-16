@@ -271,4 +271,6 @@ proto_refiner.md
 
 
 wandb/
+cv-env/
+
 >>>>>>> 80d6732 (chore: add entries for filtered geopackage and wandb to .gitignore)
