@@ -139,7 +139,26 @@ def main(config):
 
     embedding_model = 0
     if embeddingModelUsed == "CLIP":
-        embedding_model = CLIPVisionModel.from_pretrained(CLIP_MODEL)
+        # Load a preloaded CLIP checkpoint from S3 (latest), falling back to the
+        # configured CLIP_MODEL path/name if no checkpoint pointer exists.
+        from backend.s3bucket import download_latest_model_checkpoint
+
+        ckpt_dest_dir = os.path.join(config.checkpoint_dir, "preloaded_clip")
+        try:
+            # Downloads and reconstructs the HuggingFace-style checkpoint directory
+            ckpt_dir = download_latest_model_checkpoint(ckpt_dest_dir)
+            logger.info(
+                f"Loaded CLIP checkpoint from S3 into '{ckpt_dir}', using it for initialization."
+            )
+        except FileNotFoundError as e:
+            # If S3 checkpoint is not available, fall back to the original behavior
+            logger.warning(
+                f"Could not download latest CLIP checkpoint from S3 ({e}); "
+                f"falling back to CLIP_MODEL='{CLIP_MODEL}'."
+            )
+            ckpt_dir = CLIP_MODEL
+
+        embedding_model = CLIPVisionModel.from_pretrained(ckpt_dir)
     elif embeddingModelUsed == "TINYVIT":
         embedding_model = TinyViTAdapter(model_name=TINYVIT_MODEL, pretrained=True)
 
