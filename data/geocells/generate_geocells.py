@@ -7,6 +7,7 @@ import sqlite3
 from shapely import wkb as shapely_wkb
 import struct
 import uuid
+import geocell_visualizer
 
 
 FILEPATHS = [
@@ -37,8 +38,8 @@ class GenerateGeocells:
 
         self.generate_geocells()
 
-        # visualizer = geocell_visualizer.CellVisualizer(self)
-        # visualizer.show()
+        visualizer = geocell_visualizer.CellVisualizer(self)
+        visualizer.show()
 
         self.save_geocells(FILEPATHS[3])
         print("Saved geocells to file")
@@ -164,6 +165,10 @@ class GenerateGeocells:
             if country in self.COUNTRY:
                 polygons = [j for j in (self.countries.iloc[i]["geom"]).geoms]
                 cell = Cell(name, [], polygons, country, admin_1)
+                if country in self.country_cells:
+                    original = self.country_cells[country][country][0]
+                    original.combine([cell])
+                    continue
 
                 self.country_cells[country] = {country: [cell]}
 
