@@ -99,35 +99,14 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
 def main(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Fetch dataset from local SQLite (via training.load_sqlite_dataset)
-    # Hardcoded: find the latest dataset_sqlite_*.sqlite next to project root (parent of geoguessr-ai)
-    repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "."))
-    repo_parent_dir = os.path.abspath(os.path.join(repo_root, ".."))
-    candidates = []
-    for name in os.listdir(repo_parent_dir):
-        if (
-            name.startswith("dataset_sqlite_3")
-            and name.endswith(".sqlite")
-            and "clip_embeddings" not in name
-            and "tinyvit_embeddings" not in name
-        ):
-            full = os.path.join(repo_parent_dir, name)
-            try:
-                mtime = os.path.getmtime(full)
-            except Exception:
-                continue
-            candidates.append((full, mtime))
-    if not candidates:
-        raise FileNotFoundError(
-            f"No local SQLite dataset found next to project root at '{repo_parent_dir}'. "
-            f"Expected files named like 'dataset_sqlite_<run_ts=...>.sqlite'."
-        )
-    candidates.sort(key=lambda x: x[1], reverse=True)
-    sqlite_path = candidates[0][0]
-    logger.info(f"Using local SQLite dataset: {sqlite_path}")
-
-    # Use panorama-style dataset: each row corresponds to a location with multiple views
-    # df = load_sqlite_dataset(sqlite_path)
+    # Fetch dataset via S3-aware loader in training.load_sqlite_dataset.
+    # If DATASET_SQLITE_PATH is set, it can be either a local path or an s3:// URL.
+    # If unset, load_sqlite_panorama_dataset() will resolve the latest snapshot from S3.
+    sqlite_path = None
+    logger.info(
+        f"Loading panorama dataset using sqlite_path="
+        f"{sqlite_path if sqlite_path is not None else 'latest-from-S3-pointer'}"
+    )
     df = load_sqlite_panorama_dataset(sqlite_path)
 
     train_test_split = 0.9
@@ -713,3 +692,5 @@ if __name__ == "__main__":
         )
 
     main(config)
+
+
