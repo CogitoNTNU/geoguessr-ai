@@ -20,6 +20,7 @@ from transformers import CLIPVisionModel
 from config import CLIP_MODEL, TINYVIT_MODEL
 from models.utils import haversine_matrix
 from typing import Optional
+import sys
 
 
 class LocalGeoMapDataset(torch.utils.data.Dataset):
@@ -288,7 +289,11 @@ def train(
         num_batches = 0
 
         for batch_idx, (images, targets) in enumerate(
-            tqdm(train_dataloader, desc=f"Epoch {epoch + 1}/{config.epochs}")
+            tqdm(
+                train_dataloader,
+                desc=f"Epoch {epoch + 1}/{config.epochs}",
+                file=sys.stdout,
+            )
         ):
             # Resize images to match embedding model input resolution (CLIP or Tiny-ViT)
             if target_dimensions is not None:
@@ -386,7 +391,8 @@ def train(
 
             tqdm.write(
                 f"[Epoch {epoch + 1} | Batch {batch_idx}] Loss={loss.item():.4f} "
-                f"Top1={top1_acc:.3f} Top5={topk_acc:.3f}"
+                f"Top1={top1_acc:.3f} Top5={topk_acc:.3f}",
+                file=sys.stdout,
             )
 
         # Scheduler step at the end of each epoch
