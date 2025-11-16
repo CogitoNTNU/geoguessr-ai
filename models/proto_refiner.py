@@ -4,6 +4,7 @@ import torch
 from torch import nn, Tensor
 from torch.nn.parameter import Parameter
 from typing import Dict, List, Tuple
+import os
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datasets import (
@@ -284,8 +285,10 @@ class ProtoRefiner(nn.Module):
         )
         disable_progress_bar()  # dataset.map progress bar, not tqdm
 
-        # Multi-processing for CPU-bound (not I/O bound) prototype generation
-        with ProcessPoolExecutor(max_workers=None) as executor:
+        # Multi-processing for prototype generation: default to a single worker when using GPU
+        # to avoid per-process CUDA memory duplication. Override with PROTO_MAX_WORKERS.
+        max_workers = int(os.getenv("PROTO_MAX_WORKERS", "1"))
+        with ProcessPoolExecutor(max_workers=max_workers) as executor:
             future_to_index = {
                 executor.submit(self._get_prototypes, i): i
                 for i in range(self.num_geocells)
@@ -397,7 +400,11 @@ class ProtoRefiner(nn.Module):
         """
 
         emb = self.embedder.generate_embeddings(indices)
-        return {"clip": emb["clip"], "tiny_vit": emb["tinyvit"]}
+        # Ensure CPU tensors are returned to avoid CUDA IPC across processes
+        clip_cpu = emb["clip"].detach().to("cpu")
+        tiny_cpu = emb["tinyvit"].detach().to("cpu")
+        # Standardize key used downstream in forward(): self.protos[cell_id]["embedding"]
+        return {"embedding": clip_cpu, "tiny_vit": tiny_cpu}
 
 
 class Embeddings:
@@ -445,8 +452,10 @@ class Embeddings:
         print("Embedder models loaded.")
 
     def generate_embeddings(self, indices: List[int]):
-        clip_emb_list: List[torch.Tensor] = []
-        tiny_emb_list: List[torch.Tensor] = []
+        # Compute running means to avoid stacking large tensors in memory.
+        sum_clip_cpu: torch.Tensor | None = None
+        sum_tiny_cpu: torch.Tensor | None = None
+        count = 0
 
         with torch.no_grad():
             for idx in indices:
@@ -474,32 +483,45 @@ class Embeddings:
                 if tiny.dim() > 2:
                     tiny = tiny.flatten(start_dim=0).mean(dim=0)
 
-                clip_emb_list.append(clip)
-                tiny_emb_list.append(tiny)
+                # Move single vectors to CPU to minimize GPU memory residency across loop
+                clip_cpu = clip.detach().to("cpu")
+                tiny_cpu = tiny.detach().to("cpu")
 
-        # Stack into (N, D). This is compatible with:
-        # embeddings = entries["embedding"]
-        # if embeddings.dim() == 3: embeddings = embeddings.mean(dim=1)
-        # proto_emb = embeddings.mean(dim=0)
-        clip_tensor = (
-            torch.stack(clip_emb_list, dim=0)
-            if clip_emb_list
-            else torch.empty(0, 0, device=self.device)
-        )
-        tiny_tensor = (
-            torch.stack(tiny_emb_list, dim=0)
-            if tiny_emb_list
-            else torch.empty(0, 0, device=self.device)
-        )
+                if sum_clip_cpu is None:
+                    sum_clip_cpu = clip_cpu.clone()
+                    sum_tiny_cpu = tiny_cpu.clone()
+                else:
+                    sum_clip_cpu.add_(clip_cpu)
+                    sum_tiny_cpu.add_(tiny_cpu)
+                count += 1
 
-        if clip_tensor.dim() == 3:
-            clip_tensor = clip_tensor.mean(dim=1)
-        clip_tensor = clip_tensor.mean(dim=0)
+                # Proactively free GPU caches in long loops
+                if count % 64 == 0 and torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
-        if tiny_tensor.dim() == 3:
-            tiny_tensor = tiny_tensor.mean(dim=1)
-        tiny_tensor = tiny_tensor.mean(dim=0)
-        return {"tinyvit": tiny_tensor, "clip": clip_tensor}
+        if count == 0:
+            # Return zero vectors if nothing valid was processed
+            # Try to infer dims with a tiny dummy forward
+            with torch.no_grad():
+                dummy = torch.zeros((4, 3, 224, 224), device=self.device)
+                c = self.model_clip._get_embedding(dummy)
+                if c.dim() == 2:
+                    c = c.mean(dim=0)
+                if c.dim() > 1:
+                    c = c.flatten(start_dim=0).mean(dim=0)
+                t = self.model_tiny._get_embedding(dummy)
+                if t.dim() == 2:
+                    t = t.mean(dim=0)
+                if t.dim() > 1:
+                    t = t.flatten(start_dim=0).mean(dim=0)
+                return {
+                    "tinyvit": t.detach().to("cpu") * 0,
+                    "clip": c.detach().to("cpu") * 0,
+                }
+
+        mean_clip = (sum_clip_cpu / count).contiguous()
+        mean_tiny = (sum_tiny_cpu / count).contiguous()
+        return {"tinyvit": mean_tiny, "clip": mean_clip}
 
 
 if __name__ == "__main__":
