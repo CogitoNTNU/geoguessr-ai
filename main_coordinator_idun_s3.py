@@ -435,6 +435,8 @@ def train(
                 and global_step % 1000 == 0
             ):
                 model.eval()
+                total_val_loss = 0.0
+                num_val_batches = 0
                 with torch.no_grad():
                     for val_batch_idx, (images, targets) in enumerate(
                         validation_dataloader
@@ -510,21 +512,25 @@ def train(
                         )
                         val_loss = output.loss
 
-                        # Log per batch (validation)
-                        wandb.log(
-                            {
-                                "val/loss": val_loss.item(),
-                                "epoch": epoch,
-                            },
-                            step=global_step,
-                        )
+                        # Accumulate validation loss
+                        total_val_loss += val_loss.item()
+                        num_val_batches += 1
 
-                        # Also print validation loss
-                        tqdm.write(
-                            f"[Validation @ step {global_step} | Batch {val_batch_idx}] "
-                            f"ValLoss={val_loss.item():.4f}",
-                            file=sys.stdout,
-                        )
+                # Compute and log average validation loss once per validation run
+                if num_val_batches > 0:
+                    avg_val_loss = total_val_loss / num_val_batches
+                    wandb.log(
+                        {
+                            "val/avg_loss": avg_val_loss,
+                            "epoch": epoch,
+                        },
+                        step=global_step,
+                    )
+                    tqdm.write(
+                        f"[Validation @ step {global_step}] "
+                        f"AvgValLoss={avg_val_loss:.4f}",
+                        file=sys.stdout,
+                    )
 
                 model.train()
 
