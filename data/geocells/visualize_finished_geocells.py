@@ -202,10 +202,11 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
             font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
         }}
         #app {{
-            position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+            position: fixed; inset: 0; width: 100%; height: 100%;
         }}
         #deck-container {{
-            width: 100%; height: 100%; max-width: 1400px; max-height: 900px;
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
         }}
         #controls {{
             position: absolute; top: 16px; left: 16px; width: 280px; max-height: 80vh; overflow: hidden;
@@ -215,12 +216,28 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
         #controls header {{
             padding: 10px 12px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.08);
         }}
+        #bulk-actions {{
+            display: flex; gap: 8px; padding: 8px 12px 4px 12px;
+        }}
+        .bulk-button {{
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.04);
+            color: #fff;
+            font-size: 12px;
+            cursor: pointer;
+        }}
+        .bulk-button:hover {{
+            background: rgba(255,255,255,0.12);
+        }}
         #search {{
-            width: calc(100% - 24px); margin: 10px 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15);
+            width: calc(100% - 24px); margin: 6px 12px 10px 12px; padding: 8px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.15);
             background: rgba(255,255,255,0.08); color: #fff; outline: none;
         }}
         #country-list {{
-            overflow: auto; max-height: calc(80vh - 120px); padding: 6px 8px 10px 8px;
+            overflow: auto; max-height: calc(80vh - 140px); padding: 6px 8px 10px 8px;
         }}
         .country-item {{
             display: flex; align-items: center; gap: 8px; padding: 6px 6px; border-radius: 6px;
@@ -373,6 +390,22 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
         document.getElementById('search').addEventListener('input', () => {{
             renderCountryList();
         }});
+        const showAllBtn = document.getElementById('show-all');
+        const hideAllBtn = document.getElementById('hide-all');
+        if (showAllBtn) {{
+            showAllBtn.addEventListener('click', () => {{
+                selected = new Set(COUNTRIES);
+                renderCountryList();
+                updateDeck();
+            }});
+        }}
+        if (hideAllBtn) {{
+            hideAllBtn.addEventListener('click', () => {{
+                selected = new Set();
+                renderCountryList();
+                updateDeck();
+            }});
+        }}
     }});
     </script>
 </head>
@@ -381,6 +414,10 @@ def _build_interactive_html(point_data: List[Dict], arrow_data: List[Dict]) -> s
         <div id="deck-container"></div>
         <div id="controls">
             <header>Filter Countries</header>
+            <div id="bulk-actions">
+                <button id="show-all" class="bulk-button">Show all</button>
+                <button id="hide-all" class="bulk-button">Hide all</button>
+            </div>
             <div class="hint">Search and select countries to display (default: none)</div>
             <input id="search" type="text" placeholder="Search countries..." />
             <div id="country-list"></div>
