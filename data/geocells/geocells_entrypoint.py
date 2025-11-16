@@ -6,6 +6,7 @@ import cell_visualizer
 import load_admin_data
 import test_geocells
 import cluster
+import geocell_manager
 
 from tqdm import trange
 import sqlite3
@@ -55,7 +56,7 @@ def main(args):
 
         print(cells[0][1])
     elif args.mode == 7:
-        geocells = geocell_visualizer.GenerateGeocells(["Norway"])
+        geocells = geocell_visualizer.GenerateGeocells(["India"])
 
     elif args.mode == 8:
         points = [{"lng": random.random(), "lat": random.random()} for i in range(100)]
@@ -80,14 +81,18 @@ def main(args):
         sql = sqlite3.connect(
             "data/GADM_data/gadm_world_all_levels.filtered_noadm345.gpkg"
         )
-        countries = pd.read_sql_query("SELECT * FROM ADM_2 WHERE NAME_2 IS 'NA'", sql)[
-            "NAME_1"
-        ]
+        countries = pd.read_sql_query(
+            "SELECT * FROM ADM_0 WHERE COUNTRY IS 'India'", sql
+        )["GID_0"]
 
         sql.close()
 
         for cel in countries:
             print(cel)
+    elif args.mode == 11:
+        mng = geocell_manager.GeocellManager("data/geocells/finished_geocells")
+
+        print(mng.geocells["India"])
 
     else:
         print("Not a valid mode!")
@@ -108,7 +113,8 @@ if __name__ == "__main__":
                          7: Kjør geocells\n
                          8: Test clustering\n
                          9: Lagre geocells fra alle land\n
-                         10: Test database""",
+                         10: Test database\n
+                         11: Geocell mananger""",
         type=int,
     )
     args = parser.parse_args()
