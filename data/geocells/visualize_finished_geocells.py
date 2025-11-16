@@ -69,16 +69,17 @@ def _cluster_id_to_rgba(cluster_id: int) -> List[int]:
 
 def _build_cluster_metadata(df: pd.DataFrame, sv_points: np.ndarray) -> Dict[Tuple[int, int], Dict]:
     """
-    Returns a mapping: (geocell_id, cluster_id) -> {
+    Returns a mapping: (geocell_index, cluster_id) -> {
         'centroid': [lat, lng],
         'color': [r,g,b,a]
     }
     Colors are assigned so that clusters within the same geocell have distinct hues.
     """
     meta: Dict[Tuple[int, int], Dict] = {}
-    # Assign colors per geocell to ensure adjacent clusters are different
+    # Assign colors per geocell to ensure adjacent clusters are different.
+    # The proto dataframe now uses `geocell_index` as the integer geocell identifier.
     geocell_to_clusters: Dict[int, List[int]] = (
-        df.groupby("geocell_id")["cluster_id"].apply(lambda s: sorted(set(int(x) for x in s))).to_dict()
+        df.groupby("geocell_index")["cluster_id"].apply(lambda s: sorted(set(int(x) for x in s))).to_dict()
     )
     # Compute centroid per (geocell, cluster) from indices
     for geocell_id, clusters in tqdm(geocell_to_clusters.items(), desc="Preparing cluster colors", unit="geocell", leave=False):
@@ -94,7 +95,8 @@ def _build_cluster_metadata(df: pd.DataFrame, sv_points: np.ndarray) -> Dict[Tup
             meta[(int(geocell_id), int(cid))] = {"centroid": None, "color": color}
     # Compute centroids
     for _, row in tqdm(df.iterrows(), total=len(df), desc="Computing cluster centroids", unit="row", leave=False):
-        geocell_id = int(row["geocell_id"])
+        # Use `geocell_index` as the numeric geocell identifier from proto_df.
+        geocell_id = int(row["geocell_index"])
         cluster_id = int(row["cluster_id"])
         key = (geocell_id, cluster_id)
         idxs = _parse_indices_column(row["indices"])
@@ -120,7 +122,8 @@ def _build_points_from_proto(proto_csv_path: str, sv_points: np.ndarray) -> List
     cluster_meta = _build_cluster_metadata(df, sv_points)
 
     for _, row in tqdm(df.iterrows(), total=len(df), desc="Building cluster points", unit="row", leave=False):
-        geocell_id = int(row["geocell_id"])
+        # Use `geocell_index` from proto_df as the geocell identifier.
+        geocell_id = int(row["geocell_index"])
         cluster_id = int(row["cluster_id"])
         color = cluster_meta.get((geocell_id, cluster_id), {}).get("color", _cluster_id_to_rgba(cluster_id))
         country_val = row.get("country", None)
@@ -154,7 +157,8 @@ def _build_arrows_from_proto(proto_csv_path: str, sv_points: np.ndarray) -> List
     cluster_meta = _build_cluster_metadata(df, sv_points)
 
     for _, row in tqdm(df.iterrows(), total=len(df), desc="Building arrows to centroids", unit="row", leave=False):
-        geocell_id = int(row["geocell_id"])
+        # Use `geocell_index` from proto_df as the geocell identifier.
+        geocell_id = int(row["geocell_index"])
         cluster_id = int(row["cluster_id"])
         meta = cluster_meta.get((geocell_id, cluster_id))
         if not meta or not meta.get("centroid"):
