@@ -13,8 +13,12 @@ from datasets import (
 )
 from preprocessing.geo_utils import haversine
 from models.utils import ProtoDataManager
-import sqlite3
 import sys
+from pretrain.clip_embedder import CLIPEmbedding
+from pretrain.tinyvit_embedder import TinyViTEmbedding
+from main_coordinator_idun_s3 import LocalGeoMapDataset
+import numpy as np
+from training.load_sqlite_dataset import load_sqlite_panorama_dataset
 
 # Cluster refinement model
 
@@ -60,81 +64,14 @@ class ProtoRefiner(nn.Module):
         self.topk = topk
         self.max_refinement = max_refinement
         self.verbose = verbose
+        print("Initializing embedder...")
+        self.embedder = Embeddings()
 
         # TODO: get the needed data from the dataset through sql querying
         # Check all the places where self.dataset is used
         # self.dataset = {
         #     "train": DualSQLiteEmbeddingDataset(clip_db_path, tinyvit_db_path)
         # }
-
-        def read_sqlite_table(db_path: str, query: str) -> pd.DataFrame:
-            """
-            Opens a SQLite DB at `db_path`, runs `query`, returns a pandas DataFrame.
-            """
-            con = sqlite3.connect(db_path)
-            try:
-                df = pd.read_sql_query(query, con)
-            finally:
-                con.close()
-            return df
-
-        def load_pictures_clip_tinyvit_dfs(
-            pics_db_path: str,
-            clip_db_path: str,
-            tinyvit_db_path: str,
-        ):
-            """
-            Loads only the columns needed from three SQLite databases.
-
-            - Pictures / metadata DB (from create_and_upload_sqlite_from_latest_snapshot):
-                location_id, lat, lon, pano_id
-
-            - CLIP DB (from create_and_upload_sqlite_clip_embeddings_from_latest_snapshot):
-                location_id, heading, embedding, embedding_dim
-
-            - TinyViT DB (from create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot):
-                location_id, heading, embedding, embedding_dim
-
-            Returns:
-                (df_pics, df_clip, df_tiny)
-            """
-
-            # Pictures / metadata DB
-            df_pics = read_sqlite_table(
-                pics_db_path,
-                """
-                SELECT
-                    location_id,
-                    lat,
-                    lon,
-                    pano_id
-                FROM samples
-                """,
-            )
-
-            # CLIP embeddings DB
-            df_clip = read_sqlite_table(
-                clip_db_path,
-                """
-                SELECT
-                    embedding,
-                    embedding_dim
-                FROM samples
-                """,
-            )
-
-            # TinyViT embeddings DB
-            df_tiny = read_sqlite_table(
-                tinyvit_db_path,
-                """
-                SELECT
-                    embedding,
-                    embedding_dim
-                FROM samples
-                """,
-            )
-
-            return df_pics, df_clip, df_tiny
 
         # Load prototypes
         self.proto_df = pd.read_csv(proto_path)
@@ -258,6 +195,7 @@ class ProtoRefiner(nn.Module):
                 ][
                     pred_cluster_id.item()
                 ]  # TODO: dont think this will work. Need a way to get the data for the cluster. Change this to use self.proto_df. The entry is like a row in proto_df
+                # entry: {"indices":list[int], "count":int, "centroid_lat":float, "centroid_lng":float}
                 lng, lat = self._within_cluster_refinement(emb, entry)
                 top_preds.append([lng, lat])
 
@@ -458,16 +396,82 @@ class ProtoRefiner(nn.Module):
             Dict: modified data sample
         """
 
-        # TODO: Get the embeddings for the indices in that geocell through sql querying
-        entries = self.dataset["train"][indices]
-        # TODO: here we can just get the embeddings directly from by querying the database for the indices
-        embeddings = entries["embedding"]
-        if embeddings.dim() == 3:
-            embeddings = embeddings.mean(dim=1)
-        proto_emb = embeddings.mean(dim=0)
-        # If you also need mean geos:
+        emb = self.embedder.generate_embeddings(indices)
+        return {"clip": emb["clip"], "tiny_vit": emb["tinyvit"]}
 
-        return {"embedding": proto_emb}
+
+class Embeddings:
+    def __init__(self):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        df = load_sqlite_panorama_dataset(None)
+        self.data = LocalGeoMapDataset(df)
+
+        print("Loading embedder models...")
+        self.model_clip = CLIPEmbedding(
+            model_name="", device=self.device, load_checkpoint=False, panorama=False
+        )
+        self.model_tiny = TinyViTEmbedding(
+            model_name="tiny_vit_21m_512.dist_in22k_ft_in1k",
+            device=self.device,
+            load_checkpoint=False,
+            panorama=False,
+        )
+        self.lat_lon_by_index = np.loadtxt(
+            "data/out/sv_points_all_latlong.txt", delimiter=","
+        )  # shape (N, 2)
+        print("Embedder models loaded.")
+
+    def generate_embeddings(self, indices: List[int]):
+        clip_emb_list: List[torch.Tensor] = []
+        tiny_emb_list: List[torch.Tensor] = []
+
+        with torch.no_grad():
+            for idx in indices:
+                lat, lon = self.lat_lon_by_index[idx]
+                d = {"lat": float(lat), "lon": float(lon)}
+                pictures = self.data.get_tensor_of_panorama_images_from_point(d)
+
+                clip = self.model_clip._get_embedding(pictures)
+                tiny = self.model_tiny._get_embedding(pictures)
+
+                # If model returns (V, D), average across views to get (D,)
+                if clip.dim() == 2:
+                    clip = clip.mean(dim=0)
+                if tiny.dim() == 2:
+                    tiny = tiny.mean(dim=0)
+
+                # If model returns (D,), keep as is. If returns (V, D, ...), collapse to (D,)
+                if clip.dim() > 2:
+                    clip = clip.flatten(start_dim=0).mean(dim=0)
+                if tiny.dim() > 2:
+                    tiny = tiny.flatten(start_dim=0).mean(dim=0)
+
+                clip_emb_list.append(clip)
+                tiny_emb_list.append(tiny)
+
+        # Stack into (N, D). This is compatible with:
+        # embeddings = entries["embedding"]
+        # if embeddings.dim() == 3: embeddings = embeddings.mean(dim=1)
+        # proto_emb = embeddings.mean(dim=0)
+        clip_tensor = (
+            torch.stack(clip_emb_list, dim=0)
+            if clip_emb_list
+            else torch.empty(0, 0, device=self.device)
+        )
+        tiny_tensor = (
+            torch.stack(tiny_emb_list, dim=0)
+            if tiny_emb_list
+            else torch.empty(0, 0, device=self.device)
+        )
+
+        if clip_tensor.dim() == 3:
+            clip_tensor = clip_tensor.mean(dim=1)
+        clip_tensor = clip_tensor.mean(dim=0)
+
+        if tiny_tensor.dim() == 3:
+            tiny_tensor = tiny_tensor.mean(dim=1)
+        tiny_tensor = tiny_tensor.mean(dim=0)
+        return {"tinyvit": tiny_tensor, "clip": clip_tensor}
 
 
 if __name__ == "__main__":
