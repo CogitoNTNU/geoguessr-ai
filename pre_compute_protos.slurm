@@ -1,14 +1,15 @@
 #!/bin/sh
 #SBATCH --account=studiegrupper-cogito
 #SBATCH --job-name="protos_gen"
-#SBATCH --time=03-00:00:00
-#SBATCH --partition=CPUQ
-#SBATCH --cpus-per-task=32  # 2 CPU cores
-#SBATCH --mem=256GB
+#SBATCH --time=05-00:00:00
+#SBATCH --partition=GPUQ
+#SBATCH --gres=gpu:1
+#SBATCH --mem=200GB
 #SBATCH --nodes=1
+#SBATCH --constraint="(a100|h100|h200)&(gpu80g)"
 #SBATCH --output=slurm_outputs/output_protos_gen.txt
 #SBATCH --error=slurm_outputs/output_protos_gen.err
-#SBATCH --mail-user=danielnh@stud.ntnu.no,jmberget@ntnu.no
+#SBATCH --mail-user=danielnh@stud.ntnu.no
 #SBATCH --mail-type=ALL
 
 WORKDIR=${SLURM_SUBMIT_DIR}
