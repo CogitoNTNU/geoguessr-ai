@@ -48,6 +48,48 @@ class LocalGeoMapDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
+        tensor, target = self._build_tensor_and_target_from_row(row)
+        return tensor, target
+
+    def get_tensor_of_panorama_images_from_point(self, point: dict) -> torch.Tensor:
+        """
+        Given a geographic point as a dict with keys:
+          - "lat": float
+          - "lon": float
+        find the corresponding row in the underlying DataFrame and return a
+        tensor containing the panorama images for that location.
+
+        The tensor construction follows the same logic as the panorama branch
+        in __getitem__ (lines 66–86), producing a tensor of shape (V, C, H, W),
+        where V is the number of available views (typically up to 4).
+        """
+        if "lat" not in point or "lon" not in point:
+            raise KeyError("Point dictionary must contain 'lat' and 'lon' keys.")
+
+        lat = float(point["lat"])
+        lon = float(point["lon"])
+
+        if "lat" not in self.df.columns or "lon" not in self.df.columns:
+            raise KeyError("Underlying DataFrame does not contain 'lat' and 'lon' columns.")
+
+        # First, try to find exact matches on (lat, lon)
+        exact_matches = self.df[
+            (self.df["lat"] == lat) & (self.df["lon"] == lon)
+        ]
+
+        if not exact_matches.empty:
+            row = exact_matches.iloc[0]
+        else:
+            # If no exact match exists (due to floating point differences),
+            # fall back to the nearest neighbor in (lat, lon) space.
+            diffs = (self.df["lat"] - lat) ** 2 + (self.df["lon"] - lon) ** 2
+            nearest_idx = diffs.idxmin()
+            row = self.df.loc[nearest_idx]
+
+        tensor, _ = self._build_tensor_and_target_from_row(row)
+        return tensor
+
+    def _build_tensor_and_target_from_row(self, row):
 
         # Single-image mode (legacy): one image per row
         if "image" in row:
