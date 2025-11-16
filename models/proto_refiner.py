@@ -416,10 +416,32 @@ class Embeddings:
             load_checkpoint=False,
             panorama=False,
         )
-        # Robustly load lat/lon mapping; tolerate ragged/malformed lines
-        points = np.loadtxt("data/out/sv_points_all_latlong.txt", delimiter=",")
-
-        self.lat_lon_by_index = points
+        # Robustly load lat/lon mapping; tolerate whitespace and skip malformed lines
+        try:
+            df_latlon = pd.read_csv(
+                "data/out/sv_points_all_latlong.txt",
+                header=None,
+                names=["lat", "lon"],
+                usecols=[0, 1],
+                sep=",",
+                on_bad_lines="skip",
+                engine="python",
+                skip_blank_lines=True,
+                skipinitialspace=True,  # handles "lat, lon" with a space after comma
+            )
+            # Coerce to float and drop rows with NaNs
+            df_latlon = df_latlon.apply(pd.to_numeric, errors="coerce").dropna()
+            self.lat_lon_by_index = df_latlon.to_numpy(copy=False)
+        except Exception:
+            # Fallback to numpy with tolerant parsing
+            self.lat_lon_by_index = np.genfromtxt(
+                "data/out/sv_points_all_latlong.txt",
+                delimiter=",",
+                usecols=(0, 1),
+                dtype=float,
+                filling_values=np.nan,
+                autostrip=True,
+            )
         print("Embedder models loaded.")
 
     def generate_embeddings(self, indices: List[int]):
