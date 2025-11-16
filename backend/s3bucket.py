@@ -7,7 +7,6 @@ import datetime
 import struct
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import sqlite3
-import shutil
 import time
 
 try:
@@ -671,11 +670,6 @@ def create_and_upload_sqlite_from_latest_snapshot(
     # Rebuild locally by downloading from S3 would cost network; better generate inside the previous block.
     # Since temp dir is gone, copy must occur before it. Adjusted: regenerate is not feasible here.
     # Fallback: we already have sqlite_key in S3; download and save locally.
-    bucket_key = sqlite_key
-    with tempfile.TemporaryDirectory() as td2:
-        tmp_local = os.path.join(td2, "dataset.sqlite")
-        # s3.download_file(BUCKET, bucket_key, tmp_local)  # disabled: depends on S3 upload
-        # shutil.copyfile(tmp_local, local_sqlite_path)
 
     # Final W&B summary
     try:
@@ -984,10 +978,6 @@ def create_and_upload_sqlite_clip_embeddings_from_latest_snapshot(
     local_sqlite_path = os.path.join(
         repo_parent_dir, f"dataset_sqlite_clip_embeddings_{run_id}.sqlite"
     )
-    with tempfile.TemporaryDirectory() as td2:
-        tmp_local = os.path.join(td2, "dataset.sqlite")
-        # s3.download_file(BUCKET, sqlite_key, tmp_local)  # disabled: depends on S3 upload
-        # shutil.copyfile(tmp_local, local_sqlite_path)
 
     # Final W&B summary
     try:
@@ -1291,12 +1281,6 @@ def create_and_upload_sqlite_tinyvit_embeddings_from_latest_snapshot(
     local_sqlite_path = os.path.join(
         repo_parent_dir, f"dataset_sqlite_tinyvit_embeddings_{run_id}.sqlite"
     )
-    with tempfile.TemporaryDirectory() as td2:
-        tmp_local = os.path.join(td2, "dataset.sqlite")
-        # s3.download_file(BUCKET, sqlite_key, tmp_local)  # disabled: depends on S3 upload
-        # shutil.copyfile(tmp_local, local_sqlite_path)
-
-    # Final W&B summary
     try:
         sz = os.path.getsize(local_sqlite_path)
     except Exception:
@@ -1330,6 +1314,81 @@ def download_climate_file(path="koppen_geiger_climatezones_1991_2020_1km.tif"):
         return path
     s3.download_file(BUCKET, key, path)
     return path
+
+
+def upload_model_checkpoint(local_ckpt_dir: str) -> str:
+    """
+    Uploads a full HuggingFace checkpoint directory to:
+        v1/saved_models/run_ts=TIMESTAMP/<files>
+
+    Also writes:
+        v1/saved_models/_latest.json
+
+    Returns the S3 prefix of the uploaded checkpoint.
+    """
+    if not os.path.isdir(local_ckpt_dir):
+        raise FileNotFoundError(f"Checkpoint dir not found: {local_ckpt_dir}")
+
+    run_id = "run_ts=" + datetime.datetime.now(datetime.UTC).strftime(
+        "%Y-%m-%dT%H%M%SZ"
+    )
+    prefix = f"{VERSION}/saved_models/{run_id}"
+
+    # Upload all files inside the directory
+    for root, dirs, files in os.walk(local_ckpt_dir):
+        for fn in files:
+            local_path = os.path.join(root, fn)
+            rel = os.path.relpath(local_path, local_ckpt_dir)
+            key = f"{prefix}/{rel}"
+
+            s3.upload_file(
+                local_path,
+                BUCKET,
+                key,
+                ExtraArgs={"ContentType": "application/octet-stream"},
+            )
+
+    # Write the pointer to latest
+    put_json(
+        {"s3": f"s3://{BUCKET}/{prefix}/"},
+        BUCKET,
+        f"{VERSION}/saved_models/_latest.json",
+    )
+
+    return prefix
+
+
+def download_latest_model_checkpoint(dest_dir: str) -> str:
+    """
+    Downloads the latest uploaded checkpoint version from:
+        v1/saved_models/_latest.json
+
+    Reconstructs the original HuggingFace checkpoint folder structure
+    under dest_dir.
+
+    Returns the local path to the checkpoint folder.
+    """
+    ptr = get_json(BUCKET, f"{VERSION}/saved_models/_latest.json")
+    if not ptr:
+        raise FileNotFoundError("No latest model checkpoint pointer found.")
+
+    prefix = ptr["s3"].replace(f"s3://{BUCKET}/", "")
+
+    # List all checkpoint files inside prefix
+    keys = list_keys(prefix)
+    if not keys:
+        raise FileNotFoundError(f"No checkpoint files found under: {prefix}")
+
+    # Create local directory
+    os.makedirs(dest_dir, exist_ok=True)
+
+    for key in keys:
+        rel = key[len(prefix) :].lstrip("/")
+        local_path = os.path.join(dest_dir, rel)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        s3.download_file(BUCKET, key, local_path)
+
+    return dest_dir
 
 
 def main():
