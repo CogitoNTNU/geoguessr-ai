@@ -23,7 +23,7 @@ TINYVIT_DEFAULT_CHECKPOINT = os.path.join(
     "inference",
     "checkpoints",
     "tinyvit_panorama_1",
-    "epoch_0002_6.145344.pt",
+    "epoch_0006_5.110418.pt",
 )
 
 _GEOCELL_META_CACHE: dict[int, tuple[str, str]] | None = None
@@ -225,9 +225,17 @@ def main():
         checkpoint=args.checkpoint,
         device=args.device,
     )
-    print(f"{lat:.6f},{lon:.6f}")
+    print(f"The model guessed: {lat:.6f},{lon:.6f}")
     if gt_lat is not None and gt_lon is not None:
-        print(f"GT {gt_lat:.6f},{gt_lon:.6f}")
+        print(f"The ground truth is: {gt_lat:.6f},{gt_lon:.6f}")
+
+        # Clean up downloaded panorama images after use
+        for p in args.images:
+            try:
+                os.remove(p)
+            except OSError:
+                pass
+
     meta = _load_geocell_metadata()
     print("Top geocells (id, probability, country, admin1):")
     for gid, prob in zip(top_ids, top_probs):
@@ -237,5 +245,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
