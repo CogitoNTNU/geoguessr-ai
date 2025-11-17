@@ -1434,6 +1434,63 @@ def download_latest_model_checkpoint(dest_dir: str) -> str:
     return dest_dir
 
 
+def download_model_checkpoint_number(index: int, dest_dir: str) -> str:
+    """
+    Downloads the Nth most-recent saved model checkpoint from:
+        v1/saved_models/run_ts=TIMESTAMP_N/...
+
+    The newest checkpoint has index=0, second newest index=1, etc.
+
+    Returns the local path to the checkpoint folder (dest_dir).
+    """
+    if index < 0:
+        raise ValueError("index must be non-negative (0 = newest checkpoint).")
+
+    base_prefix = f"{VERSION}/saved_models"
+    keys = list_keys(base_prefix)
+    if not keys:
+        raise FileNotFoundError(f"No saved model checkpoints found under: {base_prefix}")
+
+    # Collect unique run prefixes 'run_ts=...'
+    run_ids: set[str] = set()
+    for key in keys:
+        parts = key.split("/")
+        # Expect keys like: v1/saved_models/run_ts=YYYY.../file
+        if len(parts) >= 3 and parts[1] == "saved_models" and parts[2].startswith(
+            "run_ts="
+        ):
+            run_ids.add(parts[2])
+
+    if not run_ids:
+        raise FileNotFoundError(f"No run_ts=* checkpoints found under: {base_prefix}")
+
+    # Sort run_ids by timestamp string (descending: newest first)
+    sorted_run_ids = sorted(run_ids, reverse=True)
+    if index >= len(sorted_run_ids):
+        raise IndexError(
+            f"Requested checkpoint index {index}, but only {len(sorted_run_ids)} "
+            f"checkpoint runs exist under {base_prefix}."
+        )
+
+    run_id = sorted_run_ids[index]
+    prefix = f"{VERSION}/saved_models/{run_id}"
+
+    # List all files for the selected run
+    run_keys = list_keys(prefix)
+    if not run_keys:
+        raise FileNotFoundError(f"No checkpoint files found under: {prefix}")
+
+    # Create local directory and reconstruct relative structure
+    os.makedirs(dest_dir, exist_ok=True)
+    for key in run_keys:
+        rel = key[len(prefix) :].lstrip("/")
+        local_path = os.path.join(dest_dir, rel)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        s3.download_file(BUCKET, key, local_path)
+
+    return dest_dir
+
+
 def main():
     """
     Convenience entrypoint: builds SQLite with JPEG bytes from latest snapshot
