@@ -29,5 +29,5 @@ pip install uv --user
 # export AWS_SECRET_ACCESS_KEY=...
 # export AWS_DEFAULT_REGION=eu-north-1
 
-# Run the raw JPEG -> SQLite builder (uses backend/s3bucket.py:main)
-uv run python -m backend.s3bucket
+# Run the main.py script
+uv run main.py 

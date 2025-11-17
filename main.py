@@ -1,42 +1,46 @@
 import os
-import datetime
-import FastAPI
-from contextlib import asynccontextmanager
+import pandas as pd
+import sqlite3
 
-model_path = "/models"
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Runs once at startup. Cleans up on shutdown.
-    """
-    os.makedirs(model_path, exist_ok=True)
-   
-    yield  # Wait for app shutdown
-
-    #More code here
+DATABASE_PATH = os.path.join("sqlite", "dataset.sqlite")
 
 
-app = FastAPI(lifespan=lifespan)
+def main() -> None:
+    print(f"Using database at: {DATABASE_PATH}")
+    database_path = DATABASE_PATH + "?mode=ro"
+    # Connect to the SQLite database in read-only mode
+    conn = sqlite3.connect(database_path, uri=True)
+    conn.execute("PRAGMA query_only = 1")
 
+    try:
+        # Execute a query to fetch all records from the 'samples' table
+        df = pd.read_sql_query(
+            """
+            SELECT
+              location_id,
+              lat,
+              lon,
+              heading,
+              capture_date,
+              pano_id,
+              batch_date,
+              image
+            FROM samples
+            """,
+            conn,
+        )
+    finally:
+        conn.close()
 
-# Endpoint for version information
-@app.get("/version")
-async def version():
-    s = Settings()
-    return {
-        "version": s.version,
-    }
+    if df.empty:
+        print("No data found in the 'samples' table.")
+        return
 
-
-# Health check endpoint
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy", "timestamp": str(datetime.datetime.now())}
+    print(f"Loaded {len(df)} records from the 'samples' table.")
+    print("Sample records:")
+    print(df.head())
 
 
 # Start the server
 if __name__ == "__main__":
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=7200)
+    main()
