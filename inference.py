@@ -8,10 +8,7 @@ import pandas as pd
 from PIL import Image
 from torchvision import transforms as T
 
-from backend.s3bucket import (
-    download_latest_model_checkpoint,
-    download_random_panorama,
-)
+from backend.s3bucket import download_latest_model_checkpoint, download_random_panorama
 from config import CLIP_MODEL, TINYVIT_MODEL
 from models.super_guessr import SuperGuessr
 from models.tinyvit import TinyViTAdapter
@@ -19,6 +16,12 @@ from models.proto_refiner import ProtoRefiner
 
 
 _BASE_DIR = os.path.dirname(__file__)
+
+# Optional Weights & Biases logging for inference
+try:
+    import wandb  # type: ignore
+except Exception:  # pragma: no cover
+    wandb = None  # type: ignore
 
 _GEOCELL_META_CACHE: dict[int, tuple[str, str]] | None = None
 
@@ -232,6 +235,42 @@ def main():
     gt_lat: float | None = None
     gt_lon: float | None = None
 
+    # ---- W&B setup (optional) ----
+    wandb_run = None
+    if wandb is not None:
+        # Minimal config for tracing inference runs
+        wb_config = {
+            "backbone": args.backbone,
+            "use_refiner": args.useRefiner,
+            "checkpoint_arg": args.checkpoint or "auto_default",
+            "device": args.device or "auto",
+        }
+        api_key = os.getenv("WANDB_API_KEY")
+        try:
+            if api_key:
+                wandb.login(key=api_key)
+            else:
+                # Uses stored credentials from prior `wandb login`
+                wandb.login()
+
+            wandb_run = wandb.init(
+                project="geoguessr-ai",
+                job_type="inference",
+                config=wb_config,
+                mode="online",
+            )
+        except Exception as e:
+            print(f"W&B init failed, running with W&B disabled: {e}")
+            try:
+                wandb_run = wandb.init(
+                    project="geoguessr-ai",
+                    job_type="inference",
+                    config=wb_config,
+                    mode="disabled",
+                )
+            except Exception:
+                wandb_run = None
+
     # If no images were provided, sample a random panorama from the training snapshot.
     if not args.images:
         pano = download_random_panorama(
@@ -260,11 +299,25 @@ def main():
             except OSError:
                 pass
 
+    # Log a minimal summary to W&B, if enabled
+    if wandb_run is not None:
+        log_data = {
+            "pred_lat": lat,
+            "pred_lon": lon,
+        }
+        if gt_lat is not None and gt_lon is not None:
+            log_data["gt_lat"] = gt_lat
+            log_data["gt_lon"] = gt_lon
+        wandb.log(log_data)
+
     meta = _load_geocell_metadata()
     print("Top geocells (id, probability, country, admin1):")
     for gid, prob in zip(top_ids, top_probs):
         country, admin1 = meta.get(gid, ("?", "?"))
         print(f"{gid}\t{prob:.4f}\t{country}\t{admin1}")
+
+    if wandb_run is not None:
+        wandb_run.finish()
 
 
 if __name__ == "__main__":
