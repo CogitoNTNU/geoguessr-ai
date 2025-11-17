@@ -55,7 +55,7 @@ def _load_backbone(name: str):
         except FileNotFoundError:
             ckpt_dir = CLIP_MODEL
         return CLIPVisionModel.from_pretrained(ckpt_dir)
-    else: 
+    else:
         return TinyViTAdapter(model_name=TINYVIT_MODEL, pretrained=True)
 
 
@@ -93,12 +93,18 @@ def run_inference(
 
     panorama = len(image_paths) == 4
     device = torch.device(
-        device if device is not None else ("cuda" if torch.cuda.is_available() else "cpu")
+        device
+        if device is not None
+        else ("cuda" if torch.cuda.is_available() else "cpu")
     )
 
     # If TinyViT is selected and no checkpoint was provided, fall back to the
     # trained TinyViT panorama checkpoint if it exists.
-    if backbone == "tinyvit" and not checkpoint and os.path.isfile(TINYVIT_DEFAULT_CHECKPOINT):
+    if (
+        backbone == "tinyvit"
+        and not checkpoint
+        and os.path.isfile(TINYVIT_DEFAULT_CHECKPOINT)
+    ):
         checkpoint = TINYVIT_DEFAULT_CHECKPOINT
 
     backbone_model = _load_backbone(backbone).to(device)
@@ -121,9 +127,10 @@ def run_inference(
         filtered_state = {}
         for name, param in state_dict.items():
             if name not in model_state:
+                print("skip")
                 continue
             if model_state[name].shape != param.shape:
-                # Skip mismatched tensors (e.g., geocell head when num_cells changed)
+                print("skip")
                 continue
             filtered_state[name] = param
         model.load_state_dict(filtered_state, strict=False)
