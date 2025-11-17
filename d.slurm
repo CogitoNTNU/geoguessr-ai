@@ -3,11 +3,12 @@
 #SBATCH --job-name="proto-test"
 #SBATCH --time=03-00:00:00
 #SBATCH --partition=CPUQ
-#SBATCH --cpus-per-task=4  # 2 CPU cores
+#SBATCH --cpus-per-task=4  # 4 CPU cores
 #SBATCH --mem=200GB
 #SBATCH --nodes=1
-#SBATCH --output=slurm_outputs/proto_{$SLURM_JOB_ID}.txt
-#SBATCH --error=slurm_outputs/proto_{$SLURM_JOB_ID}.err
+# Use Slurm placeholders: %j=jobid, %x=jobname, %A=array jobid, %a=array index
+#SBATCH --output=slurm_outputs/proto_%j.txt
+#SBATCH --error=slurm_outputs/proto_%j.err
 #SBATCH --mail-user=danielnh@stud.ntnu.no
 #SBATCH --mail-type=ALL
 
