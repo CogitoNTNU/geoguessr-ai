@@ -1,17 +1,16 @@
 #!/bin/sh
 #SBATCH --account=studiegrupper-cogito
-#SBATCH --job-name="geoguessr-ai"
-#SBATCH --time=05-00:00:00
+#SBATCH --job-name="geoguessr-ai-inference"
+#SBATCH --time=00-01:00:00
 #SBATCH --partition=GPUQ
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128GB
 #SBATCH --nodes=1
 #SBATCH --constraint="(a100|h100|h200)&(gpu80g)"
-#SBATCH --output=slurm_outputs/output_geo-guessr-ai-tinyvit-panorama-3.txt
-#SBATCH --error=slurm_outputs/output_geo-guessr-ai-tinyvit-panorama-3.err
+#SBATCH --output=slurm_outputs/output_geo-guessr-ai-inference.txt
+#SBATCH --error=slurm_outputs/output_geo-guessr-ai-inference.err
 #SBATCH --mail-user=magnuvbr@stud.ntnu.no,danielnh@stud.ntnu.no,jens.m.n.berget@stud.ntnu.no
 #SBATCH --mail-type=ALL
-
 
 WORKDIR=${SLURM_SUBMIT_DIR}
 cd ${WORKDIR}
@@ -25,5 +24,5 @@ module load Anaconda3/2024.02-1
 
 pip install uv --user
 
-# Run the Python script
+# Run the Python inference script
 uv run python inference.py
