@@ -56,7 +56,9 @@ def _load_backbone(name: str):
             ckpt_dir = CLIP_MODEL
         return CLIPVisionModel.from_pretrained(ckpt_dir)
     else:
-        return TinyViTAdapter(model_name=TINYVIT_MODEL, pretrained=True)
+        # For TinyViT we rely on the SuperGuessr checkpoint for weights.
+        # Do NOT load the timm ImageNet-pretrained TinyViT weights here.
+        return TinyViTAdapter(model_name=TINYVIT_MODEL, pretrained=False)
 
 
 def _build_transform(name: str):
@@ -133,6 +135,7 @@ def run_inference(
                 print("skip")
                 continue
             filtered_state[name] = param
+        print(f"Loaded {len(filtered_state)}/{len(model_state)} parameters from checkpoint.")
         model.load_state_dict(filtered_state, strict=False)
 
     model.eval()
