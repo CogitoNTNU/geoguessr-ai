@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path
 from typing import List
 
 import torch
@@ -18,15 +19,21 @@ from models.proto_refiner import ProtoRefiner
 
 
 _BASE_DIR = os.path.dirname(__file__)
-TINYVIT_DEFAULT_CHECKPOINT = os.path.join(
-    _BASE_DIR,
-    "inference",
-    "checkpoints",
-    "tinyvit_panorama_1",
-    "epoch_0006_5.110418.pt",
-)
 
 _GEOCELL_META_CACHE: dict[int, tuple[str, str]] | None = None
+
+
+def _find_default_checkpoint() -> str | None:
+    """
+    Return the default SuperGuessr checkpoint path:
+      <repo_root>/checkpoints/f8pq308o/best.pt
+
+    This lives at the top-level `checkpoints` directory, not under `inference/`.
+    """
+    ckpt_path = Path(_BASE_DIR) / "checkpoints" / "f8pq308o" / "best.pt"
+    if ckpt_path.is_file():
+        return str(ckpt_path)
+    return None
 
 
 def _load_geocell_metadata() -> dict[int, tuple[str, str]]:
@@ -100,14 +107,10 @@ def run_inference(
         else ("cuda" if torch.cuda.is_available() else "cpu")
     )
 
-    # If TinyViT is selected and no checkpoint was provided, fall back to the
-    # trained TinyViT panorama checkpoint if it exists.
-    if (
-        backbone == "tinyvit"
-        and not checkpoint
-        and os.path.isfile(TINYVIT_DEFAULT_CHECKPOINT)
-    ):
-        checkpoint = TINYVIT_DEFAULT_CHECKPOINT
+    # If no checkpoint was provided, fall back to the default
+    # checkpoints/f8pq308o/best.pt at the repo root (if it exists).
+    if not checkpoint:
+        checkpoint = _find_default_checkpoint()
 
     backbone_model = _load_backbone(backbone).to(device)
     model = SuperGuessr(
@@ -126,16 +129,27 @@ def run_inference(
             else raw_state
         )
         model_state = model.state_dict()
-        filtered_state = {}
+        filtered_state: dict[str, torch.Tensor] = {}
+        skipped: list[tuple[str, torch.Size, torch.Size | None]] = []
+
         for name, param in state_dict.items():
-            if name not in model_state:
-                print("skip")
+            target_shape = model_state.get(name, None)
+            if target_shape is None:
+                skipped.append((name, getattr(param, "shape", None), None))
                 continue
             if model_state[name].shape != param.shape:
-                print("skip")
+                skipped.append((name, param.shape, model_state[name].shape))
                 continue
             filtered_state[name] = param
-        print(f"Loaded {len(filtered_state)}/{len(model_state)} parameters from checkpoint.")
+
+        if skipped:
+            print("Skipped parameters from checkpoint (name, ckpt_shape, model_shape):")
+            for name, src_shape, dst_shape in skipped:
+                print(f"  {name}: {src_shape} -> {dst_shape}")
+
+        print(
+            f"Loaded {len(filtered_state)}/{len(model_state)} parameters from checkpoint."
+        )
         model.load_state_dict(filtered_state, strict=False)
 
     model.eval()
@@ -189,7 +203,7 @@ def main():
     parser.add_argument(
         "--backbone",
         choices=["clip", "tinyvit"],
-        default="tinyvit",
+        default="clip",
         help="Vision backbone to use (default: tinyvit with trained panorama checkpoint).",
     )
     parser.add_argument(
