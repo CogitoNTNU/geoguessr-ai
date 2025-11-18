@@ -1,0 +1,4410 @@
+[
+    {
+      "ground_truth": {
+        "lat": 1.416107,
+        "lon": 103.728337
+      },
+      "prediction": {
+        "lat": 24.45525360107422,
+        "lon": 122.98873138427734
+      },
+      "distance_km": 3293.833458005269,
+      "score": 550,
+      "top5_geocells": [
+        {
+          "geocell_index": 2932,
+          "probability": 0.1383543163537979,
+          "country": "Japan",
+          "admin1": "Okinawa"
+        },
+        {
+          "geocell_index": 2665,
+          "probability": 0.11438111960887909,
+          "country": "Japan",
+          "admin1": "Japan"
+        },
+        {
+          "geocell_index": 2931,
+          "probability": 0.03462451696395874,
+          "country": "Japan",
+          "admin1": "Okinawa"
+        },
+        {
+          "geocell_index": 2664,
+          "probability": 0.03458600863814354,
+          "country": "Japan",
+          "admin1": "Japan"
+        },
+        {
+          "geocell_index": 2926,
+          "probability": 0.025327755138278008,
+          "country": "Japan",
+          "admin1": "Okinawa"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -30.650809,
+        "lon": 142.564178
+      },
+      "prediction": {
+        "lat": -29.13584327697754,
+        "lon": 117.3519515991211
+      },
+      "distance_km": 2431.245042569274,
+      "score": 981,
+      "top5_geocells": [
+        {
+          "geocell_index": 8485,
+          "probability": 0.14947982132434845,
+          "country": "Australia",
+          "admin1": "Western Australia"
+        },
+        {
+          "geocell_index": 8265,
+          "probability": 0.12062651664018631,
+          "country": "Australia",
+          "admin1": "Australia"
+        },
+        {
+          "geocell_index": 8477,
+          "probability": 0.10739238560199738,
+          "country": "Australia",
+          "admin1": "Western Australia"
+        },
+        {
+          "geocell_index": 8273,
+          "probability": 0.09203968942165375,
+          "country": "Australia",
+          "admin1": "Australia"
+        },
+        {
+          "geocell_index": 8258,
+          "probability": 0.03983268886804581,
+          "country": "Australia",
+          "admin1": "Australia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 15.510634,
+        "lon": 74.582536
+      },
+      "prediction": {
+        "lat": 21.03841781616211,
+        "lon": 80.81230926513672
+      },
+      "distance_km": 899.9989807665714,
+      "score": 2736,
+      "top5_geocells": [
+        {
+          "geocell_index": 11764,
+          "probability": 0.015381287783384323,
+          "country": "India",
+          "admin1": "India"
+        },
+        {
+          "geocell_index": 12015,
+          "probability": 0.010333660058677197,
+          "country": "India",
+          "admin1": "Chhattisgarh"
+        },
+        {
+          "geocell_index": 12083,
+          "probability": 0.010046281851828098,
+          "country": "India",
+          "admin1": "Karnataka"
+        },
+        {
+          "geocell_index": 4555,
+          "probability": 0.009445009753108025,
+          "country": "Bangladesh",
+          "admin1": "Khulna"
+        },
+        {
+          "geocell_index": 11978,
+          "probability": 0.008511240594089031,
+          "country": "India",
+          "admin1": "India"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 34.147593,
+        "lon": -86.378786
+      },
+      "prediction": {
+        "lat": 29.760435104370117,
+        "lon": -95.37033081054688
+      },
+      "distance_km": 977.9775670876023,
+      "score": 2597,
+      "top5_geocells": [
+        {
+          "geocell_index": 1389,
+          "probability": 0.047065820544958115,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1387,
+          "probability": 0.042280636727809906,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1380,
+          "probability": 0.03579103946685791,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1386,
+          "probability": 0.034335386008024216,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1388,
+          "probability": 0.031609710305929184,
+          "country": "United States",
+          "admin1": "Texas"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 1.503766,
+        "lon": -50.913697
+      },
+      "prediction": {
+        "lat": 2.6101086139678955,
+        "lon": -61.666263580322266
+      },
+      "distance_km": 1201.1558448989824,
+      "score": 2236,
+      "top5_geocells": [
+        {
+          "geocell_index": 5343,
+          "probability": 0.0585675910115242,
+          "country": "Brazil",
+          "admin1": "Roraima"
+        },
+        {
+          "geocell_index": 5157,
+          "probability": 0.03213925287127495,
+          "country": "Brazil",
+          "admin1": "Brazil"
+        },
+        {
+          "geocell_index": 5282,
+          "probability": 0.03175579383969307,
+          "country": "Brazil",
+          "admin1": "Par\u00e1"
+        },
+        {
+          "geocell_index": 5097,
+          "probability": 0.018783239647746086,
+          "country": "Brazil",
+          "admin1": "Brazil"
+        },
+        {
+          "geocell_index": 5281,
+          "probability": 0.01657271943986416,
+          "country": "Brazil",
+          "admin1": "Par\u00e1"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -1.896596,
+        "lon": 30.408183
+      },
+      "prediction": {
+        "lat": -2.006530284881592,
+        "lon": 29.923545837402344
+      },
+      "distance_km": 55.22776375360799,
+      "score": 4818,
+      "top5_geocells": [
+        {
+          "geocell_index": 4310,
+          "probability": 0.047943469136953354,
+          "country": "Rwanda",
+          "admin1": "Amajyepfo"
+        },
+        {
+          "geocell_index": 4289,
+          "probability": 0.04563877359032631,
+          "country": "Rwanda",
+          "admin1": "Rwanda"
+        },
+        {
+          "geocell_index": 4301,
+          "probability": 0.0418960340321064,
+          "country": "Rwanda",
+          "admin1": "Rwanda"
+        },
+        {
+          "geocell_index": 4322,
+          "probability": 0.040185991674661636,
+          "country": "Rwanda",
+          "admin1": "Umujyi wa Kigali"
+        },
+        {
+          "geocell_index": 4325,
+          "probability": 0.03803376480937004,
+          "country": "Rwanda",
+          "admin1": "Umujyi wa Kigali"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 54.197744,
+        "lon": 17.402108
+      },
+      "prediction": {
+        "lat": 53.73124313354492,
+        "lon": 23.03925132751465
+      },
+      "distance_km": 372.27830917963075,
+      "score": 3896,
+      "top5_geocells": [
+        {
+          "geocell_index": 3381,
+          "probability": 0.0057529970072209835,
+          "country": "Poland",
+          "admin1": "Podlaskie"
+        },
+        {
+          "geocell_index": 3382,
+          "probability": 0.005744494032114744,
+          "country": "Poland",
+          "admin1": "Podlaskie"
+        },
+        {
+          "geocell_index": 3235,
+          "probability": 0.0041849953122437,
+          "country": "Poland",
+          "admin1": "Poland"
+        },
+        {
+          "geocell_index": 1855,
+          "probability": 0.004144562408328056,
+          "country": "Lithuania",
+          "admin1": "Alytaus"
+        },
+        {
+          "geocell_index": 3300,
+          "probability": 0.004086728673428297,
+          "country": "Poland",
+          "admin1": "Kujawsko-Pomorskie"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 25.20995,
+        "lon": 55.272526
+      },
+      "prediction": {
+        "lat": 19.095462799072266,
+        "lon": 72.88251495361328
+      },
+      "distance_km": 1934.6828604682032,
+      "score": 1368,
+      "top5_geocells": [
+        {
+          "geocell_index": 12143,
+          "probability": 0.020046856254339218,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 12144,
+          "probability": 0.018083961680531502,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 12131,
+          "probability": 0.01648777537047863,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 12146,
+          "probability": 0.015224606730043888,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 3822,
+          "probability": 0.013470117002725601,
+          "country": "Vietnam",
+          "admin1": "Qu\u1ea3ng Ninh"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 59.975321,
+        "lon": 11.368239
+      },
+      "prediction": {
+        "lat": 69.35485076904297,
+        "lon": 20.057525634765625
+      },
+      "distance_km": 1119.3448105781163,
+      "score": 2362,
+      "top5_geocells": [
+        {
+          "geocell_index": 7065,
+          "probability": 0.01325305551290512,
+          "country": "Norway",
+          "admin1": "Troms"
+        },
+        {
+          "geocell_index": 6981,
+          "probability": 0.013216011226177216,
+          "country": "Norway",
+          "admin1": "Norway"
+        },
+        {
+          "geocell_index": 7043,
+          "probability": 0.012546208687126637,
+          "country": "Norway",
+          "admin1": "Oppland"
+        },
+        {
+          "geocell_index": 7066,
+          "probability": 0.012530975043773651,
+          "country": "Norway",
+          "admin1": "Troms"
+        },
+        {
+          "geocell_index": 6983,
+          "probability": 0.012335194274783134,
+          "country": "Norway",
+          "admin1": "Norway"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 44.526338,
+        "lon": 66.1804
+      },
+      "prediction": {
+        "lat": 45.777217864990234,
+        "lon": 61.33018493652344
+      },
+      "distance_km": 404.89751398837524,
+      "score": 3812,
+      "top5_geocells": [
+        {
+          "geocell_index": 798,
+          "probability": 0.38694271445274353,
+          "country": "Kazakhstan",
+          "admin1": "Qyzylorda"
+        },
+        {
+          "geocell_index": 737,
+          "probability": 0.18602243065834045,
+          "country": "Kazakhstan",
+          "admin1": "Kazakhstan"
+        },
+        {
+          "geocell_index": 738,
+          "probability": 0.10343107581138611,
+          "country": "Kazakhstan",
+          "admin1": "Kazakhstan"
+        },
+        {
+          "geocell_index": 797,
+          "probability": 0.09472496807575226,
+          "country": "Kazakhstan",
+          "admin1": "Qyzylorda"
+        },
+        {
+          "geocell_index": 799,
+          "probability": 0.025324622169137,
+          "country": "Kazakhstan",
+          "admin1": "Qyzylorda"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 19.606459,
+        "lon": -99.05179
+      },
+      "prediction": {
+        "lat": 27.572845458984375,
+        "lon": -98.93534851074219
+      },
+      "distance_km": 885.9010246422818,
+      "score": 2762,
+      "top5_geocells": [
+        {
+          "geocell_index": 1056,
+          "probability": 0.3148789405822754,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1385,
+          "probability": 0.23061390221118927,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1036,
+          "probability": 0.2109355330467224,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1365,
+          "probability": 0.15139080584049225,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1368,
+          "probability": 0.020412670448422432,
+          "country": "United States",
+          "admin1": "Texas"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -23.26058,
+        "lon": -46.398145
+      },
+      "prediction": {
+        "lat": 27.572845458984375,
+        "lon": -98.93534851074219
+      },
+      "distance_km": 7982.39803185805,
+      "score": 24,
+      "top5_geocells": [
+        {
+          "geocell_index": 1056,
+          "probability": 0.023585744202136993,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1036,
+          "probability": 0.023335985839366913,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1385,
+          "probability": 0.017477795481681824,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1365,
+          "probability": 0.017310546711087227,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 3700,
+          "probability": 0.015000585466623306,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 11.51674,
+        "lon": 104.845629
+      },
+      "prediction": {
+        "lat": 17.33521270751953,
+        "lon": 78.47705841064453
+      },
+      "distance_km": 2909.3970136535695,
+      "score": 712,
+      "top5_geocells": [
+        {
+          "geocell_index": 12212,
+          "probability": 0.04562527686357498,
+          "country": "India",
+          "admin1": "Telangana"
+        },
+        {
+          "geocell_index": 12215,
+          "probability": 0.03304925188422203,
+          "country": "India",
+          "admin1": "Telangana"
+        },
+        {
+          "geocell_index": 12216,
+          "probability": 0.028235355392098427,
+          "country": "India",
+          "admin1": "Telangana"
+        },
+        {
+          "geocell_index": 12210,
+          "probability": 0.025466077029705048,
+          "country": "India",
+          "admin1": "Telangana"
+        },
+        {
+          "geocell_index": 12211,
+          "probability": 0.022604379802942276,
+          "country": "India",
+          "admin1": "Telangana"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -1.268661,
+        "lon": 36.779345
+      },
+      "prediction": {
+        "lat": -1.435951590538025,
+        "lon": 37.88603973388672
+      },
+      "distance_km": 124.42291618627468,
+      "score": 4600,
+      "top5_geocells": [
+        {
+          "geocell_index": 6357,
+          "probability": 0.013168192468583584,
+          "country": "Kenya",
+          "admin1": "Kenya"
+        },
+        {
+          "geocell_index": 6456,
+          "probability": 0.012825326062738895,
+          "country": "Kenya",
+          "admin1": "Makueni"
+        },
+        {
+          "geocell_index": 6344,
+          "probability": 0.012325669638812542,
+          "country": "Kenya",
+          "admin1": "Kenya"
+        },
+        {
+          "geocell_index": 6358,
+          "probability": 0.012014590203762054,
+          "country": "Kenya",
+          "admin1": "Kenya"
+        },
+        {
+          "geocell_index": 6440,
+          "probability": 0.011646539904177189,
+          "country": "Kenya",
+          "admin1": "Kiambu"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 3.153912,
+        "lon": 101.650283
+      },
+      "prediction": {
+        "lat": 3.2805919647216797,
+        "lon": 101.64916229248047
+      },
+      "distance_km": 14.086718865856458,
+      "score": 4953,
+      "top5_geocells": [
+        {
+          "geocell_index": 11032,
+          "probability": 0.03183870390057564,
+          "country": "Malaysia",
+          "admin1": "Malaysia"
+        },
+        {
+          "geocell_index": 11071,
+          "probability": 0.030007006600499153,
+          "country": "Malaysia",
+          "admin1": "Kelantan"
+        },
+        {
+          "geocell_index": 11073,
+          "probability": 0.02881818264722824,
+          "country": "Malaysia",
+          "admin1": "Kuala Lumpur"
+        },
+        {
+          "geocell_index": 11036,
+          "probability": 0.022414211183786392,
+          "country": "Malaysia",
+          "admin1": "Malaysia"
+        },
+        {
+          "geocell_index": 11038,
+          "probability": 0.01962180621922016,
+          "country": "Malaysia",
+          "admin1": "Malaysia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -40.331147,
+        "lon": 175.651103
+      },
+      "prediction": {
+        "lat": -36.8460578918457,
+        "lon": 174.7636260986328
+      },
+      "distance_km": 395.1195328895424,
+      "score": 3837,
+      "top5_geocells": [
+        {
+          "geocell_index": 8016,
+          "probability": 0.0775235965847969,
+          "country": "New Zealand",
+          "admin1": "Auckland"
+        },
+        {
+          "geocell_index": 7963,
+          "probability": 0.06653634458780289,
+          "country": "New Zealand",
+          "admin1": "New Zealand"
+        },
+        {
+          "geocell_index": 8018,
+          "probability": 0.06115450710058212,
+          "country": "New Zealand",
+          "admin1": "Auckland"
+        },
+        {
+          "geocell_index": 8014,
+          "probability": 0.053688835352659225,
+          "country": "New Zealand",
+          "admin1": "Auckland"
+        },
+        {
+          "geocell_index": 8022,
+          "probability": 0.05013124644756317,
+          "country": "New Zealand",
+          "admin1": "Bay of Plenty"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 45.937519,
+        "lon": 19.352749
+      },
+      "prediction": {
+        "lat": 50.11328887939453,
+        "lon": 22.88519859313965
+      },
+      "distance_km": 533.340283293806,
+      "score": 3498,
+      "top5_geocells": [
+        {
+          "geocell_index": 3372,
+          "probability": 0.006088294088840485,
+          "country": "Poland",
+          "admin1": "Podkarpackie"
+        },
+        {
+          "geocell_index": 10092,
+          "probability": 0.005671797785907984,
+          "country": "Serbia",
+          "admin1": "Serbia"
+        },
+        {
+          "geocell_index": 3185,
+          "probability": 0.005633764900267124,
+          "country": "Poland",
+          "admin1": "Poland"
+        },
+        {
+          "geocell_index": 10148,
+          "probability": 0.005440607201308012,
+          "country": "Serbia",
+          "admin1": "Ra\u0161ki"
+        },
+        {
+          "geocell_index": 10132,
+          "probability": 0.0053044939413666725,
+          "country": "Serbia",
+          "admin1": "Grad Beograd"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -8.045638,
+        "lon": -79.007368
+      },
+      "prediction": {
+        "lat": -8.108155250549316,
+        "lon": -79.01578521728516
+      },
+      "distance_km": 7.013092785569776,
+      "score": 4977,
+      "top5_geocells": [
+        {
+          "geocell_index": 9616,
+          "probability": 0.1539127081632614,
+          "country": "Peru",
+          "admin1": "La Libertad"
+        },
+        {
+          "geocell_index": 9611,
+          "probability": 0.08623334765434265,
+          "country": "Peru",
+          "admin1": "Jun\u00edn"
+        },
+        {
+          "geocell_index": 9544,
+          "probability": 0.07386038452386856,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9617,
+          "probability": 0.0596918985247612,
+          "country": "Peru",
+          "admin1": "La Libertad"
+        },
+        {
+          "geocell_index": 9614,
+          "probability": 0.04529969021677971,
+          "country": "Peru",
+          "admin1": "La Libertad"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 22.336612,
+        "lon": 114.167698
+      },
+      "prediction": {
+        "lat": 21.513355255126953,
+        "lon": 107.44673156738281
+      },
+      "distance_km": 699.2388241416145,
+      "score": 3130,
+      "top5_geocells": [
+        {
+          "geocell_index": 3702,
+          "probability": 0.09992048889398575,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        },
+        {
+          "geocell_index": 3822,
+          "probability": 0.07598360627889633,
+          "country": "Vietnam",
+          "admin1": "Qu\u1ea3ng Ninh"
+        },
+        {
+          "geocell_index": 3724,
+          "probability": 0.045629072934389114,
+          "country": "Vietnam",
+          "admin1": "B\u1eafc Giang"
+        },
+        {
+          "geocell_index": 3701,
+          "probability": 0.03814659267663956,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        },
+        {
+          "geocell_index": 3821,
+          "probability": 0.036234837025403976,
+          "country": "Vietnam",
+          "admin1": "Qu\u1ea3ng Ninh"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 32.059692,
+        "lon": 34.831412
+      },
+      "prediction": {
+        "lat": 32.3044319152832,
+        "lon": 35.252601623535156
+      },
+      "distance_km": 48.08118361045621,
+      "score": 4842,
+      "top5_geocells": [
+        {
+          "geocell_index": 7532,
+          "probability": 0.03564077615737915,
+          "country": "Palestine",
+          "admin1": "West Bank"
+        },
+        {
+          "geocell_index": 7534,
+          "probability": 0.02667243406176567,
+          "country": "Palestine",
+          "admin1": "West Bank"
+        },
+        {
+          "geocell_index": 7530,
+          "probability": 0.024834072217345238,
+          "country": "Palestine",
+          "admin1": "West Bank"
+        },
+        {
+          "geocell_index": 383,
+          "probability": 0.024149447679519653,
+          "country": "Jordan",
+          "admin1": "Amman"
+        },
+        {
+          "geocell_index": 7521,
+          "probability": 0.023069048300385475,
+          "country": "Palestine",
+          "admin1": "Palestine"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -21.209022,
+        "lon": 55.443111
+      },
+      "prediction": {
+        "lat": -14.336191177368164,
+        "lon": -170.73764038085938
+      },
+      "distance_km": 13610.122872374874,
+      "score": 1,
+      "top5_geocells": [
+        {
+          "geocell_index": 9031,
+          "probability": 0.09782508760690689,
+          "country": "American Samoa",
+          "admin1": "American Samoa"
+        },
+        {
+          "geocell_index": 9032,
+          "probability": 0.09781119227409363,
+          "country": "American Samoa",
+          "admin1": "American Samoa"
+        },
+        {
+          "geocell_index": 9026,
+          "probability": 0.07856524735689163,
+          "country": "Senegal",
+          "admin1": "Thi\u00e8s"
+        },
+        {
+          "geocell_index": 9038,
+          "probability": 0.07234698534011841,
+          "country": "American Samoa",
+          "admin1": "Western"
+        },
+        {
+          "geocell_index": 9030,
+          "probability": 0.0648774653673172,
+          "country": "American Samoa",
+          "admin1": "American Samoa"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -24.354269,
+        "lon": -128.305186
+      },
+      "prediction": {
+        "lat": -14.354504585266113,
+        "lon": -170.76541137695312
+      },
+      "distance_km": 4572.172625822802,
+      "score": 234,
+      "top5_geocells": [
+        {
+          "geocell_index": 9030,
+          "probability": 0.13240103423595428,
+          "country": "American Samoa",
+          "admin1": "American Samoa"
+        },
+        {
+          "geocell_index": 9038,
+          "probability": 0.10855352133512497,
+          "country": "American Samoa",
+          "admin1": "Western"
+        },
+        {
+          "geocell_index": 9031,
+          "probability": 0.10246656090021133,
+          "country": "American Samoa",
+          "admin1": "American Samoa"
+        },
+        {
+          "geocell_index": 9027,
+          "probability": 0.09097082912921906,
+          "country": "Senegal",
+          "admin1": "Ziguinchor"
+        },
+        {
+          "geocell_index": 9026,
+          "probability": 0.07429001480340958,
+          "country": "Senegal",
+          "admin1": "Thi\u00e8s"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -34.801822,
+        "lon": 146.802106
+      },
+      "prediction": {
+        "lat": -23.72657585144043,
+        "lon": 145.72927856445312
+      },
+      "distance_km": 1235.8739004439901,
+      "score": 2185,
+      "top5_geocells": [
+        {
+          "geocell_index": 8148,
+          "probability": 0.07242265343666077,
+          "country": "Australia",
+          "admin1": "Australia"
+        },
+        {
+          "geocell_index": 8092,
+          "probability": 0.036823570728302,
+          "country": "Australia",
+          "admin1": "Australia"
+        },
+        {
+          "geocell_index": 8292,
+          "probability": 0.031500235199928284,
+          "country": "Australia",
+          "admin1": "New South Wales"
+        },
+        {
+          "geocell_index": 8353,
+          "probability": 0.023996632546186447,
+          "country": "Australia",
+          "admin1": "Queensland"
+        },
+        {
+          "geocell_index": 8381,
+          "probability": 0.02359418198466301,
+          "country": "Australia",
+          "admin1": "Queensland"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 5.642458,
+        "lon": -0.178349
+      },
+      "prediction": {
+        "lat": 6.041286468505859,
+        "lon": -0.7480320930480957
+      },
+      "distance_km": 77.05731686553654,
+      "score": 4748,
+      "top5_geocells": [
+        {
+          "geocell_index": 6819,
+          "probability": 0.042737822979688644,
+          "country": "Ghana",
+          "admin1": "Ghana"
+        },
+        {
+          "geocell_index": 6879,
+          "probability": 0.03818599134683609,
+          "country": "Ghana",
+          "admin1": "Eastern"
+        },
+        {
+          "geocell_index": 6883,
+          "probability": 0.03781525790691376,
+          "country": "Ghana",
+          "admin1": "Greater Accra"
+        },
+        {
+          "geocell_index": 6880,
+          "probability": 0.03697352483868599,
+          "country": "Ghana",
+          "admin1": "Greater Accra"
+        },
+        {
+          "geocell_index": 6882,
+          "probability": 0.03640377148985863,
+          "country": "Ghana",
+          "admin1": "Greater Accra"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 46.710592,
+        "lon": 19.394073
+      },
+      "prediction": {
+        "lat": 45.488433837890625,
+        "lon": 26.00587272644043
+      },
+      "distance_km": 527.4135783860179,
+      "score": 3512,
+      "top5_geocells": [
+        {
+          "geocell_index": 9493,
+          "probability": 0.009787628427147865,
+          "country": "Romania",
+          "admin1": "Vaslui"
+        },
+        {
+          "geocell_index": 9434,
+          "probability": 0.00939977914094925,
+          "country": "Romania",
+          "admin1": "Constan\u021ba"
+        },
+        {
+          "geocell_index": 9463,
+          "probability": 0.008327146992087364,
+          "country": "Romania",
+          "admin1": "Neam\u021b"
+        },
+        {
+          "geocell_index": 9391,
+          "probability": 0.007618863135576248,
+          "country": "Romania",
+          "admin1": "Romania"
+        },
+        {
+          "geocell_index": 9421,
+          "probability": 0.007086318451911211,
+          "country": "Romania",
+          "admin1": "Romania"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 21.343625,
+        "lon": 105.392298
+      },
+      "prediction": {
+        "lat": 6.574176788330078,
+        "lon": 80.03118133544922
+      },
+      "distance_km": 3182.7988874245457,
+      "score": 593,
+      "top5_geocells": [
+        {
+          "geocell_index": 7394,
+          "probability": 0.015337432734668255,
+          "country": "Sri Lanka",
+          "admin1": "Kalutara"
+        },
+        {
+          "geocell_index": 7392,
+          "probability": 0.012500260025262833,
+          "country": "Sri Lanka",
+          "admin1": "Kalutara"
+        },
+        {
+          "geocell_index": 7323,
+          "probability": 0.011932725086808205,
+          "country": "Sri Lanka",
+          "admin1": "Sri Lanka"
+        },
+        {
+          "geocell_index": 7370,
+          "probability": 0.010773628018796444,
+          "country": "Sri Lanka",
+          "admin1": "Colombo"
+        },
+        {
+          "geocell_index": 7391,
+          "probability": 0.010726028122007847,
+          "country": "Sri Lanka",
+          "admin1": "Kalutara"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -15.585975,
+        "lon": -49.287786
+      },
+      "prediction": {
+        "lat": -12.348386764526367,
+        "lon": -60.693756103515625
+      },
+      "distance_km": 1282.0572609440176,
+      "score": 2118,
+      "top5_geocells": [
+        {
+          "geocell_index": 5342,
+          "probability": 0.022994324564933777,
+          "country": "Brazil",
+          "admin1": "Rond\u00f4nia"
+        },
+        {
+          "geocell_index": 5156,
+          "probability": 0.02091394178569317,
+          "country": "Brazil",
+          "admin1": "Brazil"
+        },
+        {
+          "geocell_index": 2810,
+          "probability": 0.014136291109025478,
+          "country": "Japan",
+          "admin1": "Hokkaido"
+        },
+        {
+          "geocell_index": 2560,
+          "probability": 0.012891558930277824,
+          "country": "Japan",
+          "admin1": "Japan"
+        },
+        {
+          "geocell_index": 5336,
+          "probability": 0.012050410732626915,
+          "country": "Brazil",
+          "admin1": "Rio Grande do Sul"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 4.97206,
+        "lon": -1.717249
+      },
+      "prediction": {
+        "lat": 5.302793502807617,
+        "lon": -1.5826919078826904
+      },
+      "distance_km": 39.680394298661135,
+      "score": 4869,
+      "top5_geocells": [
+        {
+          "geocell_index": 6874,
+          "probability": 0.05320252850651741,
+          "country": "Ghana",
+          "admin1": "Central"
+        },
+        {
+          "geocell_index": 6858,
+          "probability": 0.037560101598501205,
+          "country": "Ghana",
+          "admin1": "Ghana"
+        },
+        {
+          "geocell_index": 6910,
+          "probability": 0.034498196095228195,
+          "country": "Ghana",
+          "admin1": "Western"
+        },
+        {
+          "geocell_index": 6870,
+          "probability": 0.03430888429284096,
+          "country": "Ghana",
+          "admin1": "Ashanti"
+        },
+        {
+          "geocell_index": 6855,
+          "probability": 0.0340786948800087,
+          "country": "Ghana",
+          "admin1": "Ghana"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 58.57472,
+        "lon": -117.968453
+      },
+      "prediction": {
+        "lat": 57.45207977294922,
+        "lon": -116.4426498413086
+      },
+      "distance_km": 153.81033843590137,
+      "score": 4510,
+      "top5_geocells": [
+        {
+          "geocell_index": 10772,
+          "probability": 0.46269527077674866,
+          "country": "Canada",
+          "admin1": "Alberta"
+        },
+        {
+          "geocell_index": 10618,
+          "probability": 0.2338527888059616,
+          "country": "Canada",
+          "admin1": "Canada"
+        },
+        {
+          "geocell_index": 10619,
+          "probability": 0.02761637419462204,
+          "country": "Canada",
+          "admin1": "Canada"
+        },
+        {
+          "geocell_index": 10773,
+          "probability": 0.02672232873737812,
+          "country": "Canada",
+          "admin1": "Alberta"
+        },
+        {
+          "geocell_index": 10620,
+          "probability": 0.022580880671739578,
+          "country": "Canada",
+          "admin1": "Canada"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 27.760446,
+        "lon": 85.366475
+      },
+      "prediction": {
+        "lat": 27.665203094482422,
+        "lon": 85.31465911865234
+      },
+      "distance_km": 11.75486368678655,
+      "score": 4961,
+      "top5_geocells": [
+        {
+          "geocell_index": 1920,
+          "probability": 0.13067655265331268,
+          "country": "Nepal",
+          "admin1": "Central"
+        },
+        {
+          "geocell_index": 1922,
+          "probability": 0.12778829038143158,
+          "country": "Nepal",
+          "admin1": "Central"
+        },
+        {
+          "geocell_index": 1923,
+          "probability": 0.09362673759460449,
+          "country": "Nepal",
+          "admin1": "Central"
+        },
+        {
+          "geocell_index": 1919,
+          "probability": 0.0779830738902092,
+          "country": "Nepal",
+          "admin1": "Central"
+        },
+        {
+          "geocell_index": 1907,
+          "probability": 0.06978241354227066,
+          "country": "Nepal",
+          "admin1": "Nepal"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 29.528058,
+        "lon": 34.915077
+      },
+      "prediction": {
+        "lat": -18.56182098388672,
+        "lon": -65.99816131591797
+      },
+      "distance_km": 12036.091117434658,
+      "score": 2,
+      "top5_geocells": [
+        {
+          "geocell_index": 3041,
+          "probability": 0.018710270524024963,
+          "country": "Bolivia",
+          "admin1": "Bolivia"
+        },
+        {
+          "geocell_index": 3077,
+          "probability": 0.01686256192624569,
+          "country": "Bolivia",
+          "admin1": "Potos\u00ed"
+        },
+        {
+          "geocell_index": 3079,
+          "probability": 0.01650449074804783,
+          "country": "Bolivia",
+          "admin1": "Potos\u00ed"
+        },
+        {
+          "geocell_index": 3071,
+          "probability": 0.014351410791277885,
+          "country": "Bolivia",
+          "admin1": "Oruro"
+        },
+        {
+          "geocell_index": 3035,
+          "probability": 0.014145232737064362,
+          "country": "Bolivia",
+          "admin1": "Bolivia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 6.682075,
+        "lon": -72.858986
+      },
+      "prediction": {
+        "lat": 27.572845458984375,
+        "lon": -98.93534851074219
+      },
+      "distance_km": 3598.944328261189,
+      "score": 449,
+      "top5_geocells": [
+        {
+          "geocell_index": 1385,
+          "probability": 0.0205855630338192,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1056,
+          "probability": 0.01954048126935959,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 5756,
+          "probability": 0.015534264035522938,
+          "country": "Colombia",
+          "admin1": "Santander"
+        },
+        {
+          "geocell_index": 1036,
+          "probability": 0.013889836147427559,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 5664,
+          "probability": 0.010246583260595798,
+          "country": "Colombia",
+          "admin1": "Colombia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -15.16524,
+        "lon": -60.061867
+      },
+      "prediction": {
+        "lat": -15.268214225769043,
+        "lon": -55.443580627441406
+      },
+      "distance_km": 495.64855304832145,
+      "score": 3587,
+      "top5_geocells": [
+        {
+          "geocell_index": 5236,
+          "probability": 0.08684471994638443,
+          "country": "Brazil",
+          "admin1": "Mato Grosso"
+        },
+        {
+          "geocell_index": 5051,
+          "probability": 0.08324603736400604,
+          "country": "Brazil",
+          "admin1": "Brazil"
+        },
+        {
+          "geocell_index": 5241,
+          "probability": 0.04897927865386009,
+          "country": "Brazil",
+          "admin1": "Mato Grosso"
+        },
+        {
+          "geocell_index": 5056,
+          "probability": 0.031492993235588074,
+          "country": "Brazil",
+          "admin1": "Brazil"
+        },
+        {
+          "geocell_index": 8485,
+          "probability": 0.023891616612672806,
+          "country": "Australia",
+          "admin1": "Western Australia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 10.505137,
+        "lon": 123.73913
+      },
+      "prediction": {
+        "lat": 7.21666145324707,
+        "lon": 125.47718048095703
+      },
+      "distance_km": 412.5068240272876,
+      "score": 3793,
+      "top5_geocells": [
+        {
+          "geocell_index": 12564,
+          "probability": 0.039633627980947495,
+          "country": "Philippines",
+          "admin1": "Davao del Sur"
+        },
+        {
+          "geocell_index": 12560,
+          "probability": 0.035177502781152725,
+          "country": "Philippines",
+          "admin1": "Davao del Norte"
+        },
+        {
+          "geocell_index": 12562,
+          "probability": 0.03367183357477188,
+          "country": "Philippines",
+          "admin1": "Davao del Sur"
+        },
+        {
+          "geocell_index": 12452,
+          "probability": 0.030843250453472137,
+          "country": "Philippines",
+          "admin1": "Philippines"
+        },
+        {
+          "geocell_index": 12563,
+          "probability": 0.030740149319171906,
+          "country": "Philippines",
+          "admin1": "Davao del Sur"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 22.371754,
+        "lon": 114.169696
+      },
+      "prediction": {
+        "lat": 21.513355255126953,
+        "lon": 107.44673156738281
+      },
+      "distance_km": 699.8795581587639,
+      "score": 3129,
+      "top5_geocells": [
+        {
+          "geocell_index": 3702,
+          "probability": 0.1033080592751503,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        },
+        {
+          "geocell_index": 3822,
+          "probability": 0.07386721670627594,
+          "country": "Vietnam",
+          "admin1": "Qu\u1ea3ng Ninh"
+        },
+        {
+          "geocell_index": 3701,
+          "probability": 0.0433821976184845,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        },
+        {
+          "geocell_index": 3604,
+          "probability": 0.03299110010266304,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        },
+        {
+          "geocell_index": 3821,
+          "probability": 0.03162422031164169,
+          "country": "Vietnam",
+          "admin1": "Qu\u1ea3ng Ninh"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -6.997163,
+        "lon": 112.155749
+      },
+      "prediction": {
+        "lat": 24.45525360107422,
+        "lon": 122.98873138427734
+      },
+      "distance_km": 3689.2470317494744,
+      "score": 422,
+      "top5_geocells": [
+        {
+          "geocell_index": 2932,
+          "probability": 0.025068536400794983,
+          "country": "Japan",
+          "admin1": "Okinawa"
+        },
+        {
+          "geocell_index": 2665,
+          "probability": 0.02390134148299694,
+          "country": "Japan",
+          "admin1": "Japan"
+        },
+        {
+          "geocell_index": 2931,
+          "probability": 0.008732764050364494,
+          "country": "Japan",
+          "admin1": "Okinawa"
+        },
+        {
+          "geocell_index": 2659,
+          "probability": 0.0062857018783688545,
+          "country": "Japan",
+          "admin1": "Japan"
+        },
+        {
+          "geocell_index": 2222,
+          "probability": 0.00628460431471467,
+          "country": "Indonesia",
+          "admin1": "Indonesia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 11.790181,
+        "lon": 106.566828
+      },
+      "prediction": {
+        "lat": 17.4713134765625,
+        "lon": 99.06088256835938
+      },
+      "distance_km": 1024.943913411483,
+      "score": 2516,
+      "top5_geocells": [
+        {
+          "geocell_index": 4991,
+          "probability": 0.008889480493962765,
+          "country": "Thailand",
+          "admin1": "Sukhothai"
+        },
+        {
+          "geocell_index": 5012,
+          "probability": 0.008667869493365288,
+          "country": "Thailand",
+          "admin1": "Ubon Ratchathani"
+        },
+        {
+          "geocell_index": 4900,
+          "probability": 0.007192878983914852,
+          "country": "Thailand",
+          "admin1": "Lamphun"
+        },
+        {
+          "geocell_index": 4713,
+          "probability": 0.0067477659322321415,
+          "country": "Thailand",
+          "admin1": "Thailand"
+        },
+        {
+          "geocell_index": 4746,
+          "probability": 0.006641951389610767,
+          "country": "Thailand",
+          "admin1": "Thailand"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -13.266998,
+        "lon": -76.179676
+      },
+      "prediction": {
+        "lat": -17.368131637573242,
+        "lon": -70.53653717041016
+      },
+      "distance_km": 757.6352036009904,
+      "score": 3010,
+      "top5_geocells": [
+        {
+          "geocell_index": 9650,
+          "probability": 0.04589182138442993,
+          "country": "Peru",
+          "admin1": "San Mart\u00edn"
+        },
+        {
+          "geocell_index": 5970,
+          "probability": 0.03613875061273575,
+          "country": "Chile",
+          "admin1": "Arica y Parinacota"
+        },
+        {
+          "geocell_index": 9570,
+          "probability": 0.03255176544189453,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9571,
+          "probability": 0.029168641194701195,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9629,
+          "probability": 0.02600487880408764,
+          "country": "Peru",
+          "admin1": "Loreto"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 3.760776,
+        "lon": 98.684459
+      },
+      "prediction": {
+        "lat": 3.5890064239501953,
+        "lon": 98.615966796875
+      },
+      "distance_km": 20.556538886239803,
+      "score": 4932,
+      "top5_geocells": [
+        {
+          "geocell_index": 2489,
+          "probability": 0.03754979372024536,
+          "country": "Indonesia",
+          "admin1": "Sumatera Utara"
+        },
+        {
+          "geocell_index": 2488,
+          "probability": 0.03733775019645691,
+          "country": "Indonesia",
+          "admin1": "Sumatera Utara"
+        },
+        {
+          "geocell_index": 2490,
+          "probability": 0.0365498811006546,
+          "country": "Indonesia",
+          "admin1": "Sumatera Utara"
+        },
+        {
+          "geocell_index": 2492,
+          "probability": 0.03298720717430115,
+          "country": "Indonesia",
+          "admin1": "Sumatera Utara"
+        },
+        {
+          "geocell_index": 2493,
+          "probability": 0.03041057661175728,
+          "country": "Indonesia",
+          "admin1": "Sumatera Utara"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 37.17326,
+        "lon": -4.579515
+      },
+      "prediction": {
+        "lat": 38.825523376464844,
+        "lon": -1.980332612991333
+      },
+      "distance_km": 292.59280301883257,
+      "score": 4110,
+      "top5_geocells": [
+        {
+          "geocell_index": 1950,
+          "probability": 0.08645552396774292,
+          "country": "Spain",
+          "admin1": "Spain"
+        },
+        {
+          "geocell_index": 1944,
+          "probability": 0.044178176671266556,
+          "country": "Spain",
+          "admin1": "Spain"
+        },
+        {
+          "geocell_index": 1993,
+          "probability": 0.03638749197125435,
+          "country": "Spain",
+          "admin1": "Andaluc\u00eda"
+        },
+        {
+          "geocell_index": 2015,
+          "probability": 0.03286006674170494,
+          "country": "Spain",
+          "admin1": "Castilla-La Mancha"
+        },
+        {
+          "geocell_index": 2017,
+          "probability": 0.032606370747089386,
+          "country": "Spain",
+          "admin1": "Castilla-La Mancha"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 0.784058,
+        "lon": 35.306189
+      },
+      "prediction": {
+        "lat": 0.8257692456245422,
+        "lon": 34.57903289794922
+      },
+      "distance_km": 80.98101786107894,
+      "score": 4736,
+      "top5_geocells": [
+        {
+          "geocell_index": 6423,
+          "probability": 0.041477020829916,
+          "country": "Kenya",
+          "admin1": "Bungoma"
+        },
+        {
+          "geocell_index": 6331,
+          "probability": 0.030237799510359764,
+          "country": "Kenya",
+          "admin1": "Kenya"
+        },
+        {
+          "geocell_index": 6516,
+          "probability": 0.02646266669034958,
+          "country": "Kenya",
+          "admin1": "West Pokot"
+        },
+        {
+          "geocell_index": 6418,
+          "probability": 0.024692347273230553,
+          "country": "Kenya",
+          "admin1": "Kenya"
+        },
+        {
+          "geocell_index": 4281,
+          "probability": 0.02438887394964695,
+          "country": "Uganda",
+          "admin1": "Pallisa"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 38.483959,
+        "lon": -7.471635
+      },
+      "prediction": {
+        "lat": 32.3044319152832,
+        "lon": 35.252601623535156
+      },
+      "distance_km": 3897.8074932018408,
+      "score": 367,
+      "top5_geocells": [
+        {
+          "geocell_index": 7524,
+          "probability": 0.03253694623708725,
+          "country": "Palestine",
+          "admin1": "Palestine"
+        },
+        {
+          "geocell_index": 7522,
+          "probability": 0.027312422171235085,
+          "country": "Palestine",
+          "admin1": "Palestine"
+        },
+        {
+          "geocell_index": 7532,
+          "probability": 0.024898096919059753,
+          "country": "Palestine",
+          "admin1": "West Bank"
+        },
+        {
+          "geocell_index": 7533,
+          "probability": 0.02315918356180191,
+          "country": "Palestine",
+          "admin1": "West Bank"
+        },
+        {
+          "geocell_index": 355,
+          "probability": 0.022242527455091476,
+          "country": "Jordan",
+          "admin1": "Jordan"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 49.772074,
+        "lon": 2.294643
+      },
+      "prediction": {
+        "lat": 52.86489486694336,
+        "lon": 0.03608227148652077
+      },
+      "distance_km": 377.9841277360991,
+      "score": 3881,
+      "top5_geocells": [
+        {
+          "geocell_index": 8774,
+          "probability": 0.007811298593878746,
+          "country": "United Kingdom",
+          "admin1": "England"
+        },
+        {
+          "geocell_index": 8706,
+          "probability": 0.006936820689588785,
+          "country": "United Kingdom",
+          "admin1": "Wales"
+        },
+        {
+          "geocell_index": 8593,
+          "probability": 0.006219572853296995,
+          "country": "United Kingdom",
+          "admin1": "United Kingdom"
+        },
+        {
+          "geocell_index": 8735,
+          "probability": 0.004949284251779318,
+          "country": "United Kingdom",
+          "admin1": "England"
+        },
+        {
+          "geocell_index": 8727,
+          "probability": 0.0048094880767166615,
+          "country": "United Kingdom",
+          "admin1": "England"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 25.016924,
+        "lon": 55.143655
+      },
+      "prediction": {
+        "lat": 25.355133056640625,
+        "lon": 55.428592681884766
+      },
+      "distance_km": 47.29002376543667,
+      "score": 4844,
+      "top5_geocells": [
+        {
+          "geocell_index": 6037,
+          "probability": 0.017765412107110023,
+          "country": "United Arab Emirates",
+          "admin1": "United Arab Emirates"
+        },
+        {
+          "geocell_index": 6093,
+          "probability": 0.01616734080016613,
+          "country": "United Arab Emirates",
+          "admin1": "Sharjah"
+        },
+        {
+          "geocell_index": 6082,
+          "probability": 0.016001354902982712,
+          "country": "United Arab Emirates",
+          "admin1": "Dubai"
+        },
+        {
+          "geocell_index": 6080,
+          "probability": 0.015633920207619667,
+          "country": "United Arab Emirates",
+          "admin1": "Dubai"
+        },
+        {
+          "geocell_index": 6090,
+          "probability": 0.015545191243290901,
+          "country": "United Arab Emirates",
+          "admin1": "Sharjah"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 24.015324,
+        "lon": 56.268408
+      },
+      "prediction": {
+        "lat": 22.882442474365234,
+        "lon": 58.465576171875
+      },
+      "distance_km": 257.10435421769057,
+      "score": 4209,
+      "top5_geocells": [
+        {
+          "geocell_index": 7109,
+          "probability": 0.05468958616256714,
+          "country": "Oman",
+          "admin1": "Oman"
+        },
+        {
+          "geocell_index": 7183,
+          "probability": 0.03002801351249218,
+          "country": "Oman",
+          "admin1": "Muscat"
+        },
+        {
+          "geocell_index": 7184,
+          "probability": 0.02959144115447998,
+          "country": "Oman",
+          "admin1": "Muscat"
+        },
+        {
+          "geocell_index": 7187,
+          "probability": 0.024878600612282753,
+          "country": "Oman",
+          "admin1": "Muscat"
+        },
+        {
+          "geocell_index": 7186,
+          "probability": 0.0242933202534914,
+          "country": "Oman",
+          "admin1": "Muscat"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 32.253977,
+        "lon": -64.845526
+      },
+      "prediction": {
+        "lat": 41.8269157409668,
+        "lon": -70.81605529785156
+      },
+      "distance_km": 1188.2914918122683,
+      "score": 2255,
+      "top5_geocells": [
+        {
+          "geocell_index": 1345,
+          "probability": 0.05687505379319191,
+          "country": "United States",
+          "admin1": "Rhode Island"
+        },
+        {
+          "geocell_index": 1344,
+          "probability": 0.04288293421268463,
+          "country": "United States",
+          "admin1": "Rhode Island"
+        },
+        {
+          "geocell_index": 1150,
+          "probability": 0.03389434516429901,
+          "country": "United States",
+          "admin1": "Connecticut"
+        },
+        {
+          "geocell_index": 1227,
+          "probability": 0.03262566402554512,
+          "country": "United States",
+          "admin1": "Maryland"
+        },
+        {
+          "geocell_index": 974,
+          "probability": 0.03041142225265503,
+          "country": "United States",
+          "admin1": "United States"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 37.725113,
+        "lon": 30.870824
+      },
+      "prediction": {
+        "lat": 40.6609001159668,
+        "lon": 36.926815032958984
+      },
+      "distance_km": 615.3550135689162,
+      "score": 3311,
+      "top5_geocells": [
+        {
+          "geocell_index": 7696,
+          "probability": 0.05329660326242447,
+          "country": "Turkey",
+          "admin1": "Turkey"
+        },
+        {
+          "geocell_index": 7842,
+          "probability": 0.03184960037469864,
+          "country": "Turkey",
+          "admin1": "Ordu"
+        },
+        {
+          "geocell_index": 7847,
+          "probability": 0.02276763506233692,
+          "country": "Turkey",
+          "admin1": "Samsun"
+        },
+        {
+          "geocell_index": 7701,
+          "probability": 0.022736933082342148,
+          "country": "Turkey",
+          "admin1": "Turkey"
+        },
+        {
+          "geocell_index": 7695,
+          "probability": 0.01984274387359619,
+          "country": "Turkey",
+          "admin1": "Turkey"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 19.346305,
+        "lon": -99.11448
+      },
+      "prediction": {
+        "lat": 27.572845458984375,
+        "lon": -98.93534851074219
+      },
+      "distance_km": 914.9315455099676,
+      "score": 2709,
+      "top5_geocells": [
+        {
+          "geocell_index": 1385,
+          "probability": 0.21949942409992218,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1056,
+          "probability": 0.1654919981956482,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1036,
+          "probability": 0.12981899082660675,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1365,
+          "probability": 0.08702081441879272,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1368,
+          "probability": 0.02907685749232769,
+          "country": "United States",
+          "admin1": "Texas"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -46.272378,
+        "lon": 168.79044
+      },
+      "prediction": {
+        "lat": -44.609371185302734,
+        "lon": 170.75929260253906
+      },
+      "distance_km": 240.37945446311292,
+      "score": 4256,
+      "top5_geocells": [
+        {
+          "geocell_index": 7972,
+          "probability": 0.05229257419705391,
+          "country": "New Zealand",
+          "admin1": "New Zealand"
+        },
+        {
+          "geocell_index": 7964,
+          "probability": 0.044616542756557465,
+          "country": "New Zealand",
+          "admin1": "New Zealand"
+        },
+        {
+          "geocell_index": 8029,
+          "probability": 0.0413607582449913,
+          "country": "New Zealand",
+          "admin1": "Canterbury"
+        },
+        {
+          "geocell_index": 8032,
+          "probability": 0.03726295009255409,
+          "country": "New Zealand",
+          "admin1": "Canterbury"
+        },
+        {
+          "geocell_index": 8025,
+          "probability": 0.034279949963092804,
+          "country": "New Zealand",
+          "admin1": "Canterbury"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -17.989651,
+        "lon": -70.233666
+      },
+      "prediction": {
+        "lat": -17.772754669189453,
+        "lon": -70.1608657836914
+      },
+      "distance_km": 25.31833765512742,
+      "score": 4916,
+      "top5_geocells": [
+        {
+          "geocell_index": 9571,
+          "probability": 0.11954779922962189,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9651,
+          "probability": 0.10946056991815567,
+          "country": "Peru",
+          "admin1": "San Mart\u00edn"
+        },
+        {
+          "geocell_index": 9650,
+          "probability": 0.05283660069108009,
+          "country": "Peru",
+          "admin1": "San Mart\u00edn"
+        },
+        {
+          "geocell_index": 9570,
+          "probability": 0.03540096804499626,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9591,
+          "probability": 0.023602109402418137,
+          "country": "Peru",
+          "admin1": "Cajamarca"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 19.071332,
+        "lon": -98.159706
+      },
+      "prediction": {
+        "lat": 27.572845458984375,
+        "lon": -98.93534851074219
+      },
+      "distance_km": 948.6276612785284,
+      "score": 2648,
+      "top5_geocells": [
+        {
+          "geocell_index": 1056,
+          "probability": 0.31809142231941223,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1385,
+          "probability": 0.29208534955978394,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1036,
+          "probability": 0.18468910455703735,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1365,
+          "probability": 0.11967557668685913,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1039,
+          "probability": 0.028010431677103043,
+          "country": "United States",
+          "admin1": "United States"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 58.047445,
+        "lon": -6.541285
+      },
+      "prediction": {
+        "lat": 63.30335998535156,
+        "lon": 9.127728462219238
+      },
+      "distance_km": 1029.9994877614608,
+      "score": 2508,
+      "top5_geocells": [
+        {
+          "geocell_index": 6979,
+          "probability": 0.04418230801820755,
+          "country": "Norway",
+          "admin1": "Norway"
+        },
+        {
+          "geocell_index": 6974,
+          "probability": 0.04317636415362358,
+          "country": "Norway",
+          "admin1": "Norway"
+        },
+        {
+          "geocell_index": 6945,
+          "probability": 0.03393961861729622,
+          "country": "Norway",
+          "admin1": "Norway"
+        },
+        {
+          "geocell_index": 6978,
+          "probability": 0.03145449236035347,
+          "country": "Norway",
+          "admin1": "Norway"
+        },
+        {
+          "geocell_index": 6969,
+          "probability": 0.03001474216580391,
+          "country": "Norway",
+          "admin1": "Norway"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 56.902437,
+        "lon": 23.483513
+      },
+      "prediction": {
+        "lat": 61.906410217285156,
+        "lon": 71.12812042236328
+      },
+      "distance_km": 2688.3119132913184,
+      "score": 826,
+      "top5_geocells": [
+        {
+          "geocell_index": 4015,
+          "probability": 0.004837232641875744,
+          "country": "Russia",
+          "admin1": "Khanty-Mansiy"
+        },
+        {
+          "geocell_index": 8789,
+          "probability": 0.0031586322002112865,
+          "country": "Laos",
+          "admin1": "Laos"
+        },
+        {
+          "geocell_index": 8877,
+          "probability": 0.003132440848276019,
+          "country": "Cambodia",
+          "admin1": "Cambodia"
+        },
+        {
+          "geocell_index": 2190,
+          "probability": 0.0030147612560540438,
+          "country": "Indonesia",
+          "admin1": "Indonesia"
+        },
+        {
+          "geocell_index": 8784,
+          "probability": 0.0029380079358816147,
+          "country": "Laos",
+          "admin1": "Laos"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 60.928471,
+        "lon": 21.809775
+      },
+      "prediction": {
+        "lat": 61.87599182128906,
+        "lon": 27.713783264160156
+      },
+      "distance_km": 331.28996460096596,
+      "score": 4005,
+      "top5_geocells": [
+        {
+          "geocell_index": 11369,
+          "probability": 0.04522894695401192,
+          "country": "Finland",
+          "admin1": "Eastern Finland"
+        },
+        {
+          "geocell_index": 11347,
+          "probability": 0.033138714730739594,
+          "country": "Finland",
+          "admin1": "Finland"
+        },
+        {
+          "geocell_index": 11366,
+          "probability": 0.03303190693259239,
+          "country": "Finland",
+          "admin1": "Eastern Finland"
+        },
+        {
+          "geocell_index": 11345,
+          "probability": 0.027782198041677475,
+          "country": "Panama",
+          "admin1": "Veraguas"
+        },
+        {
+          "geocell_index": 11390,
+          "probability": 0.023422837257385254,
+          "country": "Finland",
+          "admin1": "Southern Finland"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -5.38678,
+        "lon": -80.741045
+      },
+      "prediction": {
+        "lat": -7.724352836608887,
+        "lon": -79.1525650024414
+      },
+      "distance_km": 313.60647701652454,
+      "score": 4053,
+      "top5_geocells": [
+        {
+          "geocell_index": 9541,
+          "probability": 0.045790232717990875,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9590,
+          "probability": 0.037998564541339874,
+          "country": "Peru",
+          "admin1": "Cajamarca"
+        },
+        {
+          "geocell_index": 9542,
+          "probability": 0.03649810701608658,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9611,
+          "probability": 0.03031821921467781,
+          "country": "Peru",
+          "admin1": "Jun\u00edn"
+        },
+        {
+          "geocell_index": 9592,
+          "probability": 0.02881675772368908,
+          "country": "Peru",
+          "admin1": "Cajamarca"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 21.588046,
+        "lon": 85.61439
+      },
+      "prediction": {
+        "lat": 18.57118034362793,
+        "lon": 83.97930908203125
+      },
+      "distance_km": 376.4084599301278,
+      "score": 3886,
+      "top5_geocells": [
+        {
+          "geocell_index": 11989,
+          "probability": 0.029430368915200233,
+          "country": "India",
+          "admin1": "Andhra Pradesh"
+        },
+        {
+          "geocell_index": 11890,
+          "probability": 0.025765176862478256,
+          "country": "India",
+          "admin1": "India"
+        },
+        {
+          "geocell_index": 12157,
+          "probability": 0.021889781579375267,
+          "country": "India",
+          "admin1": "Odisha"
+        },
+        {
+          "geocell_index": 12155,
+          "probability": 0.01999417133629322,
+          "country": "India",
+          "admin1": "Odisha"
+        },
+        {
+          "geocell_index": 11889,
+          "probability": 0.018917903304100037,
+          "country": "India",
+          "admin1": "India"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 56.699566,
+        "lon": 9.199692
+      },
+      "prediction": {
+        "lat": 49.62743377685547,
+        "lon": 5.8249287605285645
+      },
+      "distance_km": 817.6794049212032,
+      "score": 2891,
+      "top5_geocells": [
+        {
+          "geocell_index": 9355,
+          "probability": 0.01004310604184866,
+          "country": "Belgium",
+          "admin1": "Wallonie"
+        },
+        {
+          "geocell_index": 1776,
+          "probability": 0.007543548475950956,
+          "country": "Germany",
+          "admin1": "Rheinland-Pfalz"
+        },
+        {
+          "geocell_index": 1771,
+          "probability": 0.007076883688569069,
+          "country": "Germany",
+          "admin1": "Rheinland-Pfalz"
+        },
+        {
+          "geocell_index": 1747,
+          "probability": 0.006631861440837383,
+          "country": "Germany",
+          "admin1": "Nordrhein-Westfalen"
+        },
+        {
+          "geocell_index": 9354,
+          "probability": 0.006574939005076885,
+          "country": "Belgium",
+          "admin1": "Wallonie"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 22.46146,
+        "lon": 89.210852
+      },
+      "prediction": {
+        "lat": 22.136381149291992,
+        "lon": 90.11906433105469
+      },
+      "distance_km": 100.18435957462201,
+      "score": 4675,
+      "top5_geocells": [
+        {
+          "geocell_index": 4452,
+          "probability": 0.029013821855187416,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        },
+        {
+          "geocell_index": 4482,
+          "probability": 0.025033622980117798,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        },
+        {
+          "geocell_index": 4534,
+          "probability": 0.024040278047323227,
+          "country": "Bangladesh",
+          "admin1": "Chittagong"
+        },
+        {
+          "geocell_index": 4521,
+          "probability": 0.022920522838830948,
+          "country": "Bangladesh",
+          "admin1": "Barisal"
+        },
+        {
+          "geocell_index": 4457,
+          "probability": 0.02160630188882351,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -16.413197,
+        "lon": -71.466396
+      },
+      "prediction": {
+        "lat": -12.793842315673828,
+        "lon": -76.357666015625
+      },
+      "distance_km": 662.4601350294727,
+      "score": 3208,
+      "top5_geocells": [
+        {
+          "geocell_index": 9619,
+          "probability": 0.029505684971809387,
+          "country": "Peru",
+          "admin1": "La Libertad"
+        },
+        {
+          "geocell_index": 9624,
+          "probability": 0.029369864612817764,
+          "country": "Peru",
+          "admin1": "Lima"
+        },
+        {
+          "geocell_index": 9603,
+          "probability": 0.028701113536953926,
+          "country": "Peru",
+          "admin1": "Hu\u00e1nuco"
+        },
+        {
+          "geocell_index": 9570,
+          "probability": 0.027087250724434853,
+          "country": "Peru",
+          "admin1": "Peru"
+        },
+        {
+          "geocell_index": 9549,
+          "probability": 0.02700468711555004,
+          "country": "Peru",
+          "admin1": "Peru"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 35.137056,
+        "lon": 24.809324
+      },
+      "prediction": {
+        "lat": 35.89329528808594,
+        "lon": -5.341596603393555
+      },
+      "distance_km": 2719.3510593321885,
+      "score": 809,
+      "top5_geocells": [
+        {
+          "geocell_index": 2045,
+          "probability": 0.030905036255717278,
+          "country": "Spain",
+          "admin1": "Ceuta y Melilla"
+        },
+        {
+          "geocell_index": 2046,
+          "probability": 0.02717849239706993,
+          "country": "Spain",
+          "admin1": "Ceuta y Melilla"
+        },
+        {
+          "geocell_index": 1991,
+          "probability": 0.024779925122857094,
+          "country": "Spain",
+          "admin1": "Andaluc\u00eda"
+        },
+        {
+          "geocell_index": 1967,
+          "probability": 0.023389406502246857,
+          "country": "Spain",
+          "admin1": "Spain"
+        },
+        {
+          "geocell_index": 2080,
+          "probability": 0.017816118896007538,
+          "country": "Spain",
+          "admin1": "Regi\u00f3n de Murcia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 44.433791,
+        "lon": 12.117278
+      },
+      "prediction": {
+        "lat": 38.01655197143555,
+        "lon": -3.4415392875671387
+      },
+      "distance_km": 1480.5311226406227,
+      "score": 1854,
+      "top5_geocells": [
+        {
+          "geocell_index": 1944,
+          "probability": 0.008976555429399014,
+          "country": "Spain",
+          "admin1": "Spain"
+        },
+        {
+          "geocell_index": 2044,
+          "probability": 0.005169144831597805,
+          "country": "Spain",
+          "admin1": "Catalu\u00f1a"
+        },
+        {
+          "geocell_index": 2036,
+          "probability": 0.004047525115311146,
+          "country": "Spain",
+          "admin1": "Catalu\u00f1a"
+        },
+        {
+          "geocell_index": 2042,
+          "probability": 0.003999505657702684,
+          "country": "Spain",
+          "admin1": "Catalu\u00f1a"
+        },
+        {
+          "geocell_index": 6301,
+          "probability": 0.0036878816317766905,
+          "country": "France",
+          "admin1": "Occitanie"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 32.517922,
+        "lon": 34.904286
+      },
+      "prediction": {
+        "lat": 32.148189544677734,
+        "lon": 35.097068786621094
+      },
+      "distance_km": 44.92548008846875,
+      "score": 4852,
+      "top5_geocells": [
+        {
+          "geocell_index": 7521,
+          "probability": 0.028852136805653572,
+          "country": "Palestine",
+          "admin1": "Palestine"
+        },
+        {
+          "geocell_index": 7530,
+          "probability": 0.028597811236977577,
+          "country": "Palestine",
+          "admin1": "West Bank"
+        },
+        {
+          "geocell_index": 7533,
+          "probability": 0.022957803681492805,
+          "country": "Palestine",
+          "admin1": "West Bank"
+        },
+        {
+          "geocell_index": 7522,
+          "probability": 0.022189082577824593,
+          "country": "Palestine",
+          "admin1": "Palestine"
+        },
+        {
+          "geocell_index": 7524,
+          "probability": 0.021690890192985535,
+          "country": "Palestine",
+          "admin1": "Palestine"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 19.44295,
+        "lon": -99.114759
+      },
+      "prediction": {
+        "lat": 27.572845458984375,
+        "lon": -98.93534851074219
+      },
+      "distance_km": 904.1877242492312,
+      "score": 2728,
+      "top5_geocells": [
+        {
+          "geocell_index": 1385,
+          "probability": 0.33768248558044434,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1056,
+          "probability": 0.24216583371162415,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1365,
+          "probability": 0.13850757479667664,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1036,
+          "probability": 0.12503384053707123,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1368,
+          "probability": 0.0378243587911129,
+          "country": "United States",
+          "admin1": "Texas"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 37.990679,
+        "lon": -3.542679
+      },
+      "prediction": {
+        "lat": 38.01655197143555,
+        "lon": -3.4415392875671387
+      },
+      "distance_km": 9.317008804300208,
+      "score": 4969,
+      "top5_geocells": [
+        {
+          "geocell_index": 1944,
+          "probability": 0.061437468975782394,
+          "country": "Spain",
+          "admin1": "Spain"
+        },
+        {
+          "geocell_index": 1993,
+          "probability": 0.05422571673989296,
+          "country": "Spain",
+          "admin1": "Andaluc\u00eda"
+        },
+        {
+          "geocell_index": 1970,
+          "probability": 0.04062666743993759,
+          "country": "Spain",
+          "admin1": "Spain"
+        },
+        {
+          "geocell_index": 2048,
+          "probability": 0.032797880470752716,
+          "country": "Spain",
+          "admin1": "Comunidad de Madrid"
+        },
+        {
+          "geocell_index": 2047,
+          "probability": 0.030376620590686798,
+          "country": "Spain",
+          "admin1": "Comunidad de Madrid"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 62.943902,
+        "lon": 137.365317
+      },
+      "prediction": {
+        "lat": 55.18540954589844,
+        "lon": 113.40414428710938
+      },
+      "distance_km": 1604.2076496441384,
+      "score": 1707,
+      "top5_geocells": [
+        {
+          "geocell_index": 3983,
+          "probability": 0.0118059441447258,
+          "country": "Russia",
+          "admin1": "Russia"
+        },
+        {
+          "geocell_index": 7027,
+          "probability": 0.006335728336125612,
+          "country": "Norway",
+          "admin1": "Nord-Tr\u00f8ndelag"
+        },
+        {
+          "geocell_index": 4098,
+          "probability": 0.005453999619930983,
+          "country": "Russia",
+          "admin1": "Sakha"
+        },
+        {
+          "geocell_index": 3847,
+          "probability": 0.005235412158071995,
+          "country": "Russia",
+          "admin1": "Russia"
+        },
+        {
+          "geocell_index": 3931,
+          "probability": 0.0046590217389166355,
+          "country": "Russia",
+          "admin1": "Russia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 1.3448,
+        "lon": 103.678452
+      },
+      "prediction": {
+        "lat": 19.015960693359375,
+        "lon": 72.85753631591797
+      },
+      "distance_km": 3889.832520803877,
+      "score": 369,
+      "top5_geocells": [
+        {
+          "geocell_index": 12146,
+          "probability": 0.02250240370631218,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 12144,
+          "probability": 0.02049778774380684,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 12143,
+          "probability": 0.019950423389673233,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 12131,
+          "probability": 0.01950833573937416,
+          "country": "India",
+          "admin1": "Maharashtra"
+        },
+        {
+          "geocell_index": 12145,
+          "probability": 0.015149420127272606,
+          "country": "India",
+          "admin1": "Maharashtra"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -3.324489,
+        "lon": -79.793463
+      },
+      "prediction": {
+        "lat": 27.275270462036133,
+        "lon": 85.98992919921875
+      },
+      "distance_km": 16953.211221610472,
+      "score": 0,
+      "top5_geocells": [
+        {
+          "geocell_index": 1906,
+          "probability": 0.11917364597320557,
+          "country": "Nepal",
+          "admin1": "Nepal"
+        },
+        {
+          "geocell_index": 1917,
+          "probability": 0.07673990726470947,
+          "country": "Nepal",
+          "admin1": "Central"
+        },
+        {
+          "geocell_index": 11753,
+          "probability": 0.07056247442960739,
+          "country": "India",
+          "admin1": "India"
+        },
+        {
+          "geocell_index": 1907,
+          "probability": 0.06638264656066895,
+          "country": "Nepal",
+          "admin1": "Nepal"
+        },
+        {
+          "geocell_index": 1921,
+          "probability": 0.0571490116417408,
+          "country": "Nepal",
+          "admin1": "Central"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 31.430349,
+        "lon": 35.790942
+      },
+      "prediction": {
+        "lat": 30.150514602661133,
+        "lon": 35.50501251220703
+      },
+      "distance_km": 144.90807497457507,
+      "score": 4537,
+      "top5_geocells": [
+        {
+          "geocell_index": 397,
+          "probability": 0.052503395825624466,
+          "country": "Jordan",
+          "admin1": "Ma`an"
+        },
+        {
+          "geocell_index": 359,
+          "probability": 0.04838006570935249,
+          "country": "Jordan",
+          "admin1": "Jordan"
+        },
+        {
+          "geocell_index": 363,
+          "probability": 0.033222321420907974,
+          "country": "Jordan",
+          "admin1": "Jordan"
+        },
+        {
+          "geocell_index": 393,
+          "probability": 0.03061733953654766,
+          "country": "Jordan",
+          "admin1": "Karak"
+        },
+        {
+          "geocell_index": 396,
+          "probability": 0.02944561466574669,
+          "country": "Jordan",
+          "admin1": "Ma`an"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -0.286436,
+        "lon": 36.071852
+      },
+      "prediction": {
+        "lat": -1.3242765665054321,
+        "lon": 36.80089569091797
+      },
+      "distance_km": 141.0247252544478,
+      "score": 4549,
+      "top5_geocells": [
+        {
+          "geocell_index": 6486,
+          "probability": 0.02247340977191925,
+          "country": "Kenya",
+          "admin1": "Nairobi"
+        },
+        {
+          "geocell_index": 6477,
+          "probability": 0.021749593317508698,
+          "country": "Kenya",
+          "admin1": "Nairobi"
+        },
+        {
+          "geocell_index": 6484,
+          "probability": 0.02094596065580845,
+          "country": "Kenya",
+          "admin1": "Nairobi"
+        },
+        {
+          "geocell_index": 6478,
+          "probability": 0.02072550170123577,
+          "country": "Kenya",
+          "admin1": "Nairobi"
+        },
+        {
+          "geocell_index": 6483,
+          "probability": 0.019422700628638268,
+          "country": "Kenya",
+          "admin1": "Nairobi"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 45.317928,
+        "lon": 0.660395
+      },
+      "prediction": {
+        "lat": 45.78207778930664,
+        "lon": -0.6778630018234253
+      },
+      "distance_km": 116.2862577501837,
+      "score": 4625,
+      "top5_geocells": [
+        {
+          "geocell_index": 6278,
+          "probability": 0.008433989249169827,
+          "country": "France",
+          "admin1": "Nouvelle-Aquitaine"
+        },
+        {
+          "geocell_index": 6280,
+          "probability": 0.008119369857013226,
+          "country": "France",
+          "admin1": "Nouvelle-Aquitaine"
+        },
+        {
+          "geocell_index": 6162,
+          "probability": 0.0073759956285357475,
+          "country": "France",
+          "admin1": "France"
+        },
+        {
+          "geocell_index": 6289,
+          "probability": 0.007064545061439276,
+          "country": "France",
+          "admin1": "Nouvelle-Aquitaine"
+        },
+        {
+          "geocell_index": 6166,
+          "probability": 0.0070062605664134026,
+          "country": "France",
+          "admin1": "France"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 52.975061,
+        "lon": 6.691356
+      },
+      "prediction": {
+        "lat": 55.74239730834961,
+        "lon": 9.365397453308105
+      },
+      "distance_km": 353.0780968708599,
+      "score": 3947,
+      "top5_geocells": [
+        {
+          "geocell_index": 10230,
+          "probability": 0.020951025187969208,
+          "country": "Denmark",
+          "admin1": "Denmark"
+        },
+        {
+          "geocell_index": 10228,
+          "probability": 0.01832546666264534,
+          "country": "Denmark",
+          "admin1": "Denmark"
+        },
+        {
+          "geocell_index": 10285,
+          "probability": 0.0163153987377882,
+          "country": "Denmark",
+          "admin1": "Syddanmark"
+        },
+        {
+          "geocell_index": 10293,
+          "probability": 0.016153285279870033,
+          "country": "Denmark",
+          "admin1": "Syddanmark"
+        },
+        {
+          "geocell_index": 10297,
+          "probability": 0.01533463317900896,
+          "country": "Denmark",
+          "admin1": "Syddanmark"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 35.526092,
+        "lon": -80.916344
+      },
+      "prediction": {
+        "lat": 41.3125,
+        "lon": -84.94893646240234
+      },
+      "distance_km": 732.8638296511723,
+      "score": 3060,
+      "top5_geocells": [
+        {
+          "geocell_index": 893,
+          "probability": 0.025385025888681412,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1357,
+          "probability": 0.012587759643793106,
+          "country": "United States",
+          "admin1": "Tennessee"
+        },
+        {
+          "geocell_index": 1232,
+          "probability": 0.011484053917229176,
+          "country": "United States",
+          "admin1": "Michigan"
+        },
+        {
+          "geocell_index": 919,
+          "probability": 0.008188722655177116,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1328,
+          "probability": 0.007461987901479006,
+          "country": "United States",
+          "admin1": "Oklahoma"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 10.31571,
+        "lon": 123.885054
+      },
+      "prediction": {
+        "lat": 14.262284278869629,
+        "lon": 120.89338684082031
+      },
+      "distance_km": 546.057855401256,
+      "score": 3468,
+      "top5_geocells": [
+        {
+          "geocell_index": 12529,
+          "probability": 0.007538202218711376,
+          "country": "Philippines",
+          "admin1": "Batangas"
+        },
+        {
+          "geocell_index": 12477,
+          "probability": 0.007451985031366348,
+          "country": "Philippines",
+          "admin1": "Philippines"
+        },
+        {
+          "geocell_index": 12622,
+          "probability": 0.007188826333731413,
+          "country": "Philippines",
+          "admin1": "Rizal"
+        },
+        {
+          "geocell_index": 12618,
+          "probability": 0.007096755318343639,
+          "country": "Philippines",
+          "admin1": "Rizal"
+        },
+        {
+          "geocell_index": 12592,
+          "probability": 0.006659635342657566,
+          "country": "Philippines",
+          "admin1": "Metropolitan Manila"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 17.223268,
+        "lon": 54.297793
+      },
+      "prediction": {
+        "lat": 17.28009605407715,
+        "lon": 54.56037139892578
+      },
+      "distance_km": 28.59086415012866,
+      "score": 4905,
+      "top5_geocells": [
+        {
+          "geocell_index": 7173,
+          "probability": 0.04305603355169296,
+          "country": "Oman",
+          "admin1": "Dhofar"
+        },
+        {
+          "geocell_index": 7133,
+          "probability": 0.03313490375876427,
+          "country": "Oman",
+          "admin1": "Oman"
+        },
+        {
+          "geocell_index": 7179,
+          "probability": 0.031564220786094666,
+          "country": "Oman",
+          "admin1": "Dhofar"
+        },
+        {
+          "geocell_index": 7178,
+          "probability": 0.01891074702143669,
+          "country": "Oman",
+          "admin1": "Dhofar"
+        },
+        {
+          "geocell_index": 7135,
+          "probability": 0.017626939341425896,
+          "country": "Oman",
+          "admin1": "Oman"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 43.099776,
+        "lon": -123.518563
+      },
+      "prediction": {
+        "lat": 42.91803741455078,
+        "lon": -123.24359893798828
+      },
+      "distance_km": 30.137030633377766,
+      "score": 4900,
+      "top5_geocells": [
+        {
+          "geocell_index": 1001,
+          "probability": 0.05119749531149864,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1331,
+          "probability": 0.05066206306219101,
+          "country": "United States",
+          "admin1": "Oregon"
+        },
+        {
+          "geocell_index": 1122,
+          "probability": 0.05057892948389053,
+          "country": "United States",
+          "admin1": "California"
+        },
+        {
+          "geocell_index": 1002,
+          "probability": 0.045000892132520676,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1004,
+          "probability": 0.04444532468914986,
+          "country": "United States",
+          "admin1": "United States"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 11.522979,
+        "lon": 105.481875
+      },
+      "prediction": {
+        "lat": 27.651226043701172,
+        "lon": -98.09857940673828
+      },
+      "distance_km": 14972.231480385295,
+      "score": 0,
+      "top5_geocells": [
+        {
+          "geocell_index": 1036,
+          "probability": 0.010403676889836788,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1365,
+          "probability": 0.008672182448208332,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1385,
+          "probability": 0.008193516172468662,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 5705,
+          "probability": 0.0076448037289083,
+          "country": "Colombia",
+          "admin1": "Bol\u00edvar"
+        },
+        {
+          "geocell_index": 5610,
+          "probability": 0.00672353757545352,
+          "country": "Colombia",
+          "admin1": "Colombia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 22.366683,
+        "lon": 114.073337
+      },
+      "prediction": {
+        "lat": 21.513355255126953,
+        "lon": 107.44673156738281
+      },
+      "distance_km": 689.9721875427164,
+      "score": 3149,
+      "top5_geocells": [
+        {
+          "geocell_index": 3702,
+          "probability": 0.08222087472677231,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        },
+        {
+          "geocell_index": 3822,
+          "probability": 0.07376018911600113,
+          "country": "Vietnam",
+          "admin1": "Qu\u1ea3ng Ninh"
+        },
+        {
+          "geocell_index": 3649,
+          "probability": 0.03289463743567467,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        },
+        {
+          "geocell_index": 3724,
+          "probability": 0.03232143446803093,
+          "country": "Vietnam",
+          "admin1": "B\u1eafc Giang"
+        },
+        {
+          "geocell_index": 3647,
+          "probability": 0.02939755655825138,
+          "country": "Vietnam",
+          "admin1": "Vietnam"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 33.673634,
+        "lon": -90.719647
+      },
+      "prediction": {
+        "lat": 37.75791931152344,
+        "lon": -95.39814758300781
+      },
+      "distance_km": 620.0279595831937,
+      "score": 3300,
+      "top5_geocells": [
+        {
+          "geocell_index": 897,
+          "probability": 0.05314163118600845,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1210,
+          "probability": 0.0518919974565506,
+          "country": "United States",
+          "admin1": "Kansas"
+        },
+        {
+          "geocell_index": 883,
+          "probability": 0.03330625221133232,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1357,
+          "probability": 0.024606479331851006,
+          "country": "United States",
+          "admin1": "Tennessee"
+        },
+        {
+          "geocell_index": 1194,
+          "probability": 0.02445947751402855,
+          "country": "United States",
+          "admin1": "Illinois"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 8.455468,
+        "lon": 126.338422
+      },
+      "prediction": {
+        "lat": 7.566583633422852,
+        "lon": 124.93815612792969
+      },
+      "distance_km": 183.14230371868402,
+      "score": 4423,
+      "top5_geocells": [
+        {
+          "geocell_index": 12430,
+          "probability": 0.026039782911539078,
+          "country": "Philippines",
+          "admin1": "Philippines"
+        },
+        {
+          "geocell_index": 12562,
+          "probability": 0.025049952790141106,
+          "country": "Philippines",
+          "admin1": "Davao del Sur"
+        },
+        {
+          "geocell_index": 12577,
+          "probability": 0.02152678184211254,
+          "country": "Philippines",
+          "admin1": "La Union"
+        },
+        {
+          "geocell_index": 12453,
+          "probability": 0.020610835403203964,
+          "country": "Philippines",
+          "admin1": "Philippines"
+        },
+        {
+          "geocell_index": 12563,
+          "probability": 0.020556794479489326,
+          "country": "Philippines",
+          "admin1": "Davao del Sur"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -26.393508,
+        "lon": 152.925183
+      },
+      "prediction": {
+        "lat": -21.139238357543945,
+        "lon": 148.8036346435547
+      },
+      "distance_km": 719.0689180229625,
+      "score": 3089,
+      "top5_geocells": [
+        {
+          "geocell_index": 8163,
+          "probability": 0.0687744989991188,
+          "country": "Australia",
+          "admin1": "Australia"
+        },
+        {
+          "geocell_index": 8384,
+          "probability": 0.04793401062488556,
+          "country": "Australia",
+          "admin1": "Queensland"
+        },
+        {
+          "geocell_index": 8370,
+          "probability": 0.03162035718560219,
+          "country": "Australia",
+          "admin1": "Queensland"
+        },
+        {
+          "geocell_index": 8368,
+          "probability": 0.030830571427941322,
+          "country": "Australia",
+          "admin1": "Queensland"
+        },
+        {
+          "geocell_index": 8387,
+          "probability": 0.029402917250990868,
+          "country": "Australia",
+          "admin1": "Queensland"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 42.846328,
+        "lon": 22.133331
+      },
+      "prediction": {
+        "lat": 43.394901275634766,
+        "lon": 19.536359786987305
+      },
+      "distance_km": 219.41602700649094,
+      "score": 4317,
+      "top5_geocells": [
+        {
+          "geocell_index": 10118,
+          "probability": 0.022807741537690163,
+          "country": "Serbia",
+          "admin1": "Serbia"
+        },
+        {
+          "geocell_index": 10117,
+          "probability": 0.022377632558345795,
+          "country": "Serbia",
+          "admin1": "Serbia"
+        },
+        {
+          "geocell_index": 10588,
+          "probability": 0.020444005727767944,
+          "country": "Albania",
+          "admin1": "Kor\u00e7\u00eb"
+        },
+        {
+          "geocell_index": 10571,
+          "probability": 0.017783891409635544,
+          "country": "Albania",
+          "admin1": "Albania"
+        },
+        {
+          "geocell_index": 10163,
+          "probability": 0.017706045880913734,
+          "country": "Serbia",
+          "admin1": "Topli\u010dki"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 2.142751,
+        "lon": 112.073294
+      },
+      "prediction": {
+        "lat": 2.3360846042633057,
+        "lon": 111.46733856201172
+      },
+      "distance_km": 70.67650298405948,
+      "score": 4769,
+      "top5_geocells": [
+        {
+          "geocell_index": 11022,
+          "probability": 0.08493651449680328,
+          "country": "Malaysia",
+          "admin1": "Malaysia"
+        },
+        {
+          "geocell_index": 11134,
+          "probability": 0.07162418961524963,
+          "country": "Malaysia",
+          "admin1": "Sarawak"
+        },
+        {
+          "geocell_index": 11021,
+          "probability": 0.07125003635883331,
+          "country": "Malaysia",
+          "admin1": "Malaysia"
+        },
+        {
+          "geocell_index": 11029,
+          "probability": 0.06173602119088173,
+          "country": "Malaysia",
+          "admin1": "Malaysia"
+        },
+        {
+          "geocell_index": 11141,
+          "probability": 0.06146760284900665,
+          "country": "Malaysia",
+          "admin1": "Sarawak"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 25.754022,
+        "lon": 88.689232
+      },
+      "prediction": {
+        "lat": 24.87016487121582,
+        "lon": 90.84477996826172
+      },
+      "distance_km": 237.91643109301697,
+      "score": 4263,
+      "top5_geocells": [
+        {
+          "geocell_index": 4494,
+          "probability": 0.013697238638997078,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        },
+        {
+          "geocell_index": 4503,
+          "probability": 0.013456902466714382,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        },
+        {
+          "geocell_index": 4577,
+          "probability": 0.01334217470139265,
+          "country": "Bangladesh",
+          "admin1": "Rajshahi"
+        },
+        {
+          "geocell_index": 4493,
+          "probability": 0.01131543330848217,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        },
+        {
+          "geocell_index": 4475,
+          "probability": 0.010720185935497284,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 69.666224,
+        "lon": 23.424472
+      },
+      "prediction": {
+        "lat": 54.77920913696289,
+        "lon": 158.8704376220703
+      },
+      "distance_km": 5720.793296505459,
+      "score": 108,
+      "top5_geocells": [
+        {
+          "geocell_index": 4007,
+          "probability": 0.03530826047062874,
+          "country": "Russia",
+          "admin1": "Kamchatka"
+        },
+        {
+          "geocell_index": 721,
+          "probability": 0.027232950553297997,
+          "country": "Kazakhstan",
+          "admin1": "Kazakhstan"
+        },
+        {
+          "geocell_index": 3977,
+          "probability": 0.023854248225688934,
+          "country": "Russia",
+          "admin1": "Russia"
+        },
+        {
+          "geocell_index": 4153,
+          "probability": 0.016472266986966133,
+          "country": "Russia",
+          "admin1": "Yamal-Nenets"
+        },
+        {
+          "geocell_index": 3914,
+          "probability": 0.015873020514845848,
+          "country": "Russia",
+          "admin1": "Russia"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 26.905711,
+        "lon": 91.527344
+      },
+      "prediction": {
+        "lat": 27.210908889770508,
+        "lon": 90.84931182861328
+      },
+      "distance_km": 75.23049009733138,
+      "score": 4754,
+      "top5_geocells": [
+        {
+          "geocell_index": 4647,
+          "probability": 0.05958901718258858,
+          "country": "Bhutan",
+          "admin1": "Zhemgang"
+        },
+        {
+          "geocell_index": 4627,
+          "probability": 0.05885054171085358,
+          "country": "Bhutan",
+          "admin1": "Monggar"
+        },
+        {
+          "geocell_index": 4628,
+          "probability": 0.04736681655049324,
+          "country": "Bhutan",
+          "admin1": "Monggar"
+        },
+        {
+          "geocell_index": 4613,
+          "probability": 0.04735448211431503,
+          "country": "Bhutan",
+          "admin1": "Bhutan"
+        },
+        {
+          "geocell_index": 4618,
+          "probability": 0.04091803729534149,
+          "country": "Bhutan",
+          "admin1": "Bhutan"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 0.350933,
+        "lon": 32.574816
+      },
+      "prediction": {
+        "lat": 0.3907428979873657,
+        "lon": 32.60053253173828
+      },
+      "distance_km": 5.26991254401132,
+      "score": 4982,
+      "top5_geocells": [
+        {
+          "geocell_index": 4265,
+          "probability": 0.10910995304584503,
+          "country": "Uganda",
+          "admin1": "Kampala"
+        },
+        {
+          "geocell_index": 4286,
+          "probability": 0.05845294147729874,
+          "country": "Uganda",
+          "admin1": "Wakiso"
+        },
+        {
+          "geocell_index": 4261,
+          "probability": 0.056461166590452194,
+          "country": "Uganda",
+          "admin1": "Kampala"
+        },
+        {
+          "geocell_index": 4262,
+          "probability": 0.056187547743320465,
+          "country": "Uganda",
+          "admin1": "Kampala"
+        },
+        {
+          "geocell_index": 4263,
+          "probability": 0.05469263345003128,
+          "country": "Uganda",
+          "admin1": "Kampala"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 42.483364,
+        "lon": 19.400279
+      },
+      "prediction": {
+        "lat": 42.22062301635742,
+        "lon": 19.604393005371094
+      },
+      "distance_km": 33.68796896436342,
+      "score": 4888,
+      "top5_geocells": [
+        {
+          "geocell_index": 10592,
+          "probability": 0.045713599771261215,
+          "country": "Albania",
+          "admin1": "Lezh\u00eb"
+        },
+        {
+          "geocell_index": 10588,
+          "probability": 0.0377444289624691,
+          "country": "Albania",
+          "admin1": "Kor\u00e7\u00eb"
+        },
+        {
+          "geocell_index": 10563,
+          "probability": 0.033319033682346344,
+          "country": "Iceland",
+          "admin1": "Vesturland"
+        },
+        {
+          "geocell_index": 10579,
+          "probability": 0.03288992866873741,
+          "country": "Albania",
+          "admin1": "Albania"
+        },
+        {
+          "geocell_index": 10590,
+          "probability": 0.02717856876552105,
+          "country": "Albania",
+          "admin1": "Kuk\u00ebs"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 25.049997,
+        "lon": 121.616185
+      },
+      "prediction": {
+        "lat": 24.45525360107422,
+        "lon": 122.98873138427734
+      },
+      "distance_km": 153.56587983048223,
+      "score": 4511,
+      "top5_geocells": [
+        {
+          "geocell_index": 2932,
+          "probability": 0.42570725083351135,
+          "country": "Japan",
+          "admin1": "Okinawa"
+        },
+        {
+          "geocell_index": 2665,
+          "probability": 0.3596251308917999,
+          "country": "Japan",
+          "admin1": "Japan"
+        },
+        {
+          "geocell_index": 2664,
+          "probability": 0.07676118612289429,
+          "country": "Japan",
+          "admin1": "Japan"
+        },
+        {
+          "geocell_index": 2931,
+          "probability": 0.044549260288476944,
+          "country": "Japan",
+          "admin1": "Okinawa"
+        },
+        {
+          "geocell_index": 2659,
+          "probability": 0.03874661400914192,
+          "country": "Japan",
+          "admin1": "Japan"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 23.378056,
+        "lon": 88.228055
+      },
+      "prediction": {
+        "lat": 16.085554122924805,
+        "lon": 76.89009857177734
+      },
+      "distance_km": 1436.1854309078014,
+      "score": 1910,
+      "top5_geocells": [
+        {
+          "geocell_index": 12081,
+          "probability": 0.025012066587805748,
+          "country": "India",
+          "admin1": "Karnataka"
+        },
+        {
+          "geocell_index": 11736,
+          "probability": 0.02128615416586399,
+          "country": "India",
+          "admin1": "India"
+        },
+        {
+          "geocell_index": 12079,
+          "probability": 0.01780654676258564,
+          "country": "India",
+          "admin1": "Karnataka"
+        },
+        {
+          "geocell_index": 11822,
+          "probability": 0.016314871609210968,
+          "country": "India",
+          "admin1": "India"
+        },
+        {
+          "geocell_index": 11939,
+          "probability": 0.015739180147647858,
+          "country": "India",
+          "admin1": "India"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 62.409379,
+        "lon": 26.464387
+      },
+      "prediction": {
+        "lat": 48.696510314941406,
+        "lon": -78.30266571044922
+      },
+      "distance_km": 6003.826365597331,
+      "score": 90,
+      "top5_geocells": [
+        {
+          "geocell_index": 10886,
+          "probability": 0.017495371401309967,
+          "country": "Canada",
+          "admin1": "Ontario"
+        },
+        {
+          "geocell_index": 10714,
+          "probability": 0.01599249243736267,
+          "country": "Canada",
+          "admin1": "Canada"
+        },
+        {
+          "geocell_index": 11396,
+          "probability": 0.014857095666229725,
+          "country": "Finland",
+          "admin1": "Western Finland"
+        },
+        {
+          "geocell_index": 11406,
+          "probability": 0.013162480667233467,
+          "country": "Finland",
+          "admin1": "Western Finland"
+        },
+        {
+          "geocell_index": 11376,
+          "probability": 0.012517815455794334,
+          "country": "Finland",
+          "admin1": "Oulu"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 26.997402,
+        "lon": 90.593399
+      },
+      "prediction": {
+        "lat": 27.794849395751953,
+        "lon": 91.00753784179688
+      },
+      "distance_km": 97.64380281915356,
+      "score": 4683,
+      "top5_geocells": [
+        {
+          "geocell_index": 4596,
+          "probability": 0.0294096190482378,
+          "country": "Bhutan",
+          "admin1": "Bhutan"
+        },
+        {
+          "geocell_index": 4647,
+          "probability": 0.02817543037235737,
+          "country": "Bhutan",
+          "admin1": "Zhemgang"
+        },
+        {
+          "geocell_index": 4613,
+          "probability": 0.02805332839488983,
+          "country": "Bhutan",
+          "admin1": "Bhutan"
+        },
+        {
+          "geocell_index": 4618,
+          "probability": 0.0271441787481308,
+          "country": "Bhutan",
+          "admin1": "Bhutan"
+        },
+        {
+          "geocell_index": 4597,
+          "probability": 0.025112617760896683,
+          "country": "Bhutan",
+          "admin1": "Bhutan"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 53.2699,
+        "lon": -123.153257
+      },
+      "prediction": {
+        "lat": 54.02823257446289,
+        "lon": -121.65753936767578
+      },
+      "distance_km": 129.7195211149419,
+      "score": 4584,
+      "top5_geocells": [
+        {
+          "geocell_index": 10796,
+          "probability": 0.5547971725463867,
+          "country": "Canada",
+          "admin1": "British Columbia"
+        },
+        {
+          "geocell_index": 10633,
+          "probability": 0.24974636733531952,
+          "country": "Canada",
+          "admin1": "Canada"
+        },
+        {
+          "geocell_index": 10637,
+          "probability": 0.02923758141696453,
+          "country": "Canada",
+          "admin1": "Canada"
+        },
+        {
+          "geocell_index": 10800,
+          "probability": 0.023726025596261024,
+          "country": "Canada",
+          "admin1": "British Columbia"
+        },
+        {
+          "geocell_index": 10886,
+          "probability": 0.009139916859567165,
+          "country": "Canada",
+          "admin1": "Ontario"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -1.247247,
+        "lon": 36.77585
+      },
+      "prediction": {
+        "lat": -1.329048752784729,
+        "lon": 36.87751388549805
+      },
+      "distance_km": 14.507357646608037,
+      "score": 4952,
+      "top5_geocells": [
+        {
+          "geocell_index": 6478,
+          "probability": 0.027949081733822823,
+          "country": "Kenya",
+          "admin1": "Nairobi"
+        },
+        {
+          "geocell_index": 6384,
+          "probability": 0.027471721172332764,
+          "country": "Kenya",
+          "admin1": "Kenya"
+        },
+        {
+          "geocell_index": 6486,
+          "probability": 0.027379289269447327,
+          "country": "Kenya",
+          "admin1": "Nairobi"
+        },
+        {
+          "geocell_index": 6441,
+          "probability": 0.024179544299840927,
+          "country": "Kenya",
+          "admin1": "Kiambu"
+        },
+        {
+          "geocell_index": 6389,
+          "probability": 0.02361528016626835,
+          "country": "Kenya",
+          "admin1": "Kenya"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": -23.625526,
+        "lon": -70.396216
+      },
+      "prediction": {
+        "lat": -23.626035690307617,
+        "lon": -70.00143432617188
+      },
+      "distance_km": 40.21834913485228,
+      "score": 4867,
+      "top5_geocells": [
+        {
+          "geocell_index": 5966,
+          "probability": 0.2336072474718094,
+          "country": "Chile",
+          "admin1": "Antofagasta"
+        },
+        {
+          "geocell_index": 5916,
+          "probability": 0.06146598234772682,
+          "country": "Chile",
+          "admin1": "Chile"
+        },
+        {
+          "geocell_index": 5963,
+          "probability": 0.04554153233766556,
+          "country": "Chile",
+          "admin1": "Antofagasta"
+        },
+        {
+          "geocell_index": 5965,
+          "probability": 0.025770727545022964,
+          "country": "Chile",
+          "admin1": "Antofagasta"
+        },
+        {
+          "geocell_index": 5923,
+          "probability": 0.02193165197968483,
+          "country": "Chile",
+          "admin1": "Chile"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 6.553104,
+        "lon": 3.326909
+      },
+      "prediction": {
+        "lat": 6.553516864776611,
+        "lon": 3.378711223602295
+      },
+      "distance_km": 5.722692369023182,
+      "score": 4981,
+      "top5_geocells": [
+        {
+          "geocell_index": 6650,
+          "probability": 0.052325278520584106,
+          "country": "Nigeria",
+          "admin1": "Lagos"
+        },
+        {
+          "geocell_index": 6649,
+          "probability": 0.036360155791044235,
+          "country": "Nigeria",
+          "admin1": "Lagos"
+        },
+        {
+          "geocell_index": 6641,
+          "probability": 0.029748551547527313,
+          "country": "Nigeria",
+          "admin1": "Lagos"
+        },
+        {
+          "geocell_index": 6647,
+          "probability": 0.029399361461400986,
+          "country": "Nigeria",
+          "admin1": "Lagos"
+        },
+        {
+          "geocell_index": 6554,
+          "probability": 0.02691928669810295,
+          "country": "Nigeria",
+          "admin1": "Nigeria"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 7.386949,
+        "lon": 79.865606
+      },
+      "prediction": {
+        "lat": 6.6196441650390625,
+        "lon": 79.97184753417969
+      },
+      "distance_km": 86.12231930550057,
+      "score": 4720,
+      "top5_geocells": [
+        {
+          "geocell_index": 7323,
+          "probability": 0.030718572437763214,
+          "country": "Sri Lanka",
+          "admin1": "Sri Lanka"
+        },
+        {
+          "geocell_index": 7377,
+          "probability": 0.027501624077558517,
+          "country": "Sri Lanka",
+          "admin1": "Galle"
+        },
+        {
+          "geocell_index": 7325,
+          "probability": 0.025975612923502922,
+          "country": "Sri Lanka",
+          "admin1": "Sri Lanka"
+        },
+        {
+          "geocell_index": 7393,
+          "probability": 0.02494684047996998,
+          "country": "Sri Lanka",
+          "admin1": "Kalutara"
+        },
+        {
+          "geocell_index": 7394,
+          "probability": 0.021300222724676132,
+          "country": "Sri Lanka",
+          "admin1": "Kalutara"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 22.40559,
+        "lon": 90.781161
+      },
+      "prediction": {
+        "lat": 22.189748764038086,
+        "lon": 90.39845275878906
+      },
+      "distance_km": 46.11142348167719,
+      "score": 4848,
+      "top5_geocells": [
+        {
+          "geocell_index": 4520,
+          "probability": 0.009006550535559654,
+          "country": "Bangladesh",
+          "admin1": "Barisal"
+        },
+        {
+          "geocell_index": 4522,
+          "probability": 0.007806381210684776,
+          "country": "Bangladesh",
+          "admin1": "Chittagong"
+        },
+        {
+          "geocell_index": 5723,
+          "probability": 0.0066106803715229034,
+          "country": "Colombia",
+          "admin1": "C\u00f3rdoba"
+        },
+        {
+          "geocell_index": 4452,
+          "probability": 0.006065785884857178,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        },
+        {
+          "geocell_index": 4458,
+          "probability": 0.005922071635723114,
+          "country": "Bangladesh",
+          "admin1": "Bangladesh"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 10.244123,
+        "lon": 78.548256
+      },
+      "prediction": {
+        "lat": 11.311827659606934,
+        "lon": 104.23589324951172
+      },
+      "distance_km": 2807.575070956156,
+      "score": 762,
+      "top5_geocells": [
+        {
+          "geocell_index": 8901,
+          "probability": 0.016115954145789146,
+          "country": "Cambodia",
+          "admin1": "K\u00e2mp\u00f3ng Chhnang"
+        },
+        {
+          "geocell_index": 8880,
+          "probability": 0.014786800369620323,
+          "country": "Cambodia",
+          "admin1": "Cambodia"
+        },
+        {
+          "geocell_index": 8845,
+          "probability": 0.014254773035645485,
+          "country": "Cambodia",
+          "admin1": "Cambodia"
+        },
+        {
+          "geocell_index": 8916,
+          "probability": 0.012631716206669807,
+          "country": "Cambodia",
+          "admin1": "Krong Preah Sihanouk"
+        },
+        {
+          "geocell_index": 8903,
+          "probability": 0.012392241507768631,
+          "country": "Cambodia",
+          "admin1": "K\u00e2mp\u00f3ng Sp\u0153"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 45.255961,
+        "lon": 16.586564
+      },
+      "prediction": {
+        "lat": 46.729331970214844,
+        "lon": 5.697494029998779
+      },
+      "distance_km": 856.2760148557919,
+      "score": 2817,
+      "top5_geocells": [
+        {
+          "geocell_index": 6116,
+          "probability": 0.005241564009338617,
+          "country": "France",
+          "admin1": "France"
+        },
+        {
+          "geocell_index": 10188,
+          "probability": 0.0048646507784724236,
+          "country": "Denmark",
+          "admin1": "Denmark"
+        },
+        {
+          "geocell_index": 6214,
+          "probability": 0.004371307790279388,
+          "country": "France",
+          "admin1": "Bourgogne-Franche-Comt\u00e9"
+        },
+        {
+          "geocell_index": 7446,
+          "probability": 0.003811522852629423,
+          "country": "Croatia",
+          "admin1": "Croatia"
+        },
+        {
+          "geocell_index": 222,
+          "probability": 0.0037399267312139273,
+          "country": "Switzerland",
+          "admin1": "Switzerland"
+        }
+      ]
+    },
+    {
+      "ground_truth": {
+        "lat": 19.579641,
+        "lon": -99.072157
+      },
+      "prediction": {
+        "lat": 27.651226043701172,
+        "lon": -98.09857940673828
+      },
+      "distance_km": 902.9695891402757,
+      "score": 2731,
+      "top5_geocells": [
+        {
+          "geocell_index": 1036,
+          "probability": 0.15598459541797638,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1056,
+          "probability": 0.12392134964466095,
+          "country": "United States",
+          "admin1": "United States"
+        },
+        {
+          "geocell_index": 1365,
+          "probability": 0.11254730820655823,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 1385,
+          "probability": 0.11060425639152527,
+          "country": "United States",
+          "admin1": "Texas"
+        },
+        {
+          "geocell_index": 5790,
+          "probability": 0.03973161801695824,
+          "country": "Greece",
+          "admin1": "Aegean"
+        }
+      ]
+    },
+    {
+      "summary": true,
+      "num_samples": 100,
+      "avg_distance_km": 1547.508272241652,
+      "median_distance_km": 530.3769308399119,
+      "avg_top1_prob": 0.07457890595309437,
+      "avg_score": 3163.33
+    }
+  ]
