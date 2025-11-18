@@ -14,8 +14,6 @@ from transformers import CLIPVisionModel
 from backend.s3bucket import download_model_checkpoint_number
 from config import CLIP_MODEL
 from inference import _find_default_checkpoint, _load_geocell_metadata
-from inference.compute_average_scores import compute_summary_from_data
-from inference.recompute_geoguessr_score import geoguessr_score_from_distance
 from main_coordinator_idun_s3 import LocalGeoMapDataset
 from models.super_guessr import SuperGuessr
 from training.load_sqlite_dataset import load_sqlite_panorama_dataset
@@ -47,6 +45,76 @@ def haversine_np(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     c = 2 * np.arcsin(np.sqrt(a))
     km = (rad_np * c) / 1000
     return km
+
+
+def geoguessr_score_from_distance(
+    distance_km: float, decay_km: float = 1492.7
+) -> int:
+    """
+    GeoGuessr-style (World, distance scoring) points from distance in km,
+    using the exponential decay model:
+
+        points = 5000 * exp(-d / decay_km)
+
+    Result is clamped to [0, 5000] and rounded to nearest integer.
+    """
+    if distance_km < 0:
+        distance_km = 0.0
+    points = 5000.0 * math.exp(-(distance_km / decay_km))
+    points = max(0.0, min(5000.0, points))
+    return int(round(points))
+
+
+def _compute_summary_from_data(data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Compute summary statistics over a list of inference result samples.
+
+    Each sample is expected to have:
+      - "distance_km"
+      - "score"
+      - "top5_geocells" (list, where [0]["probability"] is the top-1 prob)
+    """
+    if not isinstance(data, list) or not data:
+        raise ValueError("Expected a non-empty list of samples for summary computation")
+
+    total_distance = 0.0
+    total_top_prob = 0.0
+    total_score = 0.0
+    n = 0
+    distances: List[float] = []
+
+    for sample in data:
+        # distance_km
+        dist = float(sample.get("distance_km", 0.0))
+        total_distance += dist
+        distances.append(dist)
+
+        # score
+        score = float(sample.get("score", 0.0))
+        total_score += score
+
+        # top geocell probability, if available
+        top5 = sample.get("top5_geocells") or []
+        if top5:
+            top_prob = float(top5[0].get("probability", 0.0))
+        else:
+            top_prob = 0.0
+        total_top_prob += top_prob
+
+        n += 1
+
+    avg_distance = total_distance / n
+    avg_top_prob = total_top_prob / n
+    avg_score = total_score / n
+    median_distance = float(np.median(distances))
+
+    return {
+        "num_samples": n,
+        "avg_distance_km": avg_distance,
+        "median_distance_km": median_distance,
+        "avg_top1_prob": avg_top_prob,
+        "avg_score": avg_score,
+    }
 
 
 def _build_clip_transform() -> torch.nn.Module:
@@ -214,7 +282,7 @@ def run_benchmark(
         )
 
     # Append summary statistics as the last element.
-    summary = compute_summary_from_data(results)
+    summary = _compute_summary_from_data(results)
     results.append(
         {
             "summary": True,
