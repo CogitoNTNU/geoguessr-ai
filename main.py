@@ -1,8 +1,16 @@
 import os
 import sqlite3
 import pandas as pd
+from dataclasses import dataclass
 
 DATABASE_PATH = os.path.join("sqlite", "dataset.sqlite")
+
+
+@dataclass
+class RunConfig:
+    include_image: bool = os.getenv("INCLUDE_IMAGE") == "1"
+    read_limit: int = int(os.getenv("READ_LIMIT", "1000"))
+    read_where: str = os.getenv("READ_WHERE", "")
 
 
 def get_database_tables(db_connection: sqlite3.Connection):
@@ -27,7 +35,7 @@ def get_database_tables(db_connection: sqlite3.Connection):
         print("Failed to execute the above query", error)
 
 
-def main() -> None:
+def main(config: RunConfig) -> None:
     print(f"Using database at: {DATABASE_PATH}")
     # Open a connection and ensure it stays open while reading
     with sqlite3.connect(DATABASE_PATH) as conn:
@@ -42,6 +50,18 @@ def main() -> None:
         cur.execute("PRAGMA table_info(samples)")
         available_cols = [row[1] for row in cur.fetchall()]
 
+        # Performance-oriented pragmas (best-effort; ignore if unsupported)
+        for pragma in (
+            "mmap_size=268435456",  # 256MB memory map
+            "temp_store=MEMORY",
+            "cache_size=-200000",  # ~200MB cache (negative => KB units)
+            "synchronous=OFF",  # safe for read-only
+        ):
+            try:
+                conn.execute(f"PRAGMA {pragma}")
+            except sqlite3.Error:
+                pass
+
         requested_cols = [
             "location_id",
             "lat",
@@ -50,8 +70,10 @@ def main() -> None:
             "capture_date",
             "pano_id",
             "batch_date",
-            "image",
         ]
+
+        if config.include_image:
+            requested_cols.append("image")
 
         # Only select columns that exist; warn about missing ones
         selected = [c for c in requested_cols if c in available_cols]
@@ -90,4 +112,5 @@ def main() -> None:
 
 # Start the server
 if __name__ == "__main__":
-    main()
+    config = RunConfig()
+    main(config)
