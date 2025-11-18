@@ -4,6 +4,7 @@ import os
 import random
 from typing import List, Dict, Any, Optional
 
+import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms as T
@@ -13,12 +14,39 @@ from transformers import CLIPVisionModel
 from backend.s3bucket import download_model_checkpoint_number
 from config import CLIP_MODEL
 from inference import _find_default_checkpoint, _load_geocell_metadata
+from inference.compute_average_scores import compute_summary_from_data
+from inference.recompute_geoguessr_score import geoguessr_score_from_distance
 from main_coordinator_idun_s3 import LocalGeoMapDataset
 from models.super_guessr import SuperGuessr
 from training.load_sqlite_dataset import load_sqlite_panorama_dataset
 
 
 _BASE_DIR = os.path.dirname(__file__)
+
+
+rad_np = 6371000.0  # Earth radius in meters for numpy haversine
+
+
+def haversine_np(x: np.ndarray, y: np.ndarray) -> np.ndarray:
+    """Computes the haversine distance between two sets of points
+
+    Args:
+        x (np.ndarray): points 1 (lon, lat)
+        y (np.ndarray): points 2 (lon, lat)
+
+    Returns:
+        np.ndarray: haversine distance in km
+    """
+    x_rad, y_rad = map(np.radians, [x, y])
+
+    delta = y_rad - x_rad
+
+    a = np.sin(delta[:, 1] / 2) ** 2 + np.cos(x_rad[:, 1]) * np.cos(y_rad[:, 1]) * np.sin(
+        delta[:, 0] / 2
+    ) ** 2
+    c = 2 * np.arcsin(np.sqrt(a))
+    km = (rad_np * c) / 1000
+    return km
 
 
 def _build_clip_transform() -> torch.nn.Module:
@@ -45,23 +73,6 @@ def _load_clip_backbone_from_index(
         ckpt_dir = CLIP_MODEL
     model = CLIPVisionModel.from_pretrained(ckpt_dir)
     return model.to(device)
-
-
-def _haversine_distance_km(
-    lat1: float, lon1: float, lat2: float, lon2: float
-) -> float:
-    """Great-circle distance between two points on Earth (km)."""
-    r_km = 6371.0
-    lat1_rad, lon1_rad = math.radians(lat1), math.radians(lon1)
-    lat2_rad, lon2_rad = math.radians(lat2), math.radians(lon2)
-    dlat = lat2_rad - lat1_rad
-    dlon = lon2_rad - lon1_rad
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(dlon / 2) ** 2
-    )
-    c = 2 * math.asin(math.sqrt(a))
-    return r_km * c
 
 
 def run_benchmark(
@@ -141,9 +152,6 @@ def run_benchmark(
     # Metadata: geocell_index -> (country, admin1)
     meta = _load_geocell_metadata()
 
-    # Geoguessr scoring parameters in kilometers (size = 14,916.862 m).
-    size_km = 14916.862 / 1000.0
-
     results: List[Dict[str, Any]] = []
 
     for idx in tqdm(indices, desc="Benchmarking", unit="sample"):
@@ -174,8 +182,11 @@ def run_benchmark(
         gt_lat = float(target["lat"])
         gt_lon = float(target["lon"])
 
-        distance_km = _haversine_distance_km(gt_lat, gt_lon, pred_lat, pred_lon)
-        score = 5000.0 * math.exp(-10.0 * distance_km / size_km)
+        # Use numpy haversine with (lon, lat) ordering
+        x = np.array([[gt_lon, gt_lat]], dtype=float)
+        y = np.array([[pred_lon, pred_lat]], dtype=float)
+        distance_km = float(haversine_np(x, y)[0])
+        score = geoguessr_score_from_distance(distance_km)
 
         top_ids = topk.indices[0].detach().cpu().tolist()
         top_probs = topk.values[0].detach().cpu().tolist()
@@ -202,7 +213,20 @@ def run_benchmark(
             }
         )
 
-    # Write results to JSON in data/out.
+    # Append summary statistics as the last element.
+    summary = compute_summary_from_data(results)
+    results.append(
+        {
+            "summary": True,
+            "num_samples": summary["num_samples"],
+            "avg_distance_km": summary["avg_distance_km"],
+            "median_distance_km": summary["median_distance_km"],
+            "avg_top1_prob": summary["avg_top1_prob"],
+            "avg_score": summary["avg_score"],
+        }
+    )
+
+    # Write results (including summary) to JSON in data/out.
     if output_path is None:
         output_path = os.path.join(_BASE_DIR, "data", "out", "inference_results.json")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
