@@ -457,6 +457,51 @@ def download_random_panorama(
     }
 
 
+def download_random_holdout_panorama(
+    dest_dir: str,
+    overwrite: bool = False,
+) -> dict:
+    """
+    Downloads up to 4 images for a random location_id from the latest *holdout*
+    snapshot (under `holdout_dataset/snapshot`).
+
+    Returns a dict with the same structure as `download_random_panorama`:
+      {
+        "paths": [local_paths...],
+        "location_id": str,
+        "lat": float,
+        "lon": float,
+      }
+    """
+    df = load_latest_holdout_snapshot_df()
+    if df is None or df.empty:
+        raise ValueError("Latest holdout snapshot is empty.")
+
+    # Group by location_id and keep only groups with at least 4 images
+    groups = [g for _, g in df.groupby("location_id") if len(g) >= 4]
+    if not groups:
+        raise ValueError(
+            "No location_id with at least 4 images found in holdout snapshot."
+        )
+
+    group = random.choice(groups)
+    group = group.sort_values("heading").head(4)
+
+    os.makedirs(dest_dir, exist_ok=True)
+    local_paths: list[str] = []
+    for _, row in group.iterrows():
+        local_path, _ = download(dest_dir, overwrite, row)
+        local_paths.append(local_path)
+
+    first = group.iloc[0]
+    return {
+        "paths": local_paths,
+        "location_id": str(first["location_id"]),
+        "lat": float(first["lat"]),
+        "lon": float(first["lon"]),
+    }
+
+
 def load_points():
     df = load_latest_snapshot_df()
     df = df.drop_duplicates(subset=["lat", "lon"], keep="first").reset_index(drop=True)
