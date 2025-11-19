@@ -177,7 +177,7 @@ def main(config):
         val_dataset, batch_size=16, num_workers=1, pin_memory=True
     )
 
-    embeddingModelUsed = "CLIP"  # Possible values are "CLIP" or "TINYVIT"
+    embeddingModelUsed = "TINYVIT"  # Possible values are "CLIP" or "TINYVIT"
 
     embedding_model = 0
     if embeddingModelUsed == "CLIP":
