@@ -151,7 +151,7 @@ def run_benchmark(
 ) -> Dict[str, Any]:
     """
     Run SuperGuessr inference on random panoramas from the test set and
-    write per-sample metrics to data/out/inference_results.json.
+    write per-sample metrics to data/out/inference_results_1000.json.
 
     - Test set = last 10% of rows from load_sqlite_panorama_dataset(sqlite_path).
     - CLIP backbone from the Nth most-recent saved_models checkpoint (index=1 by default).
@@ -177,7 +177,7 @@ def run_benchmark(
     transform = _build_clip_transform()
     test_dataset = LocalGeoMapDataset(df_test, required_size=336, transform=transform)
 
-    # Sample indices for evaluation (100 panoramas or as many as available).
+    # Sample indices for evaluation (1000 panoramas or as many as available).
     n_eval = min(num_samples, len(test_dataset))
     if n_eval <= 0:
         raise ValueError("No samples available for benchmarking.")
@@ -296,7 +296,7 @@ def run_benchmark(
 
     # Write results (including summary) to JSON in data/out.
     if output_path is None:
-        output_path = os.path.join(_BASE_DIR, "data", "out", "inference_results.json")
+        output_path = os.path.join(_BASE_DIR, "data", "out", "inference_results_1000.json")
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2)
