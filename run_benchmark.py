@@ -144,7 +144,7 @@ def _load_clip_backbone_from_index(
 
 
 def run_benchmark(
-    num_samples: int = 100,
+    num_samples: int = 1000,
     clip_checkpoint_index: int = 1,
     sqlite_path: Optional[str] = None,
     output_path: Optional[str] = None,
