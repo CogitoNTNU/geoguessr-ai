@@ -33,7 +33,7 @@ def _find_default_checkpoint() -> str | None:
 
     This lives at the top-level `checkpoints` directory, not under `inference/`.
     """
-    ckpt_path = Path(_BASE_DIR) / "checkpoints" / "hfy9p69s" / "best.pt"
+    ckpt_path = Path(_BASE_DIR) / "checkpoints" / "2hvhydb5" / "best.pt"
     if ckpt_path.is_file():
         return str(ckpt_path)
     return None
