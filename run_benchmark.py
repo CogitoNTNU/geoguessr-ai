@@ -145,7 +145,7 @@ def _load_clip_backbone_from_index(
 
 def run_benchmark(
     num_samples: int = 1000,
-    clip_checkpoint_index: int = 1,
+    clip_checkpoint_index: int = 0,
     sqlite_path: Optional[str] = None,
     output_path: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -154,7 +154,7 @@ def run_benchmark(
     write per-sample metrics to data/out/inference_results_1000.json.
 
     - Test set = last 10% of rows from load_sqlite_panorama_dataset(sqlite_path).
-    - CLIP backbone from the Nth most-recent saved_models checkpoint (index=1 by default).
+    - CLIP backbone from the Nth most-recent saved_models checkpoint (index=0 by default).
     - SuperGuessr weights loaded from the default inference checkpoint if available.
     """
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
