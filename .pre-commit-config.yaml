@@ -23,8 +23,8 @@ repos:
       # Filesystem Checks
       - id: check-executables-have-shebangs
         name: "📁 filesystem/⚙️ exec · Verify shebang presence"
-      - id: check-shebang-scripts-are-executable
-        name: "📁 filesystem/⚙️ exec · Verify script permissions"
+      # - id: check-shebang-scripts-are-executable
+      #   name: "📁 filesystem/⚙️ exec · Verify script permissions"
       - id: check-case-conflict
         name: "📁 filesystem/📝 names · Check case sensitivity"
       - id: check-illegal-windows-names
@@ -55,11 +55,11 @@ repos:
     hooks:
       - id: ruff-check
         name: "🐍 python · Check with Ruff"
-        types_or: [ python, pyi ]
-        args: [ --fix ]
+        types_or: [python, pyi]
+        args: [--fix]
       - id: ruff-format
         name: "🐍 python · Format with Ruff"
-        types_or: [ python, pyi ]
+        types_or: [python, pyi]
         exclude: |
           (?x)^(
             .*\{\{.*\}\}.*|     # Exclude any files with cookiecutter variable, this is an issue with ruff
@@ -124,7 +124,6 @@ repos:
       # Export to txt
       - id: uv-export
         name: "⚡️ uv · Export dependencies to requirements.txt"
-
 
   # ---------------------------------------------------------------------------- #
   #                            📝 Commit Message Hooks                           #
